@@ -1,5 +1,11 @@
 # Node
 node_modules/
+agencia-express/data/*.jsonl
+
+# Python
+.venv/
+__pycache__/
+*.pyc
 agencia/data/*.jsonl
 
 # Sistema
