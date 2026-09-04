@@ -14,6 +14,20 @@ def _estado():
     )
 
 
+def _resumir_erro(erro, url_destino):
+    """Resume a exceção do requests, que por padrão gera um texto muito longo."""
+    resposta = getattr(erro, "response", None)
+
+    if resposta is not None:
+        return f"{url_destino} respondeu HTTP {resposta.status_code}"
+    if isinstance(erro, requests.Timeout):
+        return f"Tempo esgotado ao contatar {url_destino}"
+    if isinstance(erro, requests.ConnectionError):
+        return f"Conexão recusada por {url_destino}"
+
+    return f"{type(erro).__name__} ao contatar {url_destino}"
+
+
 def transferir():
     corpo = request.get_json(silent=True) or {}
     id_origem = corpo.get("idOrigem")
@@ -84,7 +98,7 @@ def transferir():
                 "idOrigem": id_origem,
                 "idDestino": id_destino,
                 "valor": valor,
-                "erro": str(erro),
+                "erro": _resumir_erro(erro, url_destino),
             },
         )
         return (
