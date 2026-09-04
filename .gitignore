@@ -8,3 +8,6 @@ desktop.ini
 
 # Prettier - Code formatter
 .prettierrc
+
+# Macbook
+.DS_Store
