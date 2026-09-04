@@ -1,5 +1,3 @@
-# TODO: substitua pelo seu OFFSET pessoal (dois últimos dígitos da matrícula/RA),
-# necessário apenas se for rodar em uma máquina compartilhada do laboratório.
 OFFSET = 35
 
 NUMERO_AGENCIAS = 3

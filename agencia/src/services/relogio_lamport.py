@@ -6,11 +6,6 @@ class RelogioLamport:
 
     def __init__(self):
         self.contador = 0
-        # O servidor do Flask atende requisições em várias threads ao mesmo tempo,
-        # e o contador é um estado compartilhado entre elas. Sem o lock, duas
-        # requisições simultâneas poderiam ler e incrementar o contador de forma
-        # inconsistente (a condição de corrida clássica vista no laboratório de
-        # Threads e Semáforos).
         self._lock = threading.Lock()
 
     def evento_local(self):

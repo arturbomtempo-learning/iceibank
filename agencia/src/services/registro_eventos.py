@@ -9,8 +9,6 @@ class RegistroEventos:
     def __init__(self, nome_agencia):
         self.nome_agencia = nome_agencia
 
-        # Este arquivo fica em src/services/, então sobe dois níveis para chegar
-        # em agencia/data (equivalente ao __dirname, '..', '..', 'data' do Node).
         pasta_dados = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "..", "..", "data"
         )

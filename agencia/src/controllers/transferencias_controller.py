@@ -35,7 +35,6 @@ def transferir():
 
     agencia_destino = config.agencia_responsavel(id_destino)
 
-    # O débito é sempre local, pois esta agência é a dona da conta de origem
     ts_debito = relogio.evento_local()
     conta_origem["saldo"] -= valor
     registro.registrar(
@@ -45,7 +44,6 @@ def transferir():
     )
 
     if agencia_destino == id_agencia:
-        # Caso simples: mesma agência, credita direto
         conta_destino = contas.get(id_destino)
 
         if conta_destino is None:
@@ -62,7 +60,6 @@ def transferir():
         )
         return jsonify({"mensagem": "Transferência concluída (mesma agência)."})
 
-    # Caso entre agências: chama a agência de destino diretamente via REST
     ts_envio = relogio.ao_enviar()
     url_destino = config.agencia_por_id(agencia_destino)["url"]
 
@@ -76,16 +73,10 @@ def transferir():
             },
             timeout=5,
         )
-        # O requests não levanta exceção para status de erro por padrão (diferente
-        # do axios), então pedimos isso explicitamente com raise_for_status().
+
         resposta.raise_for_status()
         return jsonify({"mensagem": "Transferência concluída (entre agências)."})
     except requests.RequestException as erro:
-        # LIMITAÇÃO CONHECIDA: se esta chamada falhar, o débito já aplicado acima
-        # NÃO é revertido - o dinheiro "desaparece" temporariamente. Resolver isso
-        # de forma correta (garantir atomicidade mesmo sob falha) é o assunto do
-        # Sprint 4, com uma transação distribuída de verdade (2PC/Saga). Por
-        # enquanto, só registramos a inconsistência no log.
         registro.registrar(
             "TRANSFERENCIA_FALHOU",
             relogio.evento_local(),
@@ -115,8 +106,6 @@ def creditar_remoto(id_conta):
 
     contas, relogio, registro, _ = _estado()
 
-    # Ao RECEBER uma mensagem de outra agência, o relógio de Lamport é
-    # atualizado com base no timestamp recebido - é a regra 3 do algoritmo.
     ts = relogio.ao_receber(timestamp_lamport)
 
     conta = contas.get(id_conta)
