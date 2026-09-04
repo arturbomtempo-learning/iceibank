@@ -35,6 +35,9 @@ if __name__ == "__main__":
 
     porta = urlparse(agencia_config["url"]).port
 
+    if config.JWT_SECRET_KEY == "chave-de-desenvolvimento-nao-use-em-producao":
+        print("[aviso] JWT_SECRET_KEY está com o valor padrão de .env.example - troque antes de ir além do ambiente local.", flush=True)
+
     app = criar_app(id_agencia)
     print(f"[Agência {id_agencia}] ouvindo na porta {porta}", flush=True)
 

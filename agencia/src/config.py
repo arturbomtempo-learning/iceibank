@@ -1,7 +1,26 @@
+import os
+
+from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash
+
+load_dotenv()
+
 OFFSET = 35
 
 NUMERO_AGENCIAS = 3
 PORTA_BASE = 4000 + OFFSET
+
+try:
+    JWT_SECRET_KEY = os.environ["JWT_SECRET_KEY"]
+except KeyError as erro:
+    raise RuntimeError(
+        "JWT_SECRET_KEY não definido. Copie agencia/.env.example para agencia/.env "
+        "(mesmo valor nas 3 agências) antes de subir o servidor."
+    ) from erro
+
+USUARIOS = {
+    "aluno": generate_password_hash("banco123"),
+}
 
 AGENCIAS = [
     {"id": 0, "url": f"http://localhost:{PORTA_BASE}"},

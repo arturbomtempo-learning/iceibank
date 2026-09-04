@@ -7,6 +7,7 @@ agencia-express/data/*.jsonl
 __pycache__/
 *.pyc
 agencia/data/*.jsonl
+agencia/.env
 
 # Sistema
 Thumbs.db

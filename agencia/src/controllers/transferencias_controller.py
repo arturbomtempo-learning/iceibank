@@ -2,6 +2,7 @@ import requests
 from flask import current_app, jsonify, request
 
 import config
+from services import auth_service
 
 
 def _estado():
@@ -77,6 +78,8 @@ def transferir():
     ts_envio = relogio.ao_enviar()
     url_destino = config.agencia_por_id(agencia_destino)["url"]
 
+    token_servico = auth_service.gerar_token_servico(id_agencia)
+
     try:
         resposta = requests.post(
             f"{url_destino}/contas/{id_destino}/creditar-remoto",
@@ -85,6 +88,7 @@ def transferir():
                 "timestampLamport": ts_envio,
                 "origemAgencia": id_agencia,
             },
+            headers={"Authorization": f"Bearer {token_servico}"},
             timeout=5,
         )
 
