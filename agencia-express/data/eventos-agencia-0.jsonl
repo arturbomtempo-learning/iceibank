@@ -1,0 +1,7 @@
+{"agencia":"agencia-0","tipo":"CRIAR_CONTA","timestampLamport":1,"horaParede":"2026-09-04T13:41:55.062Z","detalhes":{"id":0,"nomeAluno":"Ana","saldoInicial":100}}
+{"agencia":"agencia-0","tipo":"TRANSFERENCIA_DEBITO","timestampLamport":2,"horaParede":"2026-09-04T13:42:22.428Z","detalhes":{"idOrigem":0,"idDestino":1,"valor":30}}
+{"agencia":"agencia-0","tipo":"CRIAR_CONTA","timestampLamport":4,"horaParede":"2026-09-04T13:44:46.065Z","detalhes":{"id":3,"nomeAluno":"Carla","saldoInicial":20}}
+{"agencia":"agencia-0","tipo":"TRANSFERENCIA_DEBITO","timestampLamport":5,"horaParede":"2026-09-04T13:44:46.085Z","detalhes":{"idOrigem":0,"idDestino":3,"valor":10}}
+{"agencia":"agencia-0","tipo":"TRANSFERENCIA_CREDITO","timestampLamport":6,"horaParede":"2026-09-04T13:44:46.085Z","detalhes":{"idOrigem":0,"idDestino":3,"valor":10}}
+{"agencia":"agencia-0","tipo":"TRANSFERENCIA_DEBITO","timestampLamport":7,"horaParede":"2026-09-04T13:51:35.642Z","detalhes":{"idOrigem":0,"idDestino":1,"valor":5}}
+{"agencia":"agencia-0","tipo":"TRANSFERENCIA_FALHOU","timestampLamport":9,"horaParede":"2026-09-04T13:51:35.652Z","detalhes":{"idOrigem":0,"idDestino":1,"valor":5,"erro":"connect ECONNREFUSED ::1:4036; connect ECONNREFUSED 127.0.0.1:4036"}}
