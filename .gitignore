@@ -5,3 +5,6 @@ agencia/data/*.jsonl
 # Sistema
 Thumbs.db
 desktop.ini
+
+# Prettier - Code formatter
+.prettierrc
