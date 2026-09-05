@@ -45,6 +45,8 @@ def transferir():
     conta_origem = contas.get(id_origem)
     if conta_origem is None:
         return jsonify({"erro": "Conta de origem não encontrada nesta agência."}), 404
+    if not auth_service.pode_operar_conta(request.token_payload, conta_origem):
+        return jsonify({"erro": "Você não tem permissão para transferir desta conta."}), 403
     if conta_origem["saldo"] < valor:
         return jsonify({"erro": "Saldo insuficiente."}), 400
 

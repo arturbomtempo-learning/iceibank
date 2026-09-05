@@ -10,10 +10,16 @@ def login():
     usuario = corpo.get("usuario")
     senha = corpo.get("senha")
 
-    hash_armazenado = config.USUARIOS.get(usuario)
+    dados = config.USUARIOS.get(usuario)
 
-    if hash_armazenado is None or not check_password_hash(hash_armazenado, senha or ""):
+    if dados is None or not check_password_hash(dados["senha"], senha or ""):
         return jsonify({"erro": "Usuário ou senha inválidos."}), 401
 
-    token = auth_service.gerar_token_usuario(usuario)
-    return jsonify({"token": token, "expiraEmSegundos": auth_service.EXPIRACAO_TOKEN_USUARIO_SEGUNDOS})
+    token = auth_service.gerar_token_usuario(usuario, dados["papel"])
+    return jsonify(
+        {
+            "token": token,
+            "papel": dados["papel"],
+            "expiraEmSegundos": auth_service.EXPIRACAO_TOKEN_USUARIO_SEGUNDOS,
+        }
+    )

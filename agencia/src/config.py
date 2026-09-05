@@ -18,8 +18,18 @@ except KeyError as erro:
         "(mesmo valor nas 3 agências) antes de subir o servidor."
     ) from erro
 
+# Usuários que podem fazer login (Parte F). Enquanto não existe banco de dados
+# (as contas ficam em memória), eles moram aqui, com a senha guardada em hash.
+# O papel define o que cada um pode fazer: "admin" representa o gerente da
+# agência, que abre contas e pode operar qualquer uma, e "cliente" representa o
+# correntista, que só opera as contas das quais ele é dono.
 USUARIOS = {
-    "aluno": generate_password_hash("banco123"),
+    "gerente": {"senha": generate_password_hash("gerente123"), "papel": "admin"},
+    "ana": {"senha": generate_password_hash("ana123"), "papel": "cliente"},
+    "bruno": {"senha": generate_password_hash("bruno123"), "papel": "cliente"},
+    "carla": {"senha": generate_password_hash("carla123"), "papel": "cliente"},
+    "diego": {"senha": generate_password_hash("diego123"), "papel": "cliente"},
+    "elisa": {"senha": generate_password_hash("elisa123"), "papel": "cliente"},
 }
 
 AGENCIAS = [
