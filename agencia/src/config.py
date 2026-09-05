@@ -38,6 +38,10 @@ AGENCIAS = [
     {"id": 2, "url": f"http://localhost:{PORTA_BASE + 2}"},
 ]
 
+ORIGENS_PERMITIDAS = os.environ.get(
+    "ORIGENS_PERMITIDAS", "http://localhost:5173,http://127.0.0.1:5173"
+).split(",")
+
 
 def agencia_responsavel(id_conta):
     """Partição: cada conta pertence a exatamente uma agência."""

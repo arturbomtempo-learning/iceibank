@@ -3,6 +3,7 @@ import sys
 from urllib.parse import urlparse
 
 from flask import Flask
+from flask_cors import CORS
 
 import config
 from routes import rotas
@@ -12,6 +13,8 @@ from services.relogio_lamport import RelogioLamport
 
 def criar_app(id_agencia):
     app = Flask(__name__)
+
+    CORS(app, origins=config.ORIGENS_PERMITIDAS)
 
     app.json.ensure_ascii = False
 
