@@ -8,7 +8,7 @@ import {
     type StoredSession,
 } from '@/shared/services/token-storage';
 
-import { login as requestLogin } from '../services/auth.service';
+import { login as requestLogin } from '@/shared/services/auth.service';
 
 export const useAuthStore = defineStore('auth', () => {
     const session = ref<StoredSession | null>(readSession());

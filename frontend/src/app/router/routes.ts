@@ -20,9 +20,14 @@ export const routes: RouteRecordRaw[] = [
                 component: () => import('@/modules/home/pages/DashboardPage.vue'),
             },
             {
-                path: 'conta',
-                name: 'account',
-                component: () => import('@/modules/accounts/pages/AccountPage.vue'),
+                path: 'depositar',
+                name: 'deposit',
+                component: () => import('@/modules/accounts/pages/DepositPage.vue'),
+            },
+            {
+                path: 'sacar',
+                name: 'withdraw',
+                component: () => import('@/modules/accounts/pages/WithdrawPage.vue'),
             },
             {
                 path: 'transferir',
@@ -33,6 +38,12 @@ export const routes: RouteRecordRaw[] = [
                 path: 'abrir-conta',
                 name: 'new-account',
                 component: () => import('@/modules/accounts/pages/NewAccountPage.vue'),
+                meta: { requiresManager: true },
+            },
+            {
+                path: 'novo-correntista',
+                name: 'new-customer',
+                component: () => import('@/modules/accounts/pages/NewCustomerPage.vue'),
                 meta: { requiresManager: true },
             },
         ],

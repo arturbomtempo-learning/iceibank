@@ -7,7 +7,7 @@ import BaseInput from '@/shared/components/BaseInput.vue';
 import { useForm } from '@/shared/composables/useForm';
 import { useToastStore } from '@/shared/stores/toast.store';
 
-import { useAuthStore } from '../stores/auth.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -99,6 +99,14 @@ async function submit(): Promise<void> {
                         {{ isSubmitting ? 'Entrando...' : 'Entrar' }}
                     </button>
                 </form>
+
+                <p
+                    class="mt-6 rounded-[var(--radius)] px-4 py-3 text-xs text-muted"
+                    :style="{ backgroundColor: 'var(--color-surface-hover)' }"
+                >
+                    Primeiro acesso? Entre como <strong>admin</strong> com a senha
+                    <strong>admin1234</strong> para cadastrar correntistas e abrir contas.
+                </p>
             </div>
         </section>
     </div>

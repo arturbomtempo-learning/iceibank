@@ -1,10 +1,18 @@
-import { api } from '@/shared/services/api';
+import { api } from './api';
 
 export interface Account {
     id: number;
     nomeAluno: string;
     dono: string;
     saldo: number;
+    agencia: number;
+}
+
+export interface ConsolidatedStatement {
+    usuario: string;
+    contas: Account[];
+    saldoTotal: number;
+    agenciasIndisponiveis: number[];
 }
 
 interface CreateAccountRequest {
@@ -14,8 +22,8 @@ interface CreateAccountRequest {
     saldoInicial: number;
 }
 
-export function fetchAccount(accountId: number) {
-    return api.get<Account>(`/contas/${accountId}`, { accountId });
+export function fetchStatement() {
+    return api.get<ConsolidatedStatement>('/extrato');
 }
 
 export function createAccount(account: CreateAccountRequest) {

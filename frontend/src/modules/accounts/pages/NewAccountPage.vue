@@ -10,11 +10,12 @@ import BaseInput from '@/shared/components/BaseInput.vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
+import { createAccount } from '@/shared/services/accounts.service';
+import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
-import { createAccount } from '../services/accounts.service';
-
+const accountsStore = useAccountsStore();
 const agencyStore = useAgencyStore();
 const toastStore = useToastStore();
 const { formatCurrency } = useCurrency();
@@ -55,6 +56,7 @@ async function submit(): Promise<void> {
                 `Conta ${data.id} criada para ${data.nomeAluno} com ${formatCurrency(data.saldo)}.`
             );
             reset();
+            await accountsStore.load();
         } catch {
             return;
         }

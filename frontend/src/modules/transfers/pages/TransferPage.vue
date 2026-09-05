@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import {
-    transferSchema,
-    type TransferDraft,
-    type TransferValues,
+    transferAmountSchema,
+    type TransferAmountDraft,
+    type TransferAmountValues,
 } from '@/modules/schemas/transfer.schema';
+import AccountSelect from '@/shared/components/AccountSelect.vue';
 import BaseInput from '@/shared/components/BaseInput.vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
 import { extractErrorMessage } from '@/shared/services/api';
+import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
@@ -24,40 +26,60 @@ interface TransferOutcome {
     amount: number;
 }
 
+const accountsStore = useAccountsStore();
 const agencyStore = useAgencyStore();
 const toastStore = useToastStore();
 const { formatCurrency } = useCurrency();
 
+const sourceAccountId = ref<number | null>(null);
 const outcome = ref<TransferOutcome | null>(null);
 
 const { values, errors, isSubmitting, handleSubmit, reset } = useForm<
-    TransferDraft,
-    TransferValues
->(transferSchema, {
-    sourceAccountId: null,
-    targetAccountId: null,
-    amount: null,
+    TransferAmountDraft,
+    TransferAmountValues
+>(transferAmountSchema, { targetAccountId: null, amount: null });
+
+const targetHint = computed(() => {
+    const targetId = values.value.targetAccountId;
+    if (targetId === null || !Number.isInteger(targetId) || targetId < 0) {
+        return 'Pode ser uma conta de qualquer agência.';
+    }
+
+    const sourceAgency = agencyStore.agencyForAccount(sourceAccountId.value ?? 0);
+    const targetAgency = agencyStore.agencyForAccount(targetId);
+
+    return sourceAgency?.id === targetAgency?.id
+        ? `Conta da ${targetAgency?.label}: será uma transferência dentro da mesma agência.`
+        : `Conta da ${targetAgency?.label}: será uma transferência entre agências.`;
 });
 
-const sourceHint = computed(() => {
-    const typedSourceId = values.value.sourceAccountId;
+watch(
+    () => accountsStore.accounts,
+    (accounts) => {
+        if (sourceAccountId.value === null && accounts.length > 0) {
+            sourceAccountId.value = accounts[0]?.id ?? null;
+        }
+    },
+    { immediate: true }
+);
 
-    if (!agencyStore.isAutomatic) {
-        return `A ordem vai sempre para a ${agencyStore.gateway?.label}, porque o roteamento automático está desligado.`;
-    }
-
-    if (typedSourceId === null || !Number.isInteger(typedSourceId) || typedSourceId < 0) {
-        return 'A ordem é enviada para a agência que guarda a conta de origem.';
-    }
-
-    return `A ordem será enviada para a ${agencyStore.agencyForAccount(typedSourceId)?.label}.`;
+onMounted(() => {
+    if (!accountsStore.hasLoaded) accountsStore.load();
 });
 
 async function submit(): Promise<void> {
-    await handleSubmit(async ({ sourceAccountId, targetAccountId, amount }) => {
+    const originId = sourceAccountId.value;
+    if (originId === null) return;
+
+    await handleSubmit(async ({ targetAccountId, amount }) => {
+        if (targetAccountId === originId) {
+            errors.value = { targetAccountId: 'A conta de destino deve ser diferente da origem.' };
+            return;
+        }
+
         try {
             const { data } = await transfer({
-                idOrigem: sourceAccountId,
+                idOrigem: originId,
                 idDestino: targetAccountId,
                 valor: amount,
             });
@@ -65,21 +87,23 @@ async function submit(): Promise<void> {
             outcome.value = {
                 status: 'success',
                 message: data.mensagem,
-                sourceAccountId,
+                sourceAccountId: originId,
                 targetAccountId,
                 amount,
             };
 
             toastStore.success('Transferência concluída', data.mensagem);
             reset();
+            await accountsStore.load();
         } catch (error) {
             outcome.value = {
                 status: 'failure',
                 message: extractErrorMessage(error),
-                sourceAccountId,
+                sourceAccountId: originId,
                 targetAccountId,
                 amount,
             };
+            await accountsStore.load();
         }
     });
 }
@@ -89,19 +113,16 @@ async function submit(): Promise<void> {
     <div class="flex flex-col gap-6">
         <PageHeader
             title="Transferir"
-            subtitle="Informe as contas e o valor. A agência de origem e a de destino são descobertas pelo próprio sistema."
+            subtitle="Escolha de qual conta sai o dinheiro e informe a conta de destino."
         />
 
-        <div class="grid gap-5 lg:grid-cols-5">
+        <div v-if="accountsStore.accounts.length > 0" class="grid gap-5 lg:grid-cols-5">
             <section class="card p-5 sm:p-6 lg:col-span-3">
                 <form class="flex flex-col gap-4" novalidate @submit.prevent="submit">
-                    <BaseInput
-                        v-model="values.sourceAccountId"
-                        label="Conta de origem"
-                        type="number"
-                        placeholder="Ex.: 0"
-                        :error="errors.sourceAccountId"
-                        :hint="sourceHint"
+                    <AccountSelect
+                        v-model="sourceAccountId"
+                        label="De onde sai"
+                        :accounts="accountsStore.accounts"
                     />
 
                     <BaseInput
@@ -110,7 +131,7 @@ async function submit(): Promise<void> {
                         type="number"
                         placeholder="Ex.: 1"
                         :error="errors.targetAccountId"
-                        hint="O sistema descobre sozinho a agência responsável pelo destino."
+                        :hint="targetHint"
                     />
 
                     <BaseInput
@@ -178,7 +199,7 @@ async function submit(): Promise<void> {
                         }"
                     >
                         Se a agência de destino estiver fora do ar, o débito na origem já pode ter
-                        sido aplicado. Consulte o saldo da conta de origem para confirmar.
+                        sido aplicado. Confira o saldo da conta de origem.
                     </p>
                 </div>
 
@@ -204,10 +225,15 @@ async function submit(): Promise<void> {
                     </div>
                     <p class="mt-1 font-medium">Nenhuma transferência ainda</p>
                     <p class="text-sm text-muted">
-                        O resultado da operação aparece aqui, seja ela local ou entre agências.
+                        O resultado aparece aqui, seja dentro da mesma agência ou entre agências.
                     </p>
                 </div>
             </section>
         </div>
+
+        <section v-else class="card px-6 py-12 text-center">
+            <p class="font-medium">Nenhuma conta disponível</p>
+            <p class="mt-1 text-sm text-muted">É preciso ter uma conta para enviar dinheiro.</p>
+        </section>
     </div>
 </template>

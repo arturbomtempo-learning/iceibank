@@ -1,4 +1,4 @@
-import { useAuthStore } from '@/modules/auth/stores/auth.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import { setUnauthorizedHandler } from '@/shared/services/api';
 
 import { router } from './router';

@@ -59,6 +59,8 @@ O login é feito com **usuário e senha** em `POST /auth/login`, com a senha gua
 
 Essa separação entre "usuário que faz login" e "conta bancária" resolve uma dependência circular do enunciado: o requisito 3 da seção 11.1 exige token válido inclusive para **criar conta**. Se o login dependesse de uma conta já existente, seria impossível criar a primeira conta do sistema, porque criá-la já exigiria um token vindo de uma conta que ainda não existe. Com papéis, isso deixa de ser um problema e o modelo ainda fica mais fiel ao mundo real, em que quem abre conta é o gerente, e não o próprio cliente.
 
+O sistema nasce com um único usuário semeado, o `admin` (senha `admin1234`), que é o gerente. É ele quem cadastra os correntistas em `POST /usuarios` e depois abre as contas deles. Os usuários ficam em `agencia/data/usuarios.json`, um arquivo lido pelas três agências: as **contas** continuam particionadas, mas as **credenciais** são compartilhadas, senão um correntista cadastrado em uma agência não conseguiria entrar nem receber conta nas outras.
+
 ### Tempo de expiração: 1 hora
 
 Um token eterno anularia o propósito da expiração, já que continuaria valendo para sempre caso vazasse. Por outro lado, um tempo muito curto atrapalharia o uso real: alguém consultando saldo e fazendo algumas operações pelo frontend leva minutos nisso, e ser deslogado no meio de uma operação seria uma péssima experiência. Uma hora é um valor bastante comum no mercado para tokens de acesso de sessões web e equilibra os dois lados, dando tempo para uma sessão completa e ainda assim limitando a janela de risco em caso de vazamento.
@@ -93,3 +95,18 @@ Isso muda bastante a escalabilidade. Com sessões guardadas em memória no servi
 ### Questão 3
 
 Se a chave secreta vazasse, a segurança da autenticação inteira cairia por terra. Quem estivesse de posse dela conseguiria forjar tokens válidos sem saber a senha de ninguém: bastaria montar um payload com o papel desejado e um prazo de expiração no futuro, assinar com a chave vazada e operar qualquer conta em qualquer uma das três agências, já que todas compartilham a mesma chave. Pior ainda, essa mesma chave assina os tokens de serviço, então também seria possível forjar chamadas se passando por uma agência falando com a outra. A única forma de conter o estrago seria trocar a chave, o que invalida de uma vez todos os tokens já emitidos, inclusive os legítimos. É justamente por isso que ela nunca pode ir para o controle de versão e precisa vir de uma variável de ambiente ou de um cofre de segredos, como fiz com o arquivo `.env`, que não é versionado.
+
+## Funcionalidade adicional - Extrato consolidado
+
+A funcionalidade adicional que escolhi implementar, exigida pela seção 2.1, é o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado **nas três agências** e devolve o saldo somado, em uma única chamada.
+
+Escolhi essa entre as sugestões do roteiro porque ela é a que mais depende do que este sprint tem de característico. Consultar o saldo de uma conta é trivial, já que a agência responsável guarda tudo o que precisa em memória. Somar os saldos de contas espalhadas por agências diferentes, não: nenhuma agência sozinha tem essa informação, porque a partição (`id_conta % 3`) garante justamente que cada uma só conheça a sua fatia. O endpoint só consegue responder conversando com as outras duas pela rede.
+
+O funcionamento é o seguinte. A agência que recebe a chamada separa as contas locais do usuário e, para cada uma das outras agências, faz uma requisição a uma rota interna nova, `GET /interno/contas/<usuario>`, protegida pelo mesmo **token de serviço** usado no `creditar-remoto`. Ou seja, o token de sessão da pessoa não é repassado adiante, mantendo a decisão de design da Parte F. No fim, junta tudo, ordena por número de conta e devolve a lista com o campo `saldoTotal`.
+
+Duas decisões que valem registro:
+
+1. **A rota interna não confia no papel informado por quem chama.** Ela consulta o repositório de usuários para descobrir se aquele usuário é gerente ou correntista, e só então decide se devolve todas as contas da agência ou apenas as dele. Se aceitasse um campo enviado pela agência chamadora, bastaria forjar esse campo para ler as contas de qualquer pessoa.
+2. **A indisponibilidade de uma agência não derruba o extrato.** Se uma das agências estiver fora do ar, o endpoint devolve o que conseguiu reunir e lista as agências que não responderam no campo `agenciasIndisponiveis`, e o frontend avisa que a soma está incompleta. Testei derrubando a Agência 2: o extrato continuou respondendo com as contas das Agências 0 e 1 e sinalizando a ausência da terceira.
+
+No frontend, é esse endpoint que faz a tela inicial parecer um internet banking de verdade: a pessoa entra e já vê os cartões de todas as suas contas com o saldo, sem precisar digitar número de conta nenhum.

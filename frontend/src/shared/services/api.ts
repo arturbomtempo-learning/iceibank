@@ -9,6 +9,8 @@ import { readSession } from './token-storage';
 declare module 'axios' {
     export interface AxiosRequestConfig {
         accountId?: number;
+        agencyId?: number;
+        silentError?: boolean;
     }
 }
 
@@ -31,7 +33,12 @@ export const api = axios.create({
 });
 
 function withAgencyAndToken(request: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-    request.baseURL = useAgencyStore().resolveBaseUrl(request.accountId);
+    const agencyStore = useAgencyStore();
+
+    request.baseURL =
+        request.agencyId === undefined
+            ? agencyStore.resolveBaseUrl(request.accountId)
+            : agencyStore.urlForAgency(request.agencyId);
 
     const session = readSession();
     if (session) {
@@ -86,7 +93,11 @@ api.interceptors.response.use(
             return Promise.reject(error);
         }
 
-        useToastStore().error('Operação não concluída', message);
+        const isSilent = axios.isAxiosError(error) && error.config?.silentError === true;
+        if (!isSilent) {
+            useToastStore().error('Operação não concluída', message);
+        }
+
         return Promise.reject(error);
     }
 );

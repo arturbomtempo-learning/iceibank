@@ -2,15 +2,14 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { useAuthStore } from '@/modules/auth/stores/auth.store';
-import AgencySelect from '@/shared/components/AgencySelect.vue';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import AppLogo from '@/shared/components/AppLogo.vue';
-import { useAgencyStore } from '@/shared/stores/agency.store';
+import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const agencyStore = useAgencyStore();
+const accountsStore = useAccountsStore();
 const toastStore = useToastStore();
 
 const isMenuOpen = ref(false);
@@ -18,7 +17,8 @@ const isMenuOpen = ref(false);
 const navigationItems = computed(() =>
     [
         { name: 'dashboard', label: 'Início', icon: 'M3 10.5 12 3l9 7.5V21H3z' },
-        { name: 'account', label: 'Consultar conta', icon: 'M4 6h16v12H4zM4 10h16' },
+        { name: 'deposit', label: 'Depositar', icon: 'M12 19V5M5 12l7-7 7 7' },
+        { name: 'withdraw', label: 'Sacar', icon: 'M12 5v14M5 12l7 7 7-7' },
         {
             name: 'transfer',
             label: 'Transferir',
@@ -26,6 +26,13 @@ const navigationItems = computed(() =>
         },
         authStore.isManager
             ? { name: 'new-account', label: 'Abrir conta', icon: 'M12 5v14M5 12h14' }
+            : null,
+        authStore.isManager
+            ? {
+                  name: 'new-customer',
+                  label: 'Novo correntista',
+                  icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6',
+              }
             : null,
     ].filter((item) => item !== null)
 );
@@ -40,6 +47,7 @@ function closeMenu(): void {
 
 function signOut(): void {
     authStore.signOut();
+    accountsStore.reset();
     toastStore.info('Sessão encerrada', 'Você saiu da sua conta com segurança.');
     router.push({ name: 'login' });
 }
@@ -161,17 +169,16 @@ function signOut(): void {
                     </svg>
                 </button>
 
-                <div class="ml-auto flex items-center gap-3">
-                    <span class="hidden text-[0.8125rem] text-muted sm:inline">
-                        {{
-                            agencyStore.isAutomatic
-                                ? 'A agência é escolhida pelo número da conta'
-                                : 'Todas as chamadas vão para uma agência fixa'
-                        }}
+                <div class="ml-auto flex items-center gap-2.5">
+                    <span class="hidden text-sm text-muted sm:inline">{{
+                        authStore.username
+                    }}</span>
+                    <span
+                        class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold text-white"
+                        :style="{ backgroundColor: 'var(--color-primary)' }"
+                    >
+                        {{ initials }}
                     </span>
-                    <div class="w-44">
-                        <AgencySelect />
-                    </div>
                 </div>
             </header>
 

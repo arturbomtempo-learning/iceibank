@@ -1,132 +1,192 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import { useAuthStore } from '@/modules/auth/stores/auth.store';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import AgencySelect from '@/shared/components/AgencySelect.vue';
+import BalanceCard from '@/shared/components/BalanceCard.vue';
+import { useCurrency } from '@/shared/composables/useCurrency';
+import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useAgencyStore } from '@/shared/stores/agency.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 
 const authStore = useAuthStore();
+const accountsStore = useAccountsStore();
 const agencyStore = useAgencyStore();
+const { formatCurrency } = useCurrency();
 
-const shortcuts = computed(() =>
+const isBalanceRevealed = ref(false);
+
+const actions = computed(() =>
     [
-        {
-            name: 'account',
-            title: 'Consultar conta',
-            description: 'Veja o saldo, deposite e saque em qualquer conta sua.',
-            icon: 'M4 6h16v12H4zM4 10h16',
-        },
+        { name: 'deposit', label: 'Depositar', icon: 'M12 19V5M5 12l7-7 7 7' },
+        { name: 'withdraw', label: 'Sacar', icon: 'M12 5v14M5 12l7 7 7-7' },
         {
             name: 'transfer',
-            title: 'Transferir',
-            description: 'Envie valores para contas desta ou de outra agência.',
+            label: 'Transferir',
             icon: 'M4 8h13m0 0-4-4m4 4-4 4M20 16H7m0 0 4 4m-4-4 4-4',
         },
         authStore.isManager
+            ? { name: 'new-account', label: 'Abrir conta', icon: 'M12 5v14M5 12h14' }
+            : null,
+        authStore.isManager
             ? {
-                  name: 'new-account',
-                  title: 'Abrir conta',
-                  description: 'Cadastre uma nova conta e defina o usuário dono dela.',
-                  icon: 'M12 5v14M5 12h14',
+                  name: 'new-customer',
+                  label: 'Novo correntista',
+                  icon: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6',
               }
             : null,
-    ].filter((shortcut) => shortcut !== null)
+    ].filter((action) => action !== null)
 );
 
-const roleDescription = computed(() =>
-    authStore.isManager
-        ? 'Como gerente, você abre contas e opera qualquer conta das três agências.'
-        : 'Como correntista, você opera apenas as contas das quais é dono.'
+const hasMultipleAccounts = computed(() => accountsStore.accounts.length > 1);
+
+const unavailableAgencyLabels = computed(() =>
+    accountsStore.unavailableAgencies
+        .map((agencyId) => agencyStore.labelForAgency(agencyId))
+        .join(', ')
 );
+
+onMounted(() => {
+    accountsStore.load();
+});
 </script>
 
 <template>
     <div class="flex flex-col gap-6">
-        <PageHeader :title="`Olá, ${authStore.username}`" :subtitle="roleDescription" />
-
-        <section
-            class="card relative overflow-hidden p-6 sm:p-7"
-            :style="{ backgroundColor: 'var(--color-sidebar-bg)', border: 'none' }"
-        >
-            <div
-                class="pointer-events-none absolute -top-20 -right-16 h-64 w-64 rounded-full opacity-20 blur-3xl"
-                :style="{ backgroundColor: 'var(--color-primary)' }"
-            />
-
-            <div class="relative z-10 flex flex-wrap items-end justify-between gap-6">
-                <div>
-                    <p
-                        class="text-xs font-medium tracking-wide uppercase"
-                        :style="{ color: 'var(--color-sidebar-muted)' }"
-                    >
-                        Roteamento
-                    </p>
-                    <p class="mt-1.5 text-3xl font-semibold text-white">
-                        {{ agencyStore.isAutomatic ? 'Automático' : agencyStore.gateway?.label }}
-                    </p>
-                    <p class="mt-1 text-sm" :style="{ color: 'var(--color-sidebar-muted)' }">
-                        {{
-                            agencyStore.isAutomatic
-                                ? 'Cada operação vai para a agência dona da conta'
-                                : agencyStore.gateway?.url
-                        }}
-                    </p>
-                </div>
-
-                <p class="max-w-xs text-sm" :style="{ color: 'var(--color-sidebar-muted)' }">
-                    As contas são divididas entre as agências pela regra
-                    <strong class="text-white"
-                        >número da conta % {{ agencyStore.options.length }}</strong
-                    >, e o sistema envia cada operação para a agência responsável.
+        <header class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h1 class="text-2xl font-semibold sm:text-[1.75rem]">
+                    Olá, {{ authStore.username }}
+                </h1>
+                <p class="text-sm text-muted">
+                    {{
+                        authStore.isManager
+                            ? 'Você é o gerente: cadastra correntistas, abre contas e opera qualquer conta.'
+                            : 'Bem-vindo ao seu internet banking.'
+                    }}
                 </p>
             </div>
 
-            <dl
-                class="relative z-10 mt-7 grid grid-cols-1 gap-x-6 gap-y-4 border-t pt-5 sm:grid-cols-3"
-                :style="{ borderColor: 'rgba(255,255,255,0.12)' }"
+            <button
+                type="button"
+                class="btn btn-secondary"
+                :disabled="accountsStore.isLoading"
+                @click="accountsStore.load()"
             >
-                <div v-for="agency in agencyStore.options" :key="agency.id">
-                    <dt class="text-xs" :style="{ color: 'var(--color-sidebar-muted)' }">
-                        {{ agency.label }}
-                    </dt>
-                    <dd class="numeric mt-0.5 text-[0.9375rem] font-medium text-white">
-                        contas {{ agency.id }}, {{ agency.id + agencyStore.options.length }},
-                        {{ agency.id + agencyStore.options.length * 2 }}...
-                    </dd>
-                </div>
-            </dl>
+                {{ accountsStore.isLoading ? 'Atualizando...' : 'Atualizar saldos' }}
+            </button>
+        </header>
+
+        <section v-if="accountsStore.accounts.length > 0" class="flex flex-col gap-5">
+            <div class="grid gap-5" :class="hasMultipleAccounts ? 'lg:grid-cols-2' : ''">
+                <BalanceCard
+                    v-for="account in accountsStore.accounts"
+                    :key="account.id"
+                    :account="account"
+                    :revealed="isBalanceRevealed"
+                    @toggle="isBalanceRevealed = !isBalanceRevealed"
+                />
+            </div>
+
+            <p v-if="hasMultipleAccounts" class="text-sm text-muted">
+                Saldo somado das {{ accountsStore.accounts.length }} contas:
+                <strong v-if="isBalanceRevealed" class="numeric">{{
+                    formatCurrency(accountsStore.totalBalance)
+                }}</strong>
+                <strong v-else>&bull;&bull;&bull;&bull;</strong>
+            </p>
         </section>
 
-        <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <RouterLink
-                v-for="shortcut in shortcuts"
-                :key="shortcut.name"
-                :to="{ name: shortcut.name }"
-                class="card flex flex-col gap-3 p-5 no-underline"
-                :style="{ color: 'var(--color-text)' }"
+        <section
+            v-else-if="accountsStore.isEmpty"
+            class="card flex flex-col items-center gap-2 px-6 py-12 text-center"
+        >
+            <div
+                class="flex h-12 w-12 items-center justify-center rounded-full"
+                :style="{ backgroundColor: 'var(--color-primary-soft)' }"
             >
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-[var(--radius)]"
-                    :style="{ backgroundColor: 'var(--color-primary-soft)' }"
+                <svg
+                    class="h-6 w-6"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="var(--color-primary)"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
                 >
-                    <svg
-                        class="h-5 w-5"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="var(--color-primary)"
-                        stroke-width="1.8"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    >
-                        <path :d="shortcut.icon" />
-                    </svg>
-                </div>
-
-                <div>
-                    <h2 class="text-[0.9375rem] font-semibold">{{ shortcut.title }}</h2>
-                    <p class="mt-1 text-sm text-muted">{{ shortcut.description }}</p>
-                </div>
+                    <path d="M4 6h16v12H4zM4 10h16" />
+                </svg>
+            </div>
+            <p class="mt-1 font-medium">Nenhuma conta no seu nome</p>
+            <p class="max-w-sm text-sm text-muted">
+                {{
+                    authStore.isManager
+                        ? 'Cadastre um correntista e abra a primeira conta do banco.'
+                        : 'Procure o gerente para abrir a sua conta.'
+                }}
+            </p>
+            <RouterLink v-if="authStore.isManager" :to="{ name: 'new-customer' }" class="btn mt-3">
+                Cadastrar correntista
             </RouterLink>
-        </div>
+        </section>
+
+        <p
+            v-if="accountsStore.hasUnavailableAgencies"
+            class="rounded-[var(--radius)] px-4 py-3 text-sm"
+            :style="{
+                backgroundColor: 'var(--color-surface-hover)',
+                color: 'var(--color-text-muted)',
+            }"
+        >
+            Não foi possível falar com a {{ unavailableAgencyLabels }}. Se você tiver contas lá,
+            elas não entram nesta soma até a agência voltar.
+        </p>
+
+        <section>
+            <h2 class="mb-3 text-sm font-semibold tracking-wide text-muted uppercase">
+                O que você quer fazer
+            </h2>
+
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                <RouterLink
+                    v-for="action in actions"
+                    :key="action.name"
+                    :to="{ name: action.name }"
+                    class="card flex flex-col items-center gap-2.5 px-3 py-5 text-center no-underline"
+                    :style="{ color: 'var(--color-text)' }"
+                >
+                    <span
+                        class="flex h-11 w-11 items-center justify-center rounded-full"
+                        :style="{ backgroundColor: 'var(--color-primary-soft)' }"
+                    >
+                        <svg
+                            class="h-5 w-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="var(--color-primary)"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path :d="action.icon" />
+                        </svg>
+                    </span>
+                    <span class="text-[0.8125rem] font-medium">{{ action.label }}</span>
+                </RouterLink>
+            </div>
+        </section>
+
+        <section class="card flex flex-wrap items-end justify-between gap-4 p-5">
+            <div>
+                <h2 class="text-[0.9375rem] font-semibold">Acesso às agências</h2>
+                <p class="mt-1 max-w-md text-sm text-muted">
+                    Suas operações são enviadas automaticamente para a agência que guarda cada
+                    conta. Fixe uma agência apenas se quiser testar o comportamento da partição.
+                </p>
+            </div>
+
+            <div class="w-full sm:w-52">
+                <AgencySelect label="Agência de destino das chamadas" />
+            </div>
+        </section>
     </div>
 </template>

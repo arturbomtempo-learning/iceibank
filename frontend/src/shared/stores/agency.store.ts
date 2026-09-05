@@ -60,6 +60,14 @@ export const useAgencyStore = defineStore('agency', () => {
         return resolveAgency(accountId)?.url ?? import.meta.env.VITE_API_URL;
     }
 
+    function urlForAgency(agencyId: number): string {
+        return agencies[agencyId]?.url ?? import.meta.env.VITE_API_URL;
+    }
+
+    function labelForAgency(agencyId: number): string {
+        return agencies[agencyId]?.label ?? `Agência ${agencyId}`;
+    }
+
     function select(nextSelection: AgencySelection): void {
         if (nextSelection !== AUTOMATIC_ROUTING && !isKnownAgencyId(nextSelection)) return;
 
@@ -75,6 +83,8 @@ export const useAgencyStore = defineStore('agency', () => {
         agencyForAccount,
         resolveAgency,
         resolveBaseUrl,
+        urlForAgency,
+        labelForAgency,
         select,
     };
 });
