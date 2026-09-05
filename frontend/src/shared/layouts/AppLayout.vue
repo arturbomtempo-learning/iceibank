@@ -5,11 +5,13 @@ import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import AppLogo from '@/shared/components/AppLogo.vue';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
+import { AUTOMATIC_ROUTING, useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
 const router = useRouter();
 const authStore = useAuthStore();
 const accountsStore = useAccountsStore();
+const agencyStore = useAgencyStore();
 const toastStore = useToastStore();
 
 const isMenuOpen = ref(false);
@@ -181,6 +183,30 @@ function signOut(): void {
                     </span>
                 </div>
             </header>
+
+            <div
+                v-if="!agencyStore.isAutomatic"
+                class="flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-2.5 sm:px-6"
+                :style="{
+                    backgroundColor: 'var(--color-primary-soft)',
+                    borderColor: 'var(--color-border)',
+                }"
+            >
+                <span class="badge badge-primary">Roteamento fixo</span>
+                <p class="text-[0.8125rem]" :style="{ color: 'var(--color-text)' }">
+                    Todas as chamadas estão indo para a
+                    <strong>{{ agencyStore.gateway?.label }}</strong
+                    >, então contas de outras agências não vão ser encontradas.
+                </p>
+                <button
+                    type="button"
+                    class="ml-auto cursor-pointer text-[0.8125rem] font-semibold underline"
+                    :style="{ color: 'var(--color-primary-dark)' }"
+                    @click="agencyStore.select(AUTOMATIC_ROUTING)"
+                >
+                    Voltar ao automático
+                </button>
+            </div>
 
             <main class="flex-1 px-4 py-6 sm:px-6 sm:py-8">
                 <div class="mx-auto w-full max-w-5xl">

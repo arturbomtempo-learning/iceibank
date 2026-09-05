@@ -12,7 +12,7 @@ import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
 import { createAccount } from '@/shared/services/accounts.service';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
-import { useAgencyStore } from '@/shared/stores/agency.store';
+import { AUTOMATIC_ROUTING, useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
 const accountsStore = useAccountsStore();
@@ -122,8 +122,16 @@ async function submit(): Promise<void> {
                     <template v-else>
                         Essa conta pertence à
                         <strong>{{ responsibleAgencyLabel }}</strong
-                        >, mas o roteamento automático está desligado e o cadastro iria para a
-                        {{ agencyStore.gateway?.label }}. Volte o seletor para "Automática".
+                        >, mas o roteamento está fixo na {{ agencyStore.gateway?.label }}, que vai
+                        recusar o cadastro.
+                        <button
+                            type="button"
+                            class="cursor-pointer font-semibold underline"
+                            :style="{ color: 'var(--color-primary-dark)' }"
+                            @click="agencyStore.select(AUTOMATIC_ROUTING)"
+                        >
+                            Voltar ao roteamento automático
+                        </button>
                     </template>
                 </div>
 
