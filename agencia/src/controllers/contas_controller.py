@@ -1,7 +1,7 @@
 from flask import current_app, jsonify, request
 
 import config
-from services import auth_service
+from services import auth_service, repositorio_usuarios
 
 
 def _estado():
@@ -37,7 +37,7 @@ def criar_conta():
         return jsonify({"erro": "O campo 'id' é obrigatório e deve ser um número inteiro."}), 400
     if not _numero_valido(saldo_inicial):
         return jsonify({"erro": "O campo 'saldoInicial' deve ser um número."}), 400
-    if dono not in config.USUARIOS:
+    if not repositorio_usuarios.existe(dono):
         return jsonify({"erro": "O campo 'dono' deve ser um usuário existente."}), 400
 
     if config.agencia_responsavel(id_conta) != id_agencia:

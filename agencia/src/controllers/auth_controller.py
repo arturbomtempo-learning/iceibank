@@ -1,8 +1,7 @@
 from flask import jsonify, request
 from werkzeug.security import check_password_hash
 
-import config
-from services import auth_service
+from services import auth_service, repositorio_usuarios
 
 
 def login():
@@ -10,7 +9,7 @@ def login():
     usuario = corpo.get("usuario")
     senha = corpo.get("senha")
 
-    dados = config.USUARIOS.get(usuario)
+    dados = repositorio_usuarios.buscar(usuario)
 
     if dados is None or not check_password_hash(dados["senha"], senha or ""):
         return jsonify({"erro": "Usuário ou senha inválidos."}), 401
@@ -19,6 +18,7 @@ def login():
     return jsonify(
         {
             "token": token,
+            "usuario": usuario,
             "papel": dados["papel"],
             "expiraEmSegundos": auth_service.EXPIRACAO_TOKEN_USUARIO_SEGUNDOS,
         }
