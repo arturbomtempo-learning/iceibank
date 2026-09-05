@@ -29,17 +29,15 @@ const { values, errors, isSubmitting, handleSubmit, reset } = useForm<
     initialBalance: null,
 });
 
-const totalAgencies = computed(() => agencyStore.options.length);
-
 const responsibleAgencyLabel = computed(() => {
     const accountId = values.value.accountId;
     if (accountId === null || !Number.isInteger(accountId) || accountId < 0) return null;
 
-    return `Agência ${accountId % totalAgencies.value}`;
+    return agencyStore.agencyForAccount(accountId)?.label ?? null;
 });
 
-const belongsToSelectedAgency = computed(
-    () => responsibleAgencyLabel.value === agencyStore.selected?.label
+const willReachResponsibleAgency = computed(
+    () => agencyStore.isAutomatic || responsibleAgencyLabel.value === agencyStore.gateway?.label
 );
 
 async function submit(): Promise<void> {
@@ -109,21 +107,21 @@ async function submit(): Promise<void> {
                     v-if="responsibleAgencyLabel"
                     class="rounded-[var(--radius)] px-4 py-3 text-sm sm:col-span-2"
                     :style="{
-                        backgroundColor: belongsToSelectedAgency
+                        backgroundColor: willReachResponsibleAgency
                             ? 'var(--color-primary-soft)'
                             : 'var(--color-surface-hover)',
                     }"
                 >
-                    <template v-if="belongsToSelectedAgency">
+                    <template v-if="willReachResponsibleAgency">
                         Essa conta pertence à
                         <strong>{{ responsibleAgencyLabel }}</strong
-                        >, que é a agência selecionada.
+                        >, e é para lá que o cadastro será enviado.
                     </template>
                     <template v-else>
                         Essa conta pertence à
                         <strong>{{ responsibleAgencyLabel }}</strong
-                        >. Troque a agência de acesso no topo antes de criar, senão a API vai
-                        recusar.
+                        >, mas o roteamento automático está desligado e o cadastro iria para a
+                        {{ agencyStore.gateway?.label }}. Volte o seletor para "Automática".
                     </template>
                 </div>
 

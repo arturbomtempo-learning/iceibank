@@ -2,7 +2,6 @@
 import { useRouter } from 'vue-router';
 
 import { loginSchema, type LoginDraft, type LoginValues } from '@/modules/schemas/login.schema';
-import AgencySelect from '@/shared/components/AgencySelect.vue';
 import AppLogo from '@/shared/components/AppLogo.vue';
 import BaseInput from '@/shared/components/BaseInput.vue';
 import { useForm } from '@/shared/composables/useForm';
@@ -94,11 +93,6 @@ async function submit(): Promise<void> {
                         placeholder="Sua senha"
                         autocomplete="current-password"
                         :error="errors.password"
-                    />
-
-                    <AgencySelect
-                        label="Agência de acesso"
-                        hint="Cada agência responde apenas pelas contas sob sua responsabilidade."
                     />
 
                     <button type="submit" class="btn mt-2" :disabled="isSubmitting">

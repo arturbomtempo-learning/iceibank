@@ -15,17 +15,17 @@ interface CreateAccountRequest {
 }
 
 export function fetchAccount(accountId: number) {
-    return api.get<Account>(`/contas/${accountId}`);
+    return api.get<Account>(`/contas/${accountId}`, { accountId });
 }
 
 export function createAccount(account: CreateAccountRequest) {
-    return api.post<Account>('/contas', account);
+    return api.post<Account>('/contas', account, { accountId: account.id });
 }
 
 export function deposit(accountId: number, amount: number) {
-    return api.post<Account>(`/contas/${accountId}/depositar`, { valor: amount });
+    return api.post<Account>(`/contas/${accountId}/depositar`, { valor: amount }, { accountId });
 }
 
 export function withdraw(accountId: number, amount: number) {
-    return api.post<Account>(`/contas/${accountId}/sacar`, { valor: amount });
+    return api.post<Account>(`/contas/${accountId}/sacar`, { valor: amount }, { accountId });
 }

@@ -162,10 +162,14 @@ function signOut(): void {
                 </button>
 
                 <div class="ml-auto flex items-center gap-3">
-                    <span class="badge badge-primary hidden sm:inline-flex">
-                        {{ agencyStore.selected?.label }}
+                    <span class="hidden text-[0.8125rem] text-muted sm:inline">
+                        {{
+                            agencyStore.isAutomatic
+                                ? 'A agência é escolhida pelo número da conta'
+                                : 'Todas as chamadas vão para uma agência fixa'
+                        }}
                     </span>
-                    <div class="w-40">
+                    <div class="w-44">
                         <AgencySelect />
                     </div>
                 </div>

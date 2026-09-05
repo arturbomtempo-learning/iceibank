@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import {
     accountLookupSchema,
@@ -23,6 +23,7 @@ const toastStore = useToastStore();
 const { formatCurrency } = useCurrency();
 
 const account = ref<Account | null>(null);
+const servingAgencyLabel = ref<string | null>(null);
 
 const {
     values: lookupValues,
@@ -47,13 +48,29 @@ const {
     reset: resetWithdraw,
 } = useForm<AmountDraft, AmountValues>(amountSchema, { amount: null });
 
+const lookupHint = computed(() => {
+    const typedAccountId = lookupValues.value.accountId;
+
+    if (!agencyStore.isAutomatic) {
+        return `Buscando sempre na ${agencyStore.gateway?.label}, porque o roteamento automático está desligado.`;
+    }
+
+    if (typedAccountId === null || !Number.isInteger(typedAccountId) || typedAccountId < 0) {
+        return 'A agência responsável é descoberta pelo número da conta.';
+    }
+
+    return `Essa conta é atendida pela ${agencyStore.agencyForAccount(typedAccountId)?.label}.`;
+});
+
 async function loadAccount(): Promise<void> {
     await submitLookup(async ({ accountId }) => {
         try {
             const { data } = await fetchAccount(accountId);
             account.value = data;
+            servingAgencyLabel.value = agencyStore.resolveAgency(accountId)?.label ?? null;
         } catch {
             account.value = null;
+            servingAgencyLabel.value = null;
         }
     });
 }
@@ -101,7 +118,7 @@ async function handleWithdraw(): Promise<void> {
     <div class="flex flex-col gap-6">
         <PageHeader
             title="Consultar conta"
-            subtitle="Veja o saldo e movimente uma conta desta agência."
+            subtitle="Informe o número da conta. O sistema busca sozinho na agência responsável."
         />
 
         <section class="card p-5 sm:p-6">
@@ -117,7 +134,7 @@ async function handleWithdraw(): Promise<void> {
                         type="number"
                         placeholder="Ex.: 0"
                         :error="lookupErrors.accountId"
-                        :hint="`Buscando na ${agencyStore.selected?.label}.`"
+                        :hint="lookupHint"
                     />
                 </div>
                 <button type="submit" class="btn sm:mt-[1.6875rem]" :disabled="isLookingUp">
@@ -149,7 +166,9 @@ async function handleWithdraw(): Promise<void> {
                         </p>
                     </div>
 
-                    <span class="badge badge-primary">{{ agencyStore.selected?.label }}</span>
+                    <span v-if="servingAgencyLabel" class="badge badge-primary">
+                        {{ servingAgencyLabel }}
+                    </span>
                 </div>
 
                 <dl

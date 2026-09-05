@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 
-import { useAgencyStore } from '@/shared/stores/agency.store';
+import {
+    AUTOMATIC_ROUTING,
+    useAgencyStore,
+    type AgencySelection,
+} from '@/shared/stores/agency.store';
 
 defineProps<{
     label?: string;
@@ -12,9 +16,14 @@ const agencyStore = useAgencyStore();
 
 const selectId = useId();
 
-const selectedId = computed({
-    get: () => agencyStore.selectedId,
-    set: (id: number) => agencyStore.select(id),
+const selection = computed({
+    get: () => String(agencyStore.selection),
+    set: (value: string) => {
+        const nextSelection: AgencySelection =
+            value === AUTOMATIC_ROUTING ? AUTOMATIC_ROUTING : Number(value);
+
+        agencyStore.select(nextSelection);
+    },
 });
 </script>
 
@@ -29,8 +38,13 @@ const selectedId = computed({
             {{ label }}
         </label>
 
-        <select :id="selectId" v-model="selectedId" class="input cursor-pointer">
-            <option v-for="agency in agencyStore.options" :key="agency.id" :value="agency.id">
+        <select :id="selectId" v-model="selection" class="input cursor-pointer">
+            <option :value="AUTOMATIC_ROUTING">Automática</option>
+            <option
+                v-for="agency in agencyStore.options"
+                :key="agency.id"
+                :value="String(agency.id)"
+            >
                 {{ agency.label }}
             </option>
         </select>

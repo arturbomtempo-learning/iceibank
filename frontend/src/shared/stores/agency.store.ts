@@ -7,6 +7,10 @@ export interface Agency {
     label: string;
 }
 
+export const AUTOMATIC_ROUTING = 'auto';
+
+export type AgencySelection = number | typeof AUTOMATIC_ROUTING;
+
 const STORAGE_KEY = 'iceibank.agency';
 
 const agencies: Agency[] = import.meta.env.VITE_AGENCY_URLS.split(',')
@@ -14,30 +18,63 @@ const agencies: Agency[] = import.meta.env.VITE_AGENCY_URLS.split(',')
     .filter((url) => url.length > 0)
     .map((url, index) => ({ id: index, url, label: `Agência ${index}` }));
 
-function readStoredAgencyId(): number {
-    const storedId = Number(window.localStorage.getItem(STORAGE_KEY));
-    const isKnownAgency = agencies.some((agency) => agency.id === storedId);
+function isKnownAgencyId(id: number): boolean {
+    return agencies.some((agency) => agency.id === id);
+}
 
-    return isKnownAgency ? storedId : (agencies[0]?.id ?? 0);
+function readStoredSelection(): AgencySelection {
+    const storedSelection = window.localStorage.getItem(STORAGE_KEY);
+    if (storedSelection === null || storedSelection === AUTOMATIC_ROUTING) {
+        return AUTOMATIC_ROUTING;
+    }
+
+    const storedId = Number(storedSelection);
+    return isKnownAgencyId(storedId) ? storedId : AUTOMATIC_ROUTING;
 }
 
 export const useAgencyStore = defineStore('agency', () => {
-    const selectedId = ref(readStoredAgencyId());
+    const selection = ref<AgencySelection>(readStoredSelection());
 
     const options = computed(() => agencies);
 
-    const selected = computed(
-        () => agencies.find((agency) => agency.id === selectedId.value) ?? agencies[0]
+    const isAutomatic = computed(() => selection.value === AUTOMATIC_ROUTING);
+
+    const gateway = computed(() =>
+        isAutomatic.value ? agencies[0] : agencies.find((agency) => agency.id === selection.value)
     );
 
-    const baseUrl = computed(() => selected.value?.url ?? import.meta.env.VITE_API_URL);
-
-    function select(id: number): void {
-        if (!agencies.some((agency) => agency.id === id)) return;
-
-        selectedId.value = id;
-        window.localStorage.setItem(STORAGE_KEY, String(id));
+    function agencyForAccount(accountId: number): Agency | undefined {
+        return agencies[accountId % agencies.length];
     }
 
-    return { selectedId, options, selected, baseUrl, select };
+    function resolveAgency(accountId?: number): Agency | undefined {
+        if (!isAutomatic.value) return gateway.value;
+        if (accountId === undefined || !Number.isInteger(accountId) || accountId < 0) {
+            return gateway.value;
+        }
+
+        return agencyForAccount(accountId);
+    }
+
+    function resolveBaseUrl(accountId?: number): string {
+        return resolveAgency(accountId)?.url ?? import.meta.env.VITE_API_URL;
+    }
+
+    function select(nextSelection: AgencySelection): void {
+        if (nextSelection !== AUTOMATIC_ROUTING && !isKnownAgencyId(nextSelection)) return;
+
+        selection.value = nextSelection;
+        window.localStorage.setItem(STORAGE_KEY, String(nextSelection));
+    }
+
+    return {
+        selection,
+        options,
+        isAutomatic,
+        gateway,
+        agencyForAccount,
+        resolveAgency,
+        resolveBaseUrl,
+        select,
+    };
 });

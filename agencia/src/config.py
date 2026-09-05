@@ -39,7 +39,7 @@ AGENCIAS = [
 ]
 
 ORIGENS_PERMITIDAS = os.environ.get(
-    "ORIGENS_PERMITIDAS", "http://localhost:5173,http://127.0.0.1:5173"
+    "ORIGENS_PERMITIDAS", r"http://localhost:\d+,http://127\.0\.0\.1:\d+"
 ).split(",")
 
 

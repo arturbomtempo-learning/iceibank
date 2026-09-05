@@ -13,7 +13,7 @@ const shortcuts = computed(() =>
         {
             name: 'account',
             title: 'Consultar conta',
-            description: 'Veja o saldo, deposite e saque em uma conta desta agência.',
+            description: 'Veja o saldo, deposite e saque em qualquer conta sua.',
             icon: 'M4 6h16v12H4zM4 10h16',
         },
         {
@@ -35,7 +35,7 @@ const shortcuts = computed(() =>
 
 const roleDescription = computed(() =>
     authStore.isManager
-        ? 'Como gerente, você abre contas e opera qualquer conta desta agência.'
+        ? 'Como gerente, você abre contas e opera qualquer conta das três agências.'
         : 'Como correntista, você opera apenas as contas das quais é dono.'
 );
 </script>
@@ -59,21 +59,42 @@ const roleDescription = computed(() =>
                         class="text-xs font-medium tracking-wide uppercase"
                         :style="{ color: 'var(--color-sidebar-muted)' }"
                     >
-                        Agência de acesso
+                        Roteamento
                     </p>
                     <p class="mt-1.5 text-3xl font-semibold text-white">
-                        {{ agencyStore.selected?.label }}
+                        {{ agencyStore.isAutomatic ? 'Automático' : agencyStore.gateway?.label }}
                     </p>
                     <p class="mt-1 text-sm" :style="{ color: 'var(--color-sidebar-muted)' }">
-                        {{ agencyStore.selected?.url }}
+                        {{
+                            agencyStore.isAutomatic
+                                ? 'Cada operação vai para a agência dona da conta'
+                                : agencyStore.gateway?.url
+                        }}
                     </p>
                 </div>
 
                 <p class="max-w-xs text-sm" :style="{ color: 'var(--color-sidebar-muted)' }">
-                    Cada agência responde apenas pelas contas da sua partição. Troque a agência no
-                    topo da tela para operar as demais.
+                    As contas são divididas entre as agências pela regra
+                    <strong class="text-white"
+                        >número da conta % {{ agencyStore.options.length }}</strong
+                    >, e o sistema envia cada operação para a agência responsável.
                 </p>
             </div>
+
+            <dl
+                class="relative z-10 mt-7 grid grid-cols-1 gap-x-6 gap-y-4 border-t pt-5 sm:grid-cols-3"
+                :style="{ borderColor: 'rgba(255,255,255,0.12)' }"
+            >
+                <div v-for="agency in agencyStore.options" :key="agency.id">
+                    <dt class="text-xs" :style="{ color: 'var(--color-sidebar-muted)' }">
+                        {{ agency.label }}
+                    </dt>
+                    <dd class="numeric mt-0.5 text-[0.9375rem] font-medium text-white">
+                        contas {{ agency.id }}, {{ agency.id + agencyStore.options.length }},
+                        {{ agency.id + agencyStore.options.length * 2 }}...
+                    </dd>
+                </div>
+            </dl>
         </section>
 
         <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -6,6 +6,12 @@ import { useUiStore } from '@/shared/stores/ui.store';
 
 import { readSession } from './token-storage';
 
+declare module 'axios' {
+    export interface AxiosRequestConfig {
+        accountId?: number;
+    }
+}
+
 interface ApiErrorBody {
     erro?: string;
 }
@@ -25,7 +31,7 @@ export const api = axios.create({
 });
 
 function withAgencyAndToken(request: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-    request.baseURL = useAgencyStore().baseUrl;
+    request.baseURL = useAgencyStore().resolveBaseUrl(request.accountId);
 
     const session = readSession();
     if (session) {
@@ -51,7 +57,7 @@ export function extractErrorMessage(error: unknown): string {
     }
 
     if (!requestError.response) {
-        return 'Não foi possível falar com a agência selecionada. Verifique se ela está no ar.';
+        return 'Não foi possível falar com a agência responsável. Verifique se ela está no ar.';
     }
 
     return 'Não foi possível concluir a operação.';

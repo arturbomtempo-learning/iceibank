@@ -11,5 +11,7 @@ export interface TransferResponse {
 }
 
 export function transfer(request: TransferRequest) {
-    return api.post<TransferResponse>('/transferencias', request);
+    return api.post<TransferResponse>('/transferencias', request, {
+        accountId: request.idOrigem,
+    });
 }

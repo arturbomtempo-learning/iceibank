@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import {
     transferSchema,
@@ -39,6 +39,20 @@ const { values, errors, isSubmitting, handleSubmit, reset } = useForm<
     amount: null,
 });
 
+const sourceHint = computed(() => {
+    const typedSourceId = values.value.sourceAccountId;
+
+    if (!agencyStore.isAutomatic) {
+        return `A ordem vai sempre para a ${agencyStore.gateway?.label}, porque o roteamento automático está desligado.`;
+    }
+
+    if (typedSourceId === null || !Number.isInteger(typedSourceId) || typedSourceId < 0) {
+        return 'A ordem é enviada para a agência que guarda a conta de origem.';
+    }
+
+    return `A ordem será enviada para a ${agencyStore.agencyForAccount(typedSourceId)?.label}.`;
+});
+
 async function submit(): Promise<void> {
     await handleSubmit(async ({ sourceAccountId, targetAccountId, amount }) => {
         try {
@@ -75,7 +89,7 @@ async function submit(): Promise<void> {
     <div class="flex flex-col gap-6">
         <PageHeader
             title="Transferir"
-            subtitle="A conta de origem precisa pertencer à agência selecionada. O destino pode estar em qualquer uma."
+            subtitle="Informe as contas e o valor. A agência de origem e a de destino são descobertas pelo próprio sistema."
         />
 
         <div class="grid gap-5 lg:grid-cols-5">
@@ -87,7 +101,7 @@ async function submit(): Promise<void> {
                         type="number"
                         placeholder="Ex.: 0"
                         :error="errors.sourceAccountId"
-                        :hint="`Deve pertencer à ${agencyStore.selected?.label}.`"
+                        :hint="sourceHint"
                     />
 
                     <BaseInput
