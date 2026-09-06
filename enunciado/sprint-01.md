@@ -947,17 +947,17 @@ Esta parte também **não vem com código de exemplo**. A escolha do framework, 
 
 ## 13. Checklist de entrega
 
-- [ ] Repositório Git com a estrutura de pastas indicada, com histórico de commits incremental ao longo do sprint (não um único commit no fim)
-- [ ] As 3 agências rodando simultaneamente (mesmo código, `AGENCIA_ID` diferente), cada uma respondendo pela sua partição de contas
-- [ ] CRUD de contas + depósito/saque funcionando, cada operação registrada com timestamp de Lamport
-- [ ] Transferência local (mesma agência) e entre agências funcionando
-- [ ] A falha conhecida (Parte D) reproduzida e documentada, não escondida
-- [ ] Script `mesclar-logs.js` funcionando e usado para observar concorrência real
-- [ ] Autenticação JWT protegendo as rotas da API (Parte F), com os três cenários de teste (sem token, com token válido, com token expirado)
-- [ ] Frontend funcional consumindo a API autenticada (Parte G), cobrindo login, saldo, depósito, saque e as duas formas de transferência
-- [ ] Pelo menos uma funcionalidade adicional implementada e documentada (seção 2.1)
-- [ ] Pasta `evidencias/sprint1/` com os prints indicados nas seções 4.2, 2.1, 11.2 e 12.2
-- [ ] Arquivo `RESPOSTAS.md` completo, com as questões das seções 6.4, 8.3, 10.3, 11.3 e 12.3, a descrição da funcionalidade adicional escolhida, e as justificativas de design pedidas nas Partes F e G
+- [x] Repositório Git com a estrutura de pastas indicada, com histórico de commits incremental ao longo do sprint (não um único commit no fim)
+- [x] As 3 agências rodando simultaneamente (mesmo código, `AGENCIA_ID` diferente), cada uma respondendo pela sua partição de contas
+- [x] CRUD de contas + depósito/saque funcionando, cada operação registrada com timestamp de Lamport
+- [x] Transferência local (mesma agência) e entre agências funcionando
+- [x] A falha conhecida (Parte D) reproduzida e documentada, não escondida
+- [x] Script `mesclar-logs.js` funcionando e usado para observar concorrência real
+- [x] Autenticação JWT protegendo as rotas da API (Parte F), com os três cenários de teste (sem token, com token válido, com token expirado)
+- [x] Frontend funcional consumindo a API autenticada (Parte G), cobrindo login, saldo, depósito, saque e as duas formas de transferência
+- [x] Pelo menos uma funcionalidade adicional implementada e documentada (seção 2.1)
+- [x] Pasta `evidencias/sprint1/` com os prints indicados nas seções 4.2, 2.1, 11.2 e 12.2
+- [x] Arquivo `RESPOSTAS.md` completo, com as questões das seções 6.4, 8.3, 10.3, 11.3 e 12.3, a descrição da funcionalidade adicional escolhida, e as justificativas de design pedidas nas Partes F e G
 
 ---
 
