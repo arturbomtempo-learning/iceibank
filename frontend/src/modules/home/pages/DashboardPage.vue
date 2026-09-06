@@ -46,8 +46,10 @@ const unavailableAgencyLabels = computed(() =>
 );
 
 const greetingName = computed(() => {
-    const holderName = accountsStore.accounts[0]?.nomeAluno?.trim();
-    const nameToShow = holderName || authStore.username;
+    const ownAccount = accountsStore.accounts.find(
+        (account) => account.dono === authStore.username
+    );
+    const nameToShow = ownAccount?.nomeAluno?.trim() || authStore.username;
 
     return (nameToShow.split(' ')[0] ?? nameToShow).toUpperCase();
 });
@@ -83,7 +85,11 @@ onMounted(() => {
             </button>
         </header>
 
-        <section v-if="accountsStore.accounts.length > 0" class="flex flex-col gap-5">
+        <section v-if="accountsStore.accounts.length > 0" class="flex flex-col gap-3">
+            <h2 class="text-sm font-semibold tracking-wide text-muted uppercase">
+                {{ authStore.isManager ? 'Contas do banco' : 'Suas contas' }}
+            </h2>
+
             <div class="grid gap-5" :class="hasMultipleAccounts ? 'lg:grid-cols-2' : ''">
                 <BalanceCard
                     v-for="account in accountsStore.accounts"
@@ -94,8 +100,12 @@ onMounted(() => {
                 />
             </div>
 
-            <p v-if="hasMultipleAccounts" class="text-sm text-muted">
-                Saldo somado das {{ accountsStore.accounts.length }} contas:
+            <p v-if="hasMultipleAccounts" class="mt-2 text-sm text-muted">
+                {{
+                    authStore.isManager
+                        ? `Somando as ${accountsStore.accounts.length} contas do banco:`
+                        : `Saldo somado das suas ${accountsStore.accounts.length} contas:`
+                }}
                 <strong v-if="isBalanceRevealed" class="numeric">{{
                     formatCurrency(accountsStore.totalBalance)
                 }}</strong>

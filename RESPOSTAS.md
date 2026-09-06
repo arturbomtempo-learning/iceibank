@@ -1,5 +1,42 @@
 # Respostas
 
+## Funcionalidade adicional - Extrato consolidado
+
+A funcionalidade adicional que escolhi implementar, exigida pela seção 2.1, é o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado **nas três agências** e devolve o saldo somado, em uma única chamada.
+
+Escolhi essa entre as sugestões do roteiro porque ela é a que mais depende do que este sprint tem de característico. Consultar o saldo de uma conta é trivial, já que a agência responsável guarda tudo o que precisa em memória. Somar os saldos de contas espalhadas por agências diferentes, não: nenhuma agência sozinha tem essa informação, porque a partição (`id_conta % 3`) garante justamente que cada uma só conheça a sua fatia. O endpoint só consegue responder conversando com as outras duas pela rede.
+
+O funcionamento é o seguinte. A agência que recebe a chamada separa as contas locais do usuário e, para cada uma das outras agências, faz uma requisição a uma rota interna nova, `GET /interno/contas/<usuario>`, protegida pelo mesmo **token de serviço** usado no `creditar-remoto`. Ou seja, o token de sessão da pessoa não é repassado adiante, mantendo a decisão de design da Parte F. No fim, junta tudo, ordena por número de conta e devolve a lista com o campo `saldoTotal`.
+
+O contrato ficou assim. A requisição precisa apenas do token de usuário, e pode ser feita a qualquer uma das três agências:
+
+```
+GET /extrato
+Authorization: Bearer <token>
+```
+
+```json
+{
+  "usuario": "bomtempo",
+  "contas": [
+    { "id": 6, "nomeAluno": "Artur Bomtempo", "dono": "bomtempo", "saldo": 2500, "agencia": 0 },
+    { "id": 7, "nomeAluno": "Artur Bomtempo", "dono": "bomtempo", "saldo": 800, "agencia": 1 },
+    { "id": 8, "nomeAluno": "Artur Bomtempo", "dono": "bomtempo", "saldo": 450, "agencia": 2 }
+  ],
+  "saldoTotal": 3750,
+  "agenciasIndisponiveis": []
+}
+```
+
+O campo `agencia` em cada conta mostra de qual partição ela veio, e o `saldoTotal` é a soma que nenhuma agência conseguiria calcular sozinha. Para efeito de comparação, uma consulta direta pela rota comum `GET /contas/6` só funciona na Agência 0: as outras duas respondem "Conta não encontrada nesta agência", justamente porque não conhecem contas fora da sua fatia. É esse contraste que aparece na evidência em `evidencias/sprint1/funcionalidade-adicional.png`.
+
+Duas decisões que valem registro:
+
+1. **A rota interna não confia no papel informado por quem chama.** Ela consulta o repositório de usuários para descobrir se aquele usuário é gerente ou correntista, e só então decide se devolve todas as contas da agência ou apenas as dele. Se aceitasse um campo enviado pela agência chamadora, bastaria forjar esse campo para ler as contas de qualquer pessoa.
+2. **A indisponibilidade de uma agência não derruba o extrato.** Se uma das agências estiver fora do ar, o endpoint devolve o que conseguiu reunir e lista as agências que não responderam no campo `agenciasIndisponiveis`, e o frontend avisa que a soma está incompleta. Testei derrubando a Agência 2: o extrato continuou respondendo com as contas das Agências 0 e 1 e sinalizando a ausência da terceira.
+
+No frontend, é esse endpoint que faz a tela inicial parecer um internet banking de verdade: a pessoa entra e já vê os cartões de todas as suas contas com o saldo, sem precisar digitar número de conta nenhum.
+
 ## Parte B - Relógio de Lamport e registro de eventos
 
 ### Questão 1
@@ -123,18 +160,3 @@ O padrão existe, mas não de forma tão literal quanto no backend, e vale ser h
 - **Controller**: fica dividido entre as ações das stores e o `<script setup>` de cada página, que orquestra formulário, serviço e store. O `app/router` também assume parte desse papel, decidindo o que cada rota exige (autenticação, papel de gerente) antes de liberar a navegação.
 
 O ponto mais misturado é justamente o Controller, que não mora em um arquivo próprio: ele está espalhado entre a store e o script da página. Na `TransferPage`, por exemplo, o script valida o formulário, chama o serviço, monta o resultado e manda a store recarregar os saldos, ou seja, faz trabalho de controller dentro do arquivo do componente. Foi uma escolha consciente por seguir a arquitetura por módulos definida no `INSTRUCTIONS.md` do projeto, que organiza o código por funcionalidade em vez de por camada, mas reconheço que isso afasta o frontend do MVC estrito. Quem segue o padrão à risca é o backend, onde `routes.py`, `controllers/` e `services/` separam as camadas de forma bem mais clara.
-
-## Funcionalidade adicional - Extrato consolidado
-
-A funcionalidade adicional que escolhi implementar, exigida pela seção 2.1, é o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado **nas três agências** e devolve o saldo somado, em uma única chamada.
-
-Escolhi essa entre as sugestões do roteiro porque ela é a que mais depende do que este sprint tem de característico. Consultar o saldo de uma conta é trivial, já que a agência responsável guarda tudo o que precisa em memória. Somar os saldos de contas espalhadas por agências diferentes, não: nenhuma agência sozinha tem essa informação, porque a partição (`id_conta % 3`) garante justamente que cada uma só conheça a sua fatia. O endpoint só consegue responder conversando com as outras duas pela rede.
-
-O funcionamento é o seguinte. A agência que recebe a chamada separa as contas locais do usuário e, para cada uma das outras agências, faz uma requisição a uma rota interna nova, `GET /interno/contas/<usuario>`, protegida pelo mesmo **token de serviço** usado no `creditar-remoto`. Ou seja, o token de sessão da pessoa não é repassado adiante, mantendo a decisão de design da Parte F. No fim, junta tudo, ordena por número de conta e devolve a lista com o campo `saldoTotal`.
-
-Duas decisões que valem registro:
-
-1. **A rota interna não confia no papel informado por quem chama.** Ela consulta o repositório de usuários para descobrir se aquele usuário é gerente ou correntista, e só então decide se devolve todas as contas da agência ou apenas as dele. Se aceitasse um campo enviado pela agência chamadora, bastaria forjar esse campo para ler as contas de qualquer pessoa.
-2. **A indisponibilidade de uma agência não derruba o extrato.** Se uma das agências estiver fora do ar, o endpoint devolve o que conseguiu reunir e lista as agências que não responderam no campo `agenciasIndisponiveis`, e o frontend avisa que a soma está incompleta. Testei derrubando a Agência 2: o extrato continuou respondendo com as contas das Agências 0 e 1 e sinalizando a ausência da terceira.
-
-No frontend, é esse endpoint que faz a tela inicial parecer um internet banking de verdade: a pessoa entra e já vê os cartões de todas as suas contas com o saldo, sem precisar digitar número de conta nenhum.
