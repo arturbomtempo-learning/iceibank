@@ -27,34 +27,34 @@ Este é o primeiro de quatro sprints de um projeto que evolui ao longo do semest
 ## 📚 Índice
 
 - [ICEIBank](#iceibank)
-  - [🚧 Status do Projeto](#-status-do-projeto)
-  - [📚 Índice](#-índice)
-  - [📝 Sobre o Projeto](#-sobre-o-projeto)
-  - [🎬 Vídeo de Apresentação](#-vídeo-de-apresentação)
-  - [✨ Funcionalidades Principais](#-funcionalidades-principais)
-  - [⭐ Funcionalidade Adicional: Extrato Consolidado](#-funcionalidade-adicional-extrato-consolidado)
-  - [🛠 Tecnologias Utilizadas](#-tecnologias-utilizadas)
-  - [🏗 Arquitetura](#-arquitetura)
-    - [Backend: as três agências](#backend-as-três-agências)
-    - [Frontend: o internet banking](#frontend-o-internet-banking)
-    - [Sobre a pasta `agencia-express`](#sobre-a-pasta-agencia-express)
-  - [⚙️ Instalação e Execução](#️-instalação-e-execução)
-    - [Pré-requisitos](#pré-requisitos)
-    - [📦 Passo 1: clonar e preparar o backend](#-passo-1-clonar-e-preparar-o-backend)
-    - [🏦 Passo 2: subir as três agências](#-passo-2-subir-as-três-agências)
-    - [💻 Passo 3: subir o frontend](#-passo-3-subir-o-frontend)
-    - [🛑 Como parar](#-como-parar)
-    - [🔑 Passo 4: primeiro acesso](#-passo-4-primeiro-acesso)
-    - [🕒 Linha do tempo unificada](#-linha-do-tempo-unificada)
-    - [🧯 Problemas comuns](#-problemas-comuns)
-  - [🔌 Endpoints da API](#-endpoints-da-api)
-  - [📂 Estrutura de Pastas](#-estrutura-de-pastas)
-  - [🖼️ Evidências](#️-evidências)
-  - [📖 Referências](#-referências)
-  - [🤖 Uso Responsável de IA](#-uso-responsável-de-ia)
-  - [🙏 Agradecimentos](#-agradecimentos)
-  - [👤 Autor](#-autor)
-  - [📄 Licença](#-licença)
+    - [🚧 Status do Projeto](#-status-do-projeto)
+    - [📚 Índice](#-índice)
+    - [📝 Sobre o Projeto](#-sobre-o-projeto)
+    - [🎬 Vídeo de Apresentação](#-vídeo-de-apresentação)
+    - [✨ Funcionalidades Principais](#-funcionalidades-principais)
+    - [⭐ Funcionalidade Adicional: Extrato Consolidado](#-funcionalidade-adicional-extrato-consolidado)
+    - [🛠 Tecnologias Utilizadas](#-tecnologias-utilizadas)
+    - [🏗 Arquitetura](#-arquitetura)
+        - [Backend: as três agências](#backend-as-três-agências)
+        - [Frontend: o internet banking](#frontend-o-internet-banking)
+        - [Sobre a pasta `agencia-express`](#sobre-a-pasta-agencia-express)
+    - [⚙️ Instalação e Execução](#️-instalação-e-execução)
+        - [Pré-requisitos](#pré-requisitos)
+        - [📦 Passo 1: clonar e preparar o backend](#-passo-1-clonar-e-preparar-o-backend)
+        - [🏦 Passo 2: subir as três agências](#-passo-2-subir-as-três-agências)
+        - [💻 Passo 3: subir o frontend](#-passo-3-subir-o-frontend)
+        - [🛑 Como parar](#-como-parar)
+        - [🔑 Passo 4: primeiro acesso](#-passo-4-primeiro-acesso)
+        - [🕒 Linha do tempo unificada](#-linha-do-tempo-unificada)
+        - [🧯 Problemas comuns](#-problemas-comuns)
+    - [🔌 Endpoints da API](#-endpoints-da-api)
+    - [📂 Estrutura de Pastas](#-estrutura-de-pastas)
+    - [🖼️ Evidências](#️-evidências)
+    - [📖 Referências](#-referências)
+    - [🤖 Uso Responsável de IA](#-uso-responsável-de-ia)
+    - [🙏 Agradecimentos](#-agradecimentos)
+    - [👤 Autor](#-autor)
+    - [📄 Licença](#-licença)
 
 ---
 
@@ -70,12 +70,12 @@ Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas
 
 O projeto também expõe, de forma deliberada, uma limitação real: se a agência de destino cair no meio de uma transferência, o débito já aplicado **não é revertido** e o dinheiro desaparece temporariamente. Essa inconsistência não é escondida, ela é registrada no log e documentada, porque resolvê-la de verdade é o tema do Sprint 4, com transações distribuídas.
 
-| Sprint | Conceito de Sistemas Distribuídos | Situação |
-| :---: | --- | :---: |
-| **1** | **Relógio lógico de Lamport** | ✅ Concluído |
-| 2 | Relógio vetorial | Planejado |
-| 3 | Consenso (eleição de líder) | Planejado |
-| 4 | Transações distribuídas (2PC/Saga) | Planejado |
+| Sprint | Conceito de Sistemas Distribuídos  |   Situação   |
+| :----: | ---------------------------------- | :----------: |
+| **1**  | **Relógio lógico de Lamport**      | ✅ Concluído |
+|   2    | Relógio vetorial                   |  Planejado   |
+|   3    | Consenso (eleição de líder)        |  Planejado   |
+|   4    | Transações distribuídas (2PC/Saga) |  Planejado   |
 
 ---
 
@@ -84,8 +84,6 @@ O projeto também expõe, de forma deliberada, uma limitação real: se a agênc
 Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionamento:
 
 **▶️ [Assistir à apresentação do Sprint 1](https://youtu.be/fpBiZ1JiXc8)**
-
-O vídeo percorre as principais funcionalidades e decisões do projeto: as três agências rodando simultaneamente, o particionamento das contas, o relógio de Lamport em ação nos logs, as transferências local e entre agências, a reprodução da falha conhecida, a autenticação e a autorização via JWT, o frontend consumindo a API e a funcionalidade adicional de extrato consolidado.
 
 ---
 
@@ -151,28 +149,28 @@ Duas decisões de projeto que valem destaque:
 
 **Backend**
 
-| Tecnologia | Versão | Papel no projeto |
-| --- | :---: | --- |
-| Python | 3.14 | Linguagem escolhida para a entrega |
-| Flask | 3.1.3 | Framework web que expõe a API REST de cada agência |
-| PyJWT | 2.13.0 | Geração e validação dos tokens JWT |
-| Requests | 2.34.2 | Chamadas HTTP de uma agência para outra |
-| Flask-Cors | 6.0.5 | Autoriza o frontend, que roda em outra origem, a consumir a API |
-| python-dotenv | 1.2.3 | Carrega a chave secreta a partir do `.env`, fora do controle de versão |
-| Werkzeug | (via Flask) | Hash das senhas com pbkdf2 |
+| Tecnologia    |   Versão    | Papel no projeto                                                       |
+| ------------- | :---------: | ---------------------------------------------------------------------- |
+| Python        |    3.14     | Linguagem escolhida para a entrega                                     |
+| Flask         |    3.1.3    | Framework web que expõe a API REST de cada agência                     |
+| PyJWT         |   2.13.0    | Geração e validação dos tokens JWT                                     |
+| Requests      |   2.34.2    | Chamadas HTTP de uma agência para outra                                |
+| Flask-Cors    |    6.0.5    | Autoriza o frontend, que roda em outra origem, a consumir a API        |
+| python-dotenv |    1.2.3    | Carrega a chave secreta a partir do `.env`, fora do controle de versão |
+| Werkzeug      | (via Flask) | Hash das senhas com pbkdf2                                             |
 
 **Frontend**
 
-| Tecnologia | Versão | Papel no projeto |
-| --- | :---: | --- |
-| Vue.js | 3.5 | Framework da interface, com Composition API e `<script setup>` |
-| TypeScript | 6.0 | Tipagem estática em todo o código do frontend |
-| Vite | 8.1 | Servidor de desenvolvimento e empacotamento |
-| Vue Router | 5.3 | Rotas e guards de autenticação e de papel |
-| Pinia | 4.0 | Gerenciamento de estado no padrão Setup Store |
-| Axios | 1.20 | Cliente HTTP, com interceptors de token, erro e carregamento |
-| Zod | 4.5 | Validação dos formulários com tipos inferidos do schema |
-| Tailwind CSS | 4.3 | Estilização, sobre um design system com tokens próprios |
+| Tecnologia   | Versão | Papel no projeto                                               |
+| ------------ | :----: | -------------------------------------------------------------- |
+| Vue.js       |  3.5   | Framework da interface, com Composition API e `<script setup>` |
+| TypeScript   |  6.0   | Tipagem estática em todo o código do frontend                  |
+| Vite         |  8.1   | Servidor de desenvolvimento e empacotamento                    |
+| Vue Router   |  5.3   | Rotas e guards de autenticação e de papel                      |
+| Pinia        |  4.0   | Gerenciamento de estado no padrão Setup Store                  |
+| Axios        |  1.20  | Cliente HTTP, com interceptors de token, erro e carregamento   |
+| Zod          |  4.5   | Validação dos formulários com tipos inferidos do schema        |
+| Tailwind CSS |  4.3   | Estilização, sobre um design system com tokens próprios        |
 
 A escolha de **Python com Flask** atende à exigência do roteiro, que permite Java ou Python e proíbe a entrega em Node.js. O **Vue** foi escolhido no frontend, cuja tecnologia era livre.
 
@@ -231,12 +229,12 @@ A entrega avaliável é a pasta [`agencia/`](agencia/), escrita em Python com Fl
 
 O ICEIBank roda em **4 terminais simultâneos**: um para cada uma das três agências, mais um para o frontend. Essa separação não é detalhe de execução, é a essência do projeto: cada agência é um processo independente, com sua própria memória e seu próprio relógio lógico.
 
-| Terminal | O que roda | Porta |
-| :---: | --- | :---: |
-| 1 | Agência 0 | 4035 |
-| 2 | Agência 1 | 4036 |
-| 3 | Agência 2 | 4037 |
-| 4 | Frontend (Vite) | 5173 |
+| Terminal | O que roda      | Porta |
+| :------: | --------------- | :---: |
+|    1     | Agência 0       | 4035  |
+|    2     | Agência 1       | 4036  |
+|    3     | Agência 2       | 4037  |
+|    4     | Frontend (Vite) | 5173  |
 
 ### Pré-requisitos
 
@@ -382,8 +380,8 @@ Pressione **Ctrl+C** em cada terminal. Vale lembrar que as contas ficam **em mem
 
 O sistema nasce com um único usuário, o gerente:
 
-| Usuário | Senha | Papel |
-| --- | --- | --- |
+| Usuário | Senha       | Papel   |
+| ------- | ----------- | ------- |
 | `admin` | `admin1234` | Gerente |
 
 Como as contas são recriadas a cada execução, o roteiro de uma sessão nova é:
@@ -415,13 +413,13 @@ cd iceibank\agencia
 
 ### 🧯 Problemas comuns
 
-| Sintoma | Causa provável | Solução |
-| --- | --- | --- |
-| A agência não sobe e reclama de `JWT_SECRET_KEY` | O arquivo `.env` não foi criado | Copie o `.env.example` para `.env` na pasta `agencia` |
-| `Address already in use` ao subir uma agência | A porta já está ocupada por uma execução anterior | Encerre o processo antigo ou reinicie o terminal |
-| Todas as telas mostram "não foi possível falar com a agência" | Alguma agência não está rodando | Confirme que os três terminais estão ativos |
-| As contas sumiram depois de reiniciar | Comportamento esperado: as contas ficam em memória | Recrie as contas entrando como `admin` |
-| "Já existe um usuário com esse nome" após reiniciar | Os usuários são salvos em arquivo, e não somem | Use outro nome, ou apague `agencia/data/usuarios.json` para voltar apenas ao `admin` |
+| Sintoma                                                       | Causa provável                                     | Solução                                                                              |
+| ------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| A agência não sobe e reclama de `JWT_SECRET_KEY`              | O arquivo `.env` não foi criado                    | Copie o `.env.example` para `.env` na pasta `agencia`                                |
+| `Address already in use` ao subir uma agência                 | A porta já está ocupada por uma execução anterior  | Encerre o processo antigo ou reinicie o terminal                                     |
+| Todas as telas mostram "não foi possível falar com a agência" | Alguma agência não está rodando                    | Confirme que os três terminais estão ativos                                          |
+| As contas sumiram depois de reiniciar                         | Comportamento esperado: as contas ficam em memória | Recrie as contas entrando como `admin`                                               |
+| "Já existe um usuário com esse nome" após reiniciar           | Os usuários são salvos em arquivo, e não somem     | Use outro nome, ou apague `agencia/data/usuarios.json` para voltar apenas ao `admin` |
 
 ---
 
@@ -429,18 +427,18 @@ cd iceibank\agencia
 
 Todas as rotas, exceto o login, exigem o cabeçalho `Authorization: Bearer <token>`.
 
-| Método | Rota | Proteção | Descrição |
-| :---: | --- | --- | --- |
-| `POST` | `/auth/login` | pública | Autentica e devolve o token JWT |
-| `POST` | `/usuarios` | gerente | Cadastra um novo correntista |
-| `POST` | `/contas` | gerente | Abre uma conta na agência responsável pelo número |
-| `GET` | `/contas/<id>` | dono ou gerente | Consulta o saldo de uma conta |
-| `POST` | `/contas/<id>/depositar` | dono ou gerente | Credita um valor |
-| `POST` | `/contas/<id>/sacar` | dono ou gerente | Debita um valor |
-| `POST` | `/transferencias` | dono ou gerente | Transfere, resolvendo local ou entre agências |
-| `GET` | `/extrato` | autenticado | ⭐ Extrato consolidado das três agências |
-| `POST` | `/contas/<id>/creditar-remoto` | token de serviço | Rota interna: crédito vindo de outra agência |
-| `GET` | `/interno/contas/<usuario>` | token de serviço | Rota interna: contas de um usuário nesta agência |
+| Método | Rota                           | Proteção         | Descrição                                         |
+| :----: | ------------------------------ | ---------------- | ------------------------------------------------- |
+| `POST` | `/auth/login`                  | pública          | Autentica e devolve o token JWT                   |
+| `POST` | `/usuarios`                    | gerente          | Cadastra um novo correntista                      |
+| `POST` | `/contas`                      | gerente          | Abre uma conta na agência responsável pelo número |
+| `GET`  | `/contas/<id>`                 | dono ou gerente  | Consulta o saldo de uma conta                     |
+| `POST` | `/contas/<id>/depositar`       | dono ou gerente  | Credita um valor                                  |
+| `POST` | `/contas/<id>/sacar`           | dono ou gerente  | Debita um valor                                   |
+| `POST` | `/transferencias`              | dono ou gerente  | Transfere, resolvendo local ou entre agências     |
+| `GET`  | `/extrato`                     | autenticado      | ⭐ Extrato consolidado das três agências          |
+| `POST` | `/contas/<id>/creditar-remoto` | token de serviço | Rota interna: crédito vindo de outra agência      |
+| `GET`  | `/interno/contas/<usuario>`    | token de serviço | Rota interna: contas de um usuário nesta agência  |
 
 ---
 
@@ -494,42 +492,42 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 
 **Backend e conceitos distribuídos**
 
-| Evidência | O que demonstra |
-| --- | --- |
-| [`transferencia-local.png`](evidencias/sprint1/transferencia-local.png) | Transferência dentro da mesma agência |
-| [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto |
-| [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png) | Agência de destino fora do ar: HTTP 502 e débito não revertido |
-| [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png) | Eventos das 3 agências ordenados por relógio de Lamport |
+| Evidência                                                                                 | O que demonstra                                                |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| [`transferencia-local.png`](evidencias/sprint1/transferencia-local.png)                   | Transferência dentro da mesma agência                          |
+| [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto             |
+| [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png)                           | Agência de destino fora do ar: HTTP 502 e débito não revertido |
+| [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png)                             | Eventos das 3 agências ordenados por relógio de Lamport        |
 
 **Autenticação (Parte F)**
 
-| Evidência | O que demonstra |
-| --- | --- |
-| [`auth-sem-token.png`](evidencias/sprint1/auth-sem-token.png) | Requisição sem token recusada com HTTP 401 |
-| [`auth-com-token.png`](evidencias/sprint1/auth-com-token.png) | Operação concluída com token válido |
-| [`auth-token-expirado.png`](evidencias/sprint1/auth-token-expirado.png) | Token expirado recusado com HTTP 401 |
+| Evidência                                                               | O que demonstra                            |
+| ----------------------------------------------------------------------- | ------------------------------------------ |
+| [`auth-sem-token.png`](evidencias/sprint1/auth-sem-token.png)           | Requisição sem token recusada com HTTP 401 |
+| [`auth-com-token.png`](evidencias/sprint1/auth-com-token.png)           | Operação concluída com token válido        |
+| [`auth-token-expirado.png`](evidencias/sprint1/auth-token-expirado.png) | Token expirado recusado com HTTP 401       |
 
 **Frontend (Parte G)**
 
-| Evidência | O que demonstra |
-| --- | --- |
-| [`frontend-login.png`](evidencias/sprint1/frontend-login.png) | Tela de login |
-| [`frontend-login-invalido.png`](evidencias/sprint1/frontend-login-invalido.png) | Credenciais inválidas tratadas na interface |
-| [`frontend-cadastro.png`](evidencias/sprint1/frontend-cadastro.png) | Gerente cadastrando um correntista |
-| [`frontend-abrir-conta.png`](evidencias/sprint1/frontend-abrir-conta.png) | Abertura de conta, com a agência responsável indicada |
-| [`frontend-saldo.png`](evidencias/sprint1/frontend-saldo.png) | Consulta de saldo na tela inicial |
-| [`frontend-deposito.png`](evidencias/sprint1/frontend-deposito.png) | Depósito via formulário |
-| [`frontend-saque.png`](evidencias/sprint1/frontend-saque.png) | Saque via formulário |
-| [`frontend-transferencia-local.png`](evidencias/sprint1/frontend-transferencia-local.png) | Transferência na mesma agência pela interface |
-| [`frontend-transferencia.png`](evidencias/sprint1/frontend-transferencia.png) | Transferência entre agências pela interface |
-| [`frontend-erro.png`](evidencias/sprint1/frontend-erro.png) | Saldo insuficiente exibido para a pessoa usuária |
-| [`frontend-erro-entre-agencias.png`](evidencias/sprint1/frontend-erro-entre-agencias.png) | Falha de transferência entre agências na interface |
-| [`frontend-sessao-expirada.png`](evidencias/sprint1/frontend-sessao-expirada.png) | Token expirado encerrando a sessão e devolvendo ao login |
+| Evidência                                                                                 | O que demonstra                                          |
+| ----------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [`frontend-login.png`](evidencias/sprint1/frontend-login.png)                             | Tela de login                                            |
+| [`frontend-login-invalido.png`](evidencias/sprint1/frontend-login-invalido.png)           | Credenciais inválidas tratadas na interface              |
+| [`frontend-cadastro.png`](evidencias/sprint1/frontend-cadastro.png)                       | Gerente cadastrando um correntista                       |
+| [`frontend-abrir-conta.png`](evidencias/sprint1/frontend-abrir-conta.png)                 | Abertura de conta, com a agência responsável indicada    |
+| [`frontend-saldo.png`](evidencias/sprint1/frontend-saldo.png)                             | Consulta de saldo na tela inicial                        |
+| [`frontend-deposito.png`](evidencias/sprint1/frontend-deposito.png)                       | Depósito via formulário                                  |
+| [`frontend-saque.png`](evidencias/sprint1/frontend-saque.png)                             | Saque via formulário                                     |
+| [`frontend-transferencia-local.png`](evidencias/sprint1/frontend-transferencia-local.png) | Transferência na mesma agência pela interface            |
+| [`frontend-transferencia.png`](evidencias/sprint1/frontend-transferencia.png)             | Transferência entre agências pela interface              |
+| [`frontend-erro.png`](evidencias/sprint1/frontend-erro.png)                               | Saldo insuficiente exibido para a pessoa usuária         |
+| [`frontend-erro-entre-agencias.png`](evidencias/sprint1/frontend-erro-entre-agencias.png) | Falha de transferência entre agências na interface       |
+| [`frontend-sessao-expirada.png`](evidencias/sprint1/frontend-sessao-expirada.png)         | Token expirado encerrando a sessão e devolvendo ao login |
 
 **Funcionalidade adicional**
 
-| Evidência | O que demonstra |
-| --- | --- |
+| Evidência                                                                         | O que demonstra                                                                                            |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | [`funcionalidade-adicional.png`](evidencias/sprint1/funcionalidade-adicional.png) | Cada agência conhece só a sua partição, e uma única chamada ao `/extrato` reúne as três com o saldo somado |
 
 ---
