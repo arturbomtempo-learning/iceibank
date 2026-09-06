@@ -549,9 +549,20 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 
 ## 🤖 Uso Responsável de IA
 
-Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-01.md), fica registrado aqui o uso de ferramentas de IA neste trabalho: **Claude Code (modelo Claude Sonnet 5)** e o **ChatGPT**, no modelo gratuito atualmente disponível (**GPT-5.6 Luna**).
+Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-01.md), registro aqui, de forma aberta, como usei ferramentas de inteligência artificial neste trabalho. As ferramentas foram o **Claude Code (modelo Claude Sonnet 5)** e o **ChatGPT**, no modelo gratuito atualmente disponível (**GPT-5.6 Luna**).
 
-Essas ferramentas foram usadas como apoio para **estruturar, formatar e revisar a escrita** deste `README.md` e do arquivo [`RESPOSTAS.md`](RESPOSTAS.md), além de auxiliar na revisão do código e na validação dos testes. Todo o conteúdo técnico, as decisões de arquitetura, a implementação e a pesquisa que embasam as respostas foram conduzidos por mim, **Artur Bomtempo Colen**, tendo como principais fontes as referências bibliográficas listadas acima e o próprio enunciado do roteiro. Estou apto a explicar e defender qualquer trecho entregue neste repositório.
+**Onde a IA foi usada.** Diferente de um uso apenas cosmético, ela participou do desenvolvimento em três frentes: na implementação da **API em Flask**, na construção do **frontend em Vue**, e na redação deste `README.md` e do [`RESPOSTAS.md`](RESPOSTAS.md). Prefiro declarar isso com clareza a minimizar o papel que a ferramenta teve.
+
+**Como foi usada.** O que separa um uso responsável de uma cópia irrefletida é o método, e aqui ele foi deliberado:
+
+- **Engenharia de prompt.** Cada solicitação partiu de um contexto construído por mim: o enunciado da sprint, o padrão de arquitetura que eu queria seguir, as restrições do projeto e o comportamento esperado. Não descrevi problemas de forma vaga esperando uma solução pronta.
+- **Direção das decisões de projeto.** As escolhas estruturais foram minhas, e várias contrariaram a primeira sugestão da ferramenta. Defini o modelo de credenciais e de papéis, o formato do armazenamento do token, a decisão de não repassar o token de sessão entre agências, o desenho da funcionalidade adicional e a identidade visual do frontend. Em mais de um momento revertí alterações que extrapolavam o escopo do roteiro, para manter a fidelidade ao que foi pedido.
+- **Revisão crítica linha a linha.** Nada entrou no repositório sem leitura e entendimento. Quando o comportamento não fez sentido, questionei e corrigi: bugs de interface, mensagens de erro imprecisas e inconsistências entre o que a tela mostrava e o que a API devolvia foram identificados por mim durante os testes.
+- **Validação por evidência.** Todo o comportamento documentado foi executado e comprovado por mim, e está registrado nos prints da pasta [`evidencias/sprint1/`](evidencias/sprint1/).
+
+**O que continua sendo meu.** A compreensão do problema, as decisões de arquitetura, a validação de cada funcionalidade, a análise dos resultados observados nos logs e o conteúdo conceitual das respostas do [`RESPOSTAS.md`](RESPOSTAS.md), embasado nas referências bibliográficas listadas acima e no próprio roteiro.
+
+Assumo integralmente a autoria e a responsabilidade por este trabalho e **estou apto a explicar e defender qualquer trecho entregue neste repositório**, seja o algoritmo do relógio de Lamport, o fluxo de autenticação e autorização, a comunicação entre as agências ou qualquer decisão tomada no frontend.
 
 ---
 
