@@ -96,6 +96,34 @@ Isso muda bastante a escalabilidade. Com sessões guardadas em memória no servi
 
 Se a chave secreta vazasse, a segurança da autenticação inteira cairia por terra. Quem estivesse de posse dela conseguiria forjar tokens válidos sem saber a senha de ninguém: bastaria montar um payload com o papel desejado e um prazo de expiração no futuro, assinar com a chave vazada e operar qualquer conta em qualquer uma das três agências, já que todas compartilham a mesma chave. Pior ainda, essa mesma chave assina os tokens de serviço, então também seria possível forjar chamadas se passando por uma agência falando com a outra. A única forma de conter o estrago seria trocar a chave, o que invalida de uma vez todos os tokens já emitidos, inclusive os legítimos. É justamente por isso que ela nunca pode ir para o controle de versão e precisa vir de uma variável de ambiente ou de um cofre de segredos, como fiz com o arquivo `.env`, que não é versionado.
 
+## Parte G - Frontend
+
+### Questão 1
+
+O token não é reenviado manualmente em lugar nenhum: isso acontece em um ponto único, o **interceptor de requisição** da instância de Axios que fica em `shared/services/api.ts`. Antes de qualquer requisição sair, ele lê a sessão guardada e, se ela existir, injeta o cabeçalho `Authorization: Bearer <token>`. Como todos os serviços do projeto usam essa mesma instância, nenhuma tela, store ou service precisa saber que o token existe: quem escreve uma chamada nova ganha a autenticação de graça, e não há risco de alguém esquecer de anexar o cabeçalho em uma rota.
+
+O armazenamento em si fica isolado em `shared/services/token-storage.ts`, que é o único arquivo que toca no storage do navegador. Guardo a sessão no **`sessionStorage`**, e não no `localStorage`, porque assim o token morre junto com a aba, reduzindo o tempo em que ele fica disponível em uma máquina compartilhada. Junto do token gravo o instante de expiração, calculado a partir do `expiraEmSegundos` que o login devolve, e toda leitura confere esse prazo antes de entregar a sessão.
+
+### Questão 2
+
+A pessoa é avisada de forma explícita, não recebe um erro genérico. O tratamento acontece em duas camadas.
+
+A primeira é preventiva e local: como o `token-storage` valida o prazo de expiração a cada leitura, uma sessão já vencida é descartada antes mesmo de a requisição sair, e a navegação é barrada pelo guard de rotas.
+
+A segunda vale para o caso em que o token vence entre uma tela e outra, ou é recusado pelo servidor por qualquer motivo. O **interceptor de resposta** identifica o `401`, exibe um aviso escrito "Sessão encerrada - Faça login novamente para continuar", limpa a sessão do storage e redireciona para a tela de login. Testei isso injetando um token realmente expirado no navegador: a aplicação mostrou o aviso e voltou para o login, sem deixar a pessoa presa em uma tela quebrada.
+
+Um detalhe de implementação: o interceptor não importa o roteador nem a store de autenticação diretamente, porque isso criaria uma dependência circular. Em vez disso, ele expõe um `setUnauthorizedHandler`, e o `app/init.ts` registra ali a ação de deslogar e redirecionar quando a aplicação sobe.
+
+### Questão 3
+
+O padrão existe, mas não de forma tão literal quanto no backend, e vale ser honesto sobre isso. O Vue com Composition API não é um framework MVC clássico: ele é baseado em componentes, e o que mais se aproxima do modelo tradicional é o MVVM. Ainda assim, dá para mapear os três papéis:
+
+- **Model**: os serviços em `shared/services/` (que definem os contratos com a API e os tipos como `Account` e `ConsolidatedStatement`) somados às stores do Pinia (`accounts.store`, `auth.store`, `agency.store`), que guardam o estado da aplicação e as regras de acesso a ele.
+- **View**: os blocos `<template>` das páginas e os componentes reutilizáveis de `shared/components/`, que só recebem dados e emitem eventos, sem chamar a API diretamente.
+- **Controller**: fica dividido entre as ações das stores e o `<script setup>` de cada página, que orquestra formulário, serviço e store. O `app/router` também assume parte desse papel, decidindo o que cada rota exige (autenticação, papel de gerente) antes de liberar a navegação.
+
+O ponto mais misturado é justamente o Controller, que não mora em um arquivo próprio: ele está espalhado entre a store e o script da página. Na `TransferPage`, por exemplo, o script valida o formulário, chama o serviço, monta o resultado e manda a store recarregar os saldos, ou seja, faz trabalho de controller dentro do arquivo do componente. Foi uma escolha consciente por seguir a arquitetura por módulos definida no `INSTRUCTIONS.md` do projeto, que organiza o código por funcionalidade em vez de por camada, mas reconheço que isso afasta o frontend do MVC estrito. Quem segue o padrão à risca é o backend, onde `routes.py`, `controllers/` e `services/` separam as camadas de forma bem mais clara.
+
 ## Funcionalidade adicional - Extrato consolidado
 
 A funcionalidade adicional que escolhi implementar, exigida pela seção 2.1, é o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado **nas três agências** e devolve o saldo somado, em uma única chamada.
