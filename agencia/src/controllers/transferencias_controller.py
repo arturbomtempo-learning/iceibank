@@ -108,12 +108,7 @@ def transferir():
             },
         )
         return (
-            jsonify(
-                {
-                    "erro": "Falha ao contatar agência de destino. Débito já aplicado - "
-                    "inconsistência conhecida (ver Sprint 4)."
-                }
-            ),
+            jsonify({"erro": "Falha ao contatar agência de destino. Débito já aplicado."}),
             502,
         )
 
