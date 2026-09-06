@@ -43,6 +43,9 @@ export const useAccountsStore = defineStore('accounts', () => {
             totalBalance.value = data.saldoTotal;
             unavailableAgencies.value = data.agenciasIndisponiveis;
             hasLoaded.value = true;
+        } catch {
+            accounts.value = [];
+            totalBalance.value = 0;
         } finally {
             isLoading.value = false;
         }

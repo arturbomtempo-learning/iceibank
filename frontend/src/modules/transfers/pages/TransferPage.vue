@@ -198,8 +198,9 @@ async function submit(): Promise<void> {
                             color: 'var(--color-text-muted)',
                         }"
                     >
-                        Se a agência de destino estiver fora do ar, o débito na origem já pode ter
-                        sido aplicado. Confira o saldo da conta de origem.
+                        A agência de destino não confirmou o crédito, seja porque está fora do ar ou
+                        porque a conta informada não existe lá. O débito na origem já pode ter sido
+                        aplicado, então confira o saldo antes de tentar de novo.
                     </p>
                 </div>
 
