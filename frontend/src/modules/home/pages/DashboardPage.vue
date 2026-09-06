@@ -45,6 +45,13 @@ const unavailableAgencyLabels = computed(() =>
         .join(', ')
 );
 
+const greetingName = computed(() => {
+    const holderName = accountsStore.accounts[0]?.nomeAluno?.trim();
+    const nameToShow = holderName || authStore.username;
+
+    return (nameToShow.split(' ')[0] ?? nameToShow).toUpperCase();
+});
+
 onMounted(() => {
     accountsStore.load();
 });
@@ -55,7 +62,7 @@ onMounted(() => {
         <header class="flex flex-wrap items-end justify-between gap-3">
             <div>
                 <h1 class="text-2xl font-semibold sm:text-[1.75rem]">
-                    Olá, {{ authStore.username }}
+                    Olá, {{ greetingName }}
                 </h1>
                 <p class="text-sm text-muted">
                     {{
