@@ -168,7 +168,7 @@ async function submit(): Promise<void> {
                         {{ outcome.status === 'success' ? 'Concluída' : 'Não concluída' }}
                     </span>
 
-                    <p class="mt-3 text-[0.9375rem] font-medium">{{ outcome.message }}</p>
+                    <p class="mt-3.5 text-[0.9375rem] font-semibold">{{ outcome.message }}</p>
 
                     <dl class="mt-5 flex flex-col gap-3 text-sm">
                         <div class="flex items-center justify-between gap-4">
@@ -190,14 +190,7 @@ async function submit(): Promise<void> {
                         </div>
                     </dl>
 
-                    <p
-                        v-if="outcome.status === 'failure'"
-                        class="mt-4 rounded-[var(--radius)] p-3 text-xs"
-                        :style="{
-                            backgroundColor: 'var(--color-surface-hover)',
-                            color: 'var(--color-text-muted)',
-                        }"
-                    >
+                    <p v-if="outcome.status === 'failure'" class="note mt-5 text-xs">
                         A agência de destino não confirmou o crédito, seja porque está fora do ar ou
                         porque a conta informada não existe lá. O débito na origem já pode ter sido
                         aplicado, então confira o saldo antes de tentar de novo.
@@ -209,8 +202,8 @@ async function submit(): Promise<void> {
                     class="card flex h-full flex-col items-center justify-center gap-2 px-6 py-12 text-center"
                 >
                     <div
-                        class="flex h-12 w-12 items-center justify-center rounded-full"
-                        :style="{ backgroundColor: 'var(--color-primary-soft)' }"
+                        class="flex h-14 w-14 items-center justify-center rounded-2xl"
+                        :style="{ backgroundColor: 'var(--color-brand-50)' }"
                     >
                         <svg
                             class="h-6 w-6"
@@ -224,7 +217,7 @@ async function submit(): Promise<void> {
                             <path d="M4 8h13m0 0-4-4m4 4-4 4M20 16H7m0 0 4 4m-4-4 4-4" />
                         </svg>
                     </div>
-                    <p class="mt-1 font-medium">Nenhuma transferência ainda</p>
+                    <p class="mt-2 font-semibold">Nenhuma transferência ainda</p>
                     <p class="text-sm text-muted">
                         O resultado aparece aqui, seja dentro da mesma agência ou entre agências.
                     </p>
@@ -233,7 +226,7 @@ async function submit(): Promise<void> {
         </div>
 
         <section v-else class="card px-6 py-12 text-center">
-            <p class="font-medium">Nenhuma conta disponível</p>
+            <p class="font-semibold">Nenhuma conta disponível</p>
             <p class="mt-1 text-sm text-muted">É preciso ter uma conta para enviar dinheiro.</p>
         </section>
     </div>

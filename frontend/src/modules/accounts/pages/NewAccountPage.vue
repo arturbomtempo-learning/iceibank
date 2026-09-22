@@ -107,12 +107,8 @@ async function submit(): Promise<void> {
 
                 <div
                     v-if="responsibleAgencyLabel"
-                    class="rounded-[var(--radius)] px-4 py-3 text-sm sm:col-span-2"
-                    :style="{
-                        backgroundColor: willReachResponsibleAgency
-                            ? 'var(--color-primary-soft)'
-                            : 'var(--color-surface-hover)',
-                    }"
+                    class="note text-sm sm:col-span-2"
+                    :class="willReachResponsibleAgency ? 'note-brand' : ''"
                 >
                     <template v-if="willReachResponsibleAgency">
                         Essa conta pertence à

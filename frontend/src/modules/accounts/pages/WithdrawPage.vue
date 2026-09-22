@@ -97,7 +97,7 @@ async function submit(): Promise<void> {
         </section>
 
         <section v-else class="card px-6 py-12 text-center">
-            <p class="font-medium">Nenhuma conta disponível</p>
+            <p class="font-semibold">Nenhuma conta disponível</p>
             <p class="mt-1 text-sm text-muted">É preciso ter ao menos uma conta para sacar.</p>
         </section>
     </div>

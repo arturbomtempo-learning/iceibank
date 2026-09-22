@@ -13,6 +13,12 @@ const router = useRouter();
 const authStore = useAuthStore();
 const toastStore = useToastStore();
 
+const highlights = [
+    'Saldo, depósito, saque e extrato em tempo real',
+    'Transferências dentro da agência e entre agências',
+    'Sessão autenticada por token nas três agências',
+];
+
 const { values, errors, isSubmitting, handleSubmit } = useForm<LoginDraft, LoginValues>(
     loginSchema,
     { username: '', password: '' }
@@ -32,52 +38,96 @@ async function submit(): Promise<void> {
 </script>
 
 <template>
-    <div class="grid min-h-screen lg:grid-cols-2">
-        <section
-            class="relative hidden flex-col justify-between overflow-hidden p-12 lg:flex"
-            :style="{ backgroundColor: 'var(--color-sidebar-bg)' }"
-        >
+    <div class="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+        <section class="surface-ink relative hidden flex-col justify-between p-12 xl:p-14 lg:flex">
+            <div class="grain pointer-events-none absolute inset-0 opacity-70" />
+
             <div
-                class="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full opacity-20 blur-3xl"
-                :style="{ backgroundColor: 'var(--color-primary)' }"
-            />
-            <div
-                class="pointer-events-none absolute -bottom-32 -left-20 h-80 w-80 rounded-full opacity-10 blur-3xl"
-                :style="{ backgroundColor: 'var(--color-primary-light)' }"
+                class="pointer-events-none absolute -right-24 -bottom-28 h-[26rem] w-[26rem] rounded-full opacity-[0.07]"
+                :style="{
+                    border: '1px solid #ffffff',
+                    boxShadow: '0 0 0 6rem rgba(255, 255, 255, 0.04) inset',
+                }"
             />
 
-            <AppLogo variant="light" size="md" />
+            <div class="relative z-10">
+                <AppLogo variant="light" size="md" />
+            </div>
 
-            <div class="relative z-10 max-w-md">
-                <h2 class="text-3xl leading-tight font-semibold text-white">
-                    Seu banco distribuído, em três agências independentes.
+            <div class="relative z-10 max-w-lg">
+                <span class="badge badge-onink">Sistemas distribuídos</span>
+
+                <h2
+                    class="display mt-5 text-[2.5rem] leading-[1.08] font-extrabold text-white xl:text-[2.85rem]"
+                >
+                    Seu banco em três agências
+                    <span :style="{ color: 'var(--color-accent)' }">independentes</span>.
                 </h2>
-                <p class="mt-4 text-[0.9375rem]" :style="{ color: 'var(--color-sidebar-muted)' }">
+
+                <p class="mt-5 text-[0.9375rem]" :style="{ color: 'var(--color-ink-muted)' }">
                     Cada agência responde pela sua própria partição de contas e conversa com as
                     demais para concluir transferências entre elas.
                 </p>
+
+                <ul class="mt-8 flex flex-col gap-3">
+                    <li
+                        v-for="highlight in highlights"
+                        :key="highlight"
+                        class="flex items-start gap-3 text-sm"
+                        :style="{ color: 'var(--color-ink-muted)' }"
+                    >
+                        <svg
+                            class="mt-0.5 h-[17px] w-[17px] shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            :stroke="'var(--color-accent)'"
+                            stroke-width="2.4"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="m4 12.5 5 5L20 6.5" />
+                        </svg>
+                        {{ highlight }}
+                    </li>
+                </ul>
             </div>
 
-            <div class="relative z-10 flex gap-8">
-                <div v-for="agency in [0, 1, 2]" :key="agency">
-                    <p class="text-2xl font-semibold text-white numeric">0{{ agency }}</p>
-                    <p class="text-xs" :style="{ color: 'var(--color-sidebar-muted)' }">Agência</p>
+            <div class="relative z-10 grid grid-cols-3 gap-3">
+                <div
+                    v-for="agency in [0, 1, 2]"
+                    :key="agency"
+                    class="rounded-[var(--radius-md)] border px-4 py-3.5"
+                    :style="{
+                        borderColor: 'var(--color-ink-line)',
+                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                    }"
+                >
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="h-1.5 w-1.5 rounded-full"
+                            :style="{ backgroundColor: 'var(--color-accent)' }"
+                        />
+                        <p class="display numeric text-xl font-extrabold text-white">
+                            0{{ agency }}
+                        </p>
+                    </div>
+                    <p class="mt-1 text-xs" :style="{ color: 'var(--color-ink-muted)' }">Agência</p>
                 </div>
             </div>
         </section>
 
-        <section class="flex items-center justify-center px-5 py-10 sm:px-8">
+        <section class="flex items-center justify-center px-5 py-12 sm:px-8">
             <div class="w-full max-w-sm">
-                <div class="mb-8 lg:hidden">
+                <div class="mb-9 lg:hidden">
                     <AppLogo size="md" />
                 </div>
 
-                <h1 class="text-2xl font-semibold">Acessar sua conta</h1>
-                <p class="mt-1.5 text-sm text-muted">
+                <h1 class="text-[1.75rem] leading-tight">Acessar sua conta</h1>
+                <p class="mt-2 text-sm text-muted">
                     Entre com suas credenciais para acessar o ICEIBank.
                 </p>
 
-                <form class="mt-7 flex flex-col gap-4" novalidate @submit.prevent="submit">
+                <form class="mt-8 flex flex-col gap-4" novalidate @submit.prevent="submit">
                     <BaseInput
                         v-model="values.username"
                         label="Usuário"
@@ -95,15 +145,26 @@ async function submit(): Promise<void> {
                         :error="errors.password"
                     />
 
-                    <button type="submit" class="btn mt-2" :disabled="isSubmitting">
-                        {{ isSubmitting ? 'Entrando...' : 'Entrar' }}
+                    <button type="submit" class="btn btn-block mt-2" :disabled="isSubmitting">
+                        <template v-if="isSubmitting">Entrando...</template>
+                        <template v-else>
+                            Entrar
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M5 12h13m0 0-5-5m5 5-5 5" />
+                            </svg>
+                        </template>
                     </button>
                 </form>
 
-                <p
-                    class="mt-6 rounded-[var(--radius)] px-4 py-3 text-xs text-muted"
-                    :style="{ backgroundColor: 'var(--color-surface-hover)' }"
-                >
+                <p class="note note-brand mt-7 text-xs">
                     Primeiro acesso? Entre como <strong>admin</strong> com a senha
                     <strong>admin1234</strong> para cadastrar correntistas e abrir contas.
                 </p>

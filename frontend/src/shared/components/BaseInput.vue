@@ -37,7 +37,7 @@ function handleInput(event: Event): void {
     <div class="flex flex-col gap-1.5">
         <label
             :for="inputId"
-            class="text-[0.8125rem] font-medium"
+            class="text-[0.8125rem] font-semibold"
             :style="{ color: 'var(--color-text)' }"
         >
             {{ label }}
@@ -66,7 +66,23 @@ function handleInput(event: Event): void {
             />
         </div>
 
-        <p v-if="error" class="text-xs font-medium" :style="{ color: 'var(--color-danger)' }">
+        <p
+            v-if="error"
+            class="flex items-center gap-1.5 text-xs font-medium"
+            :style="{ color: 'var(--color-danger)' }"
+        >
+            <svg
+                class="h-3.5 w-3.5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7.5v5M12 16h.01" />
+            </svg>
             {{ error }}
         </p>
         <p v-else-if="hint" class="text-xs text-muted">{{ hint }}</p>

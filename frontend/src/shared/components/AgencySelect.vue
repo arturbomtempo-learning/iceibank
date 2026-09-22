@@ -32,7 +32,7 @@ const selection = computed({
         <label
             v-if="label"
             :for="selectId"
-            class="text-[0.8125rem] font-medium"
+            class="text-[0.8125rem] font-semibold"
             :style="{ color: 'var(--color-text)' }"
         >
             {{ label }}

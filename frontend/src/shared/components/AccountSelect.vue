@@ -21,7 +21,7 @@ const { formatCurrency } = useCurrency();
     <div class="flex flex-col gap-1.5">
         <label
             :for="selectId"
-            class="text-[0.8125rem] font-medium"
+            class="text-[0.8125rem] font-semibold"
             :style="{ color: 'var(--color-text)' }"
         >
             {{ label }}

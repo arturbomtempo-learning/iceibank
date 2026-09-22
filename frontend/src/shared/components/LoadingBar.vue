@@ -13,7 +13,7 @@ const uiStore = useUiStore();
     >
         <div
             v-if="uiStore.isLoading"
-            class="fixed inset-x-0 top-0 z-60 h-0.5 overflow-hidden"
+            class="fixed inset-x-0 top-0 z-60 h-[3px] overflow-hidden"
             role="status"
             aria-label="Carregando"
         >
@@ -21,7 +21,8 @@ const uiStore = useUiStore();
                 class="h-full w-2/5 animate-[loading-slide_1.1s_ease-in-out_infinite]"
                 :style="{
                     background:
-                        'linear-gradient(90deg, transparent, var(--color-primary), var(--color-primary-light))',
+                        'linear-gradient(90deg, transparent, var(--color-brand-500), var(--color-accent))',
+                    boxShadow: '0 0 12px rgba(47, 193, 135, 0.7)',
                 }"
             />
         </div>
