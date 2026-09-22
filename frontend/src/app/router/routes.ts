@@ -4,6 +4,11 @@ import AppLayout from '@/shared/layouts/AppLayout.vue';
 
 export const routes: RouteRecordRaw[] = [
     {
+        path: '/',
+        name: 'home',
+        component: () => import('@/modules/landing/pages/LandingPage.vue'),
+    },
+    {
         path: '/login',
         name: 'login',
         component: () => import('@/modules/auth/pages/LoginPage.vue'),
@@ -15,7 +20,7 @@ export const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true },
         children: [
             {
-                path: '',
+                path: 'painel',
                 name: 'dashboard',
                 component: () => import('@/modules/home/pages/DashboardPage.vue'),
             },
@@ -50,6 +55,6 @@ export const routes: RouteRecordRaw[] = [
     },
     {
         path: '/:pathMatch(.*)*',
-        redirect: { name: 'dashboard' },
+        redirect: { name: 'home' },
     },
 ];
