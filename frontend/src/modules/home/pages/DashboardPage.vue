@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 
+import mascotHead from '@/assets/mascot/mascot-head.webp';
 import AgencySelect from '@/shared/components/AgencySelect.vue';
 import BalanceCard from '@/shared/components/BalanceCard.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
@@ -141,19 +142,15 @@ onMounted(() => {
             v-else-if="accountsStore.isEmpty"
             class="card flex flex-col items-center gap-2 px-6 py-14 text-center"
         >
-            <span class="op-glyph">
-                <svg
-                    class="h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.9"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M4 6h16v12H4zM4 10h16" />
-                </svg>
-            </span>
+            <img
+                :src="mascotHead"
+                width="320"
+                height="279"
+                alt=""
+                class="w-[88px]"
+                loading="lazy"
+                decoding="async"
+            />
             <p class="mt-2 font-semibold">Nenhuma conta no seu nome</p>
             <p class="max-w-sm text-sm text-muted">
                 {{

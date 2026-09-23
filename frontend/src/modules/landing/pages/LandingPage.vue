@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
+import mascotFullBody from '@/assets/mascot/mascot-full-body.webp';
 import AppLogo from '@/shared/components/AppLogo.vue';
 import { useAuthStore } from '@/shared/stores/auth.store';
 
@@ -691,39 +692,58 @@ onBeforeUnmount(() => {
         <section class="px-5 pb-20 sm:px-8 sm:pb-28">
             <div
                 data-reveal
-                class="reveal surface-ink relative mx-auto max-w-6xl overflow-hidden px-6 py-16 text-center sm:px-12 sm:py-20"
+                class="reveal surface-ink relative mx-auto max-w-6xl overflow-hidden px-6 py-14 sm:px-12 sm:py-16"
                 :style="{ borderRadius: 'var(--radius-xl)', boxShadow: 'var(--shadow-lg)' }"
             >
                 <div class="grain pointer-events-none absolute inset-0 opacity-70" />
 
-                <div class="relative z-10 mx-auto max-w-2xl">
-                    <h2
-                        class="text-[2rem] leading-tight font-extrabold text-white sm:text-[2.75rem]"
-                    >
-                        Entre e veja as três agências
-                        <span :style="{ color: 'var(--color-accent)' }">trabalhando juntas</span>.
-                    </h2>
-                    <p class="mt-5 text-[1.0625rem]" :style="{ color: 'var(--color-ink-muted)' }">
-                        Abra o internet banking, transfira entre agências diferentes e acompanhe o
-                        resultado chegando do outro lado da rede.
-                    </p>
+                <div
+                    class="relative z-10 grid items-center gap-10 text-center lg:grid-cols-[1.2fr_0.8fr] lg:gap-12 lg:text-left"
+                >
+                    <div class="mx-auto max-w-2xl lg:mx-0">
+                        <h2
+                            class="text-[2rem] leading-tight font-extrabold text-white sm:text-[2.75rem]"
+                        >
+                            Entre e veja as três agências
+                            <span :style="{ color: 'var(--color-accent)' }">trabalhando juntas</span
+                            >.
+                        </h2>
+                        <p
+                            class="mt-5 text-[1.0625rem]"
+                            :style="{ color: 'var(--color-ink-muted)' }"
+                        >
+                            Abra o internet banking, transfira entre agências diferentes e acompanhe
+                            o resultado chegando do outro lado da rede.
+                        </p>
 
-                    <div class="mt-9 flex flex-wrap justify-center gap-3">
-                        <RouterLink :to="primaryCta.route" class="btn">
-                            {{ primaryCta.label }}
-                        </RouterLink>
-                        <a href="#produto" class="btn btn-onink">Rever os recursos</a>
+                        <div class="mt-9 flex flex-wrap justify-center gap-3 lg:justify-start">
+                            <RouterLink :to="primaryCta.route" class="btn">
+                                {{ primaryCta.label }}
+                            </RouterLink>
+                            <a href="#produto" class="btn btn-onink">Rever os recursos</a>
+                        </div>
+
+                        <p
+                            v-if="!authStore.isAuthenticated"
+                            class="mt-8 text-[0.8125rem]"
+                            :style="{ color: 'var(--color-ink-muted)' }"
+                        >
+                            Primeiro acesso? Entre como
+                            <strong class="text-white">admin</strong> com a senha
+                            <strong class="text-white">admin1234</strong> para cadastrar
+                            correntistas e abrir contas.
+                        </p>
                     </div>
 
-                    <p
-                        v-if="!authStore.isAuthenticated"
-                        class="mt-8 text-[0.8125rem]"
-                        :style="{ color: 'var(--color-ink-muted)' }"
-                    >
-                        Primeiro acesso? Entre como <strong class="text-white">admin</strong> com a
-                        senha <strong class="text-white">admin1234</strong> para cadastrar
-                        correntistas e abrir contas.
-                    </p>
+                    <img
+                        :src="mascotFullBody"
+                        width="642"
+                        height="760"
+                        alt="Mascote do ICEIBank, um castor de moletom segurando um cartão do banco"
+                        class="mx-auto w-full max-w-[200px] lg:max-w-[280px]"
+                        loading="lazy"
+                        decoding="async"
+                    />
                 </div>
             </div>
         </section>
