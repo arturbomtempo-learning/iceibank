@@ -29,12 +29,10 @@ ORIGENS_PERMITIDAS = os.environ.get(
 
 
 def agencia_responsavel(id_conta):
-    """Partição: cada conta pertence a exatamente uma agência."""
     return id_conta % NUMERO_AGENCIAS
 
 
 def agencia_por_id(id_agencia):
-    """Retorna a configuração da agência, ou None se o id não existir."""
     for agencia in AGENCIAS:
         if agencia["id"] == id_agencia:
             return agencia

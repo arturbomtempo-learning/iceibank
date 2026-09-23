@@ -175,7 +175,6 @@ onMounted(() => {
         <section>
             <h2 class="eyebrow mb-4">O que você quer fazer</h2>
 
-            <!-- Barra única de atalhos, separada por fios: padrão de app bancário -->
             <div class="card overflow-hidden">
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
                     <RouterLink
@@ -203,7 +202,6 @@ onMounted(() => {
 
                         <span class="text-[0.8125rem] font-semibold">{{ action.label }}</span>
 
-                        <!-- Barra diagonal da marca, revelada no hover -->
                         <span
                             class="motif-rule absolute inset-x-0 bottom-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                         />

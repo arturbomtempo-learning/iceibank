@@ -5,7 +5,6 @@ from services import auth_service, repositorio_usuarios
 
 
 def _estado():
-    """Estado compartilhado da agência (equivalente ao req.app.locals do Express)."""
     return (
         current_app.config["CONTAS"],
         current_app.config["RELOGIO"],
@@ -15,12 +14,10 @@ def _estado():
 
 
 def _numero_valido(valor):
-    """Python é mais rígido que o JavaScript com tipos, então validamos antes de somar."""
     return isinstance(valor, (int, float)) and not isinstance(valor, bool)
 
 
 def _sem_permissao():
-    """403: quem chamou está autenticado, mas a conta não é dele."""
     return jsonify({"erro": "Você não tem permissão para operar esta conta."}), 403
 
 

@@ -12,13 +12,11 @@ async function transferir(req, res) {
 
     const agenciaDestino = config.agenciaResponsavel(idDestino);
 
-    // O débito é sempre local, pois esta agência é a dona da conta de origem
     const tsDebito = relogio.eventoLocal();
     contaOrigem.saldo -= valor;
     registro.registrar('TRANSFERENCIA_DEBITO', tsDebito, { idOrigem, idDestino, valor });
 
     if (agenciaDestino === idAgencia) {
-        // Caso simples: mesma agência, credita direto
         const contaDestino = contas.get(idDestino);
 
         if (!contaDestino) {
@@ -33,7 +31,6 @@ async function transferir(req, res) {
         return res.json({ mensagem: 'Transferência concluída (mesma agência).' });
     }
 
-    // Caso entre agências: chama a agência de destino diretamente via REST
     const tsEnvio = relogio.aoEnviar();
     const urlDestino = config.AGENCIAS.find((a) => a.id === agenciaDestino).url;
 
@@ -45,11 +42,6 @@ async function transferir(req, res) {
         });
         res.json({ mensagem: 'Transferência concluída (entre agências).' });
     } catch (erro) {
-        // LIMITAÇÃO CONHECIDA: se esta chamada falhar, o débito já aplicado acima
-        // NÃO é revertido - o dinheiro "desaparece" temporariamente. Resolver isso
-        // de forma correta (garantir atomicidade mesmo sob falha) é o assunto do
-        // Sprint 4, com uma transação distribuída de verdade (2PC/Saga). Por
-        // enquanto, só registramos a inconsistência no log.
         registro.registrar('TRANSFERENCIA_FALHOU', relogio.eventoLocal(), {
             idOrigem,
             idDestino,
@@ -67,8 +59,6 @@ async function creditarRemoto(req, res) {
     const idConta = parseInt(req.params.id, 10);
     const { valor, timestampLamport, origemAgencia } = req.body;
 
-    // Ao RECEBER uma mensagem de outra agência, o relógio de Lamport é
-    // atualizado com base no timestamp recebido - é a regra 3 do algoritmo.
     const ts = relogio.aoReceber(timestampLamport);
 
     const conta = contas.get(idConta);

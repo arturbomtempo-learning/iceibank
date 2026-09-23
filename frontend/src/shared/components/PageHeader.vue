@@ -2,9 +2,7 @@
 defineProps<{
     title: string;
     subtitle?: string;
-    /** Agrupa a operação (Movimentação, Transferência, Gerência). */
     group?: string;
-    /** Caminho de um ícone de traço 24x24. */
     icon?: string;
 }>();
 </script>

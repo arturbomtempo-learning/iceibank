@@ -7,13 +7,6 @@ from services import auth_service
 
 
 def _autenticar(tipos_permitidos):
-    """Autenticação: valida assinatura, expiração e tipo do token.
-
-    Devolve (payload, None) quando o token serve, ou (None, resposta_de_erro)
-    quando não serve. Token ausente, inválido ou expirado é 401 ("não sei quem
-    você é"); token válido mas do tipo errado para a rota é 403 ("sei quem você
-    é, mas esse token não vale aqui").
-    """
     cabecalho = request.headers.get("Authorization", "")
     if not cabecalho.startswith("Bearer "):
         return None, (jsonify({"erro": "Token ausente. Envie 'Authorization: Bearer <token>'."}), 401)
@@ -34,8 +27,6 @@ def _autenticar(tipos_permitidos):
 
 
 def requer_autenticacao(view_func):
-    """Exige apenas um token de usuário válido, sem restringir papel."""
-
     @wraps(view_func)
     def rota_protegida(*args, **kwargs):
         payload, erro = _autenticar(("usuario",))
@@ -49,8 +40,6 @@ def requer_autenticacao(view_func):
 
 
 def requer_admin(view_func):
-    """Autoriza por papel: além de autenticado, precisa ser o gerente da agência."""
-
     @wraps(view_func)
     def rota_protegida(*args, **kwargs):
         payload, erro = _autenticar(("usuario",))
@@ -67,8 +56,6 @@ def requer_admin(view_func):
 
 
 def requer_servico(view_func):
-    """Só aceita o token interno emitido por outra agência (rota creditar-remoto)."""
-
     @wraps(view_func)
     def rota_protegida(*args, **kwargs):
         payload, erro = _autenticar(("servico",))

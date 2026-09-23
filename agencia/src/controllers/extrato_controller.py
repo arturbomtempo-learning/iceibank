@@ -25,8 +25,6 @@ def _contas_locais(usuario, e_admin):
 
 
 def _contas_de_outra_agencia(id_agencia_destino, usuario, id_agencia_origem):
-    """Pergunta a outra agência quais contas daquele usuário ela guarda, usando um
-    token de serviço próprio em vez de repassar o token de quem fez o login."""
     url_destino = config.agencia_por_id(id_agencia_destino)["url"]
     token_servico = auth_service.gerar_token_servico(id_agencia_origem)
 
@@ -41,8 +39,6 @@ def _contas_de_outra_agencia(id_agencia_destino, usuario, id_agencia_origem):
 
 
 def listar_contas_para_servico(usuario):
-    """Rota interna: só outra agência chama, com token de serviço. O papel vem do
-    repositório de usuários, e não de um campo que a agência chamadora poderia forjar."""
     dados_usuario = repositorio_usuarios.buscar(usuario)
     e_admin = dados_usuario is not None and dados_usuario["papel"] == auth_service.PAPEL_ADMIN
 
@@ -50,8 +46,6 @@ def listar_contas_para_servico(usuario):
 
 
 def extrato_consolidado():
-    """Funcionalidade adicional (seção 2.1): junta as contas do usuário nas três
-    agências e devolve o saldo somado, mesmo estando em partições diferentes."""
     _, id_agencia = _estado()
 
     usuario = request.token_payload.get("sub")

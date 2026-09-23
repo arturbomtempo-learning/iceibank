@@ -46,9 +46,6 @@ def _gravar_arquivo(usuarios):
 
 
 def _carregar():
-    """As contas são particionadas entre as agências, mas as credenciais não: as 3
-    agências leem este mesmo arquivo, então um correntista cadastrado em uma delas
-    consegue entrar e receber conta em qualquer outra."""
     usuarios = _ler_arquivo()
 
     if not usuarios:
@@ -70,7 +67,6 @@ def existe(usuario):
 
 
 def criar_cliente(usuario, senha):
-    """Cadastra um correntista. Retorna False se o usuário já existir."""
     with _lock:
         usuarios = _carregar()
 

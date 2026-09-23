@@ -39,7 +39,9 @@ async function submit(): Promise<void> {
 
 <template>
     <div class="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
-        <section class="surface-ink relative hidden flex-col justify-between p-12 xl:p-14 lg:flex">
+        <section
+            class="surface-ink relative hidden flex-col justify-between overflow-hidden p-12 lg:flex xl:p-14"
+        >
             <div class="grain pointer-events-none absolute inset-0 opacity-70" />
 
             <div
@@ -50,9 +52,13 @@ async function submit(): Promise<void> {
                 }"
             />
 
-            <div class="relative z-10">
+            <RouterLink
+                :to="{ name: 'home' }"
+                class="relative z-10 self-start"
+                aria-label="Ir para a página inicial"
+            >
                 <AppLogo variant="light" size="md" />
-            </div>
+            </RouterLink>
 
             <div class="relative z-10 max-w-lg">
                 <span class="badge badge-onink">Sistemas distribuídos</span>
@@ -118,9 +124,13 @@ async function submit(): Promise<void> {
 
         <section class="flex items-center justify-center px-5 py-12 sm:px-8">
             <div class="w-full max-w-sm">
-                <div class="mb-9 lg:hidden">
+                <RouterLink
+                    :to="{ name: 'home' }"
+                    class="mb-9 inline-block lg:hidden"
+                    aria-label="Ir para a página inicial"
+                >
                     <AppLogo size="md" />
-                </div>
+                </RouterLink>
 
                 <h1 class="text-[1.75rem] leading-tight">Acessar sua conta</h1>
                 <p class="mt-2 text-sm text-muted">

@@ -6,7 +6,6 @@ from services import auth_service
 
 
 def _estado():
-    """Estado compartilhado da agência (equivalente ao req.app.locals do Express)."""
     return (
         current_app.config["CONTAS"],
         current_app.config["RELOGIO"],
@@ -16,7 +15,6 @@ def _estado():
 
 
 def _resumir_erro(erro, url_destino):
-    """Resume a exceção do requests, que por padrão gera um texto muito longo."""
     resposta = getattr(erro, "response", None)
 
     if resposta is not None:

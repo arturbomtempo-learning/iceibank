@@ -76,13 +76,13 @@ function signOut(): void {
             :class="isMenuOpen ? 'translate-x-0' : '-translate-x-full'"
         >
             <div class="relative z-10 flex h-[4.5rem] items-center px-5">
-                <AppLogo variant="light" size="sm" />
+                <RouterLink :to="{ name: 'dashboard' }" aria-label="Ir para o início">
+                    <AppLogo variant="light" size="sm" />
+                </RouterLink>
             </div>
 
             <nav class="relative z-10 flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
-                <p class="section-title mb-1.5 px-3.5" :style="{ color: 'var(--color-ink-muted)' }">
-                    Menu
-                </p>
+                <p class="eyebrow eyebrow-onink mb-1.5 px-3.5">Menu</p>
 
                 <RouterLink
                     v-for="item in navigationItems"

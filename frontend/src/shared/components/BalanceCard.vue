@@ -36,9 +36,7 @@ const { formatCurrency } = useCurrency();
 
         <div class="relative z-10 flex items-start justify-between gap-4">
             <div class="min-w-0">
-                <p class="section-title" :style="{ color: 'var(--color-ink-muted)' }">
-                    Saldo disponível
-                </p>
+                <p class="eyebrow eyebrow-onink">Saldo disponível</p>
 
                 <div class="mt-2 flex items-center gap-3">
                     <p

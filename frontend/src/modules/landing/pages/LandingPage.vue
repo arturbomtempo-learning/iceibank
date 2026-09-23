@@ -124,6 +124,12 @@ function handleScroll(): void {
     isScrolled.value = window.scrollY > 8;
 }
 
+function scrollToTop(): void {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+}
+
 onMounted(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
@@ -157,7 +163,6 @@ onBeforeUnmount(() => {
 
 <template>
     <div ref="root" class="min-h-screen">
-        <!-- ================= Navegação ================= -->
         <header
             class="fixed inset-x-0 top-0 z-50 transition-all duration-300"
             :style="
@@ -171,7 +176,11 @@ onBeforeUnmount(() => {
             "
         >
             <div class="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-8 px-5 sm:px-8">
-                <RouterLink :to="{ name: 'home' }" aria-label="ICEIBank">
+                <RouterLink
+                    :to="{ name: 'home' }"
+                    aria-label="ICEIBank, voltar ao topo"
+                    @click="scrollToTop"
+                >
                     <AppLogo :variant="isScrolled ? 'dark' : 'light'" size="sm" />
                 </RouterLink>
 
@@ -250,7 +259,6 @@ onBeforeUnmount(() => {
             </div>
         </header>
 
-        <!-- ================= Hero ================= -->
         <section class="surface-ink relative overflow-hidden pt-[4.5rem]">
             <div class="grain pointer-events-none absolute inset-0 opacity-70" />
 
@@ -337,7 +345,6 @@ onBeforeUnmount(() => {
                     </dl>
                 </div>
 
-                <!-- Visual do hero -->
                 <div class="relative mx-auto w-full max-w-sm lg:max-w-none">
                     <div
                         class="float-slow card relative z-10 p-6"
@@ -348,7 +355,7 @@ onBeforeUnmount(() => {
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="section-title">Extrato consolidado</p>
+                                <p class="eyebrow">Extrato consolidado</p>
                                 <p class="display numeric mt-2 text-3xl font-extrabold">
                                     R$ 3.750,00
                                 </p>
@@ -448,7 +455,6 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ================= Produto ================= -->
         <section id="produto" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
             <div class="grid gap-12 lg:grid-cols-[0.95fr_1fr] lg:gap-16">
                 <div>
@@ -463,7 +469,6 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
 
-                    <!-- Destaque: a funcionalidade autoral do projeto -->
                     <article
                         data-reveal
                         class="reveal surface-ink relative mt-10 overflow-hidden p-6 sm:p-7"
@@ -522,7 +527,6 @@ onBeforeUnmount(() => {
                     </article>
                 </div>
 
-                <!-- Demais recursos: lista editorial, sem repetição de ícones -->
                 <ul class="lg:pt-2">
                     <li
                         v-for="(capability, index) in capabilities"
@@ -548,7 +552,6 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ================= Arquitetura ================= -->
         <section
             id="arquitetura"
             class="scroll-mt-24"
@@ -571,7 +574,6 @@ onBeforeUnmount(() => {
                         </p>
                     </div>
 
-                    <!-- Mapa da partição -->
                     <div data-reveal class="reveal">
                         <div class="flex items-baseline justify-between gap-4">
                             <p class="eyebrow">Onde cada conta vive</p>
@@ -646,7 +648,6 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ================= Segurança ================= -->
         <section id="seguranca" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
             <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div data-reveal class="reveal">
@@ -687,7 +688,6 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ================= Chamada final ================= -->
         <section class="px-5 pb-20 sm:px-8 sm:pb-28">
             <div
                 data-reveal
@@ -728,49 +728,46 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- ================= Rodapé ================= -->
         <footer class="border-t" :style="{ borderColor: 'var(--color-border)' }">
-            <div
-                class="mx-auto flex max-w-6xl flex-col gap-8 px-5 py-12 sm:px-8 md:flex-row md:items-start md:justify-between"
-            >
-                <div class="max-w-xs">
-                    <AppLogo size="sm" />
-                    <p class="mt-4 text-sm text-muted">
-                        Banco simplificado dividido em agências, construído para aplicar conceitos
-                        de Sistemas Distribuídos em um sistema que realmente funciona.
-                    </p>
-                </div>
+            <div class="mx-auto max-w-6xl px-5 py-14 sm:px-8">
+                <div class="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
+                    <div class="max-w-sm">
+                        <RouterLink
+                            :to="{ name: 'home' }"
+                            class="inline-block"
+                            aria-label="ICEIBank, voltar ao topo"
+                            @click="scrollToTop"
+                        >
+                            <AppLogo size="sm" />
+                        </RouterLink>
+                        <p class="mt-4 text-sm text-muted">
+                            Internet banking distribuído em três agências independentes, com saldo
+                            consolidado, transferências entre agências e sessão autenticada.
+                        </p>
+                    </div>
 
-                <div class="flex flex-wrap gap-12">
                     <div>
-                        <p class="section-title">Navegar</p>
-                        <ul class="mt-4 flex flex-col gap-2.5">
+                        <p class="eyebrow">O banco</p>
+                        <ul class="mt-4 flex flex-col gap-3">
                             <li v-for="link in navLinks" :key="link.href">
-                                <a
-                                    :href="link.href"
-                                    class="text-sm no-underline"
-                                    :style="{ color: 'var(--color-text-muted)' }"
-                                >
-                                    {{ link.label }}
-                                </a>
-                            </li>
-                            <li>
-                                <RouterLink
-                                    :to="primaryCta.route"
-                                    class="text-sm no-underline"
-                                    :style="{ color: 'var(--color-text-muted)' }"
-                                >
-                                    {{ primaryCta.label }}
-                                </RouterLink>
+                                <a :href="link.href" class="link-nav text-sm">{{ link.label }}</a>
                             </li>
                         </ul>
                     </div>
 
                     <div>
-                        <p class="section-title">Projeto</p>
-                        <ul class="mt-4 flex flex-col gap-2.5 text-sm text-muted">
-                            <li>Flask · Vue 3 · Tailwind</li>
-                            <li>Licença MIT</li>
+                        <p class="eyebrow">Sua conta</p>
+                        <ul class="mt-4 flex flex-col gap-3">
+                            <li>
+                                <RouterLink :to="primaryCta.route" class="link-nav text-sm">
+                                    {{ primaryCta.label }}
+                                </RouterLink>
+                            </li>
+                            <li>
+                                <a href="#seguranca" class="link-nav text-sm">
+                                    Segurança da sua conta
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -778,13 +775,16 @@ onBeforeUnmount(() => {
 
             <div class="border-t" :style="{ borderColor: 'var(--color-border)' }">
                 <div
-                    class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-6 sm:px-8"
+                    class="mx-auto flex max-w-6xl flex-col gap-3 px-5 py-6 sm:px-8 md:flex-row md:items-center md:justify-between"
                 >
-                    <p class="text-xs text-muted">
-                        Projeto acadêmico de Laboratório de Desenvolvimento de Aplicações Móveis e
-                        Distribuídas. Não é uma instituição financeira.
+                    <p class="max-w-2xl text-xs text-muted">
+                        O ICEIBank é um projeto acadêmico e não é uma instituição financeira
+                        autorizada a funcionar no país. Os valores exibidos não representam dinheiro
+                        real.
                     </p>
-                    <p class="text-xs text-muted">© 2026 ICEIBank</p>
+                    <p class="shrink-0 text-xs text-muted">
+                        © 2026 ICEIBank. Todos os direitos reservados.
+                    </p>
                 </div>
             </div>
         </footer>

@@ -4,8 +4,6 @@ from datetime import datetime, timezone
 
 
 class RegistroEventos:
-    """Grava um evento por linha em data/eventos-<agencia>.jsonl (formato JSON Lines)."""
-
     def __init__(self, nome_agencia):
         self.nome_agencia = nome_agencia
 
