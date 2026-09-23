@@ -113,6 +113,8 @@ async function submit(): Promise<void> {
     <div class="flex flex-col gap-6">
         <PageHeader
             title="Transferir"
+            group="Transferência"
+            icon="M4 8h13m0 0-4-4m4 4-4 4M20 16H7m0 0 4 4m-4-4 4-4"
             subtitle="Escolha de qual conta sai o dinheiro e informe a conta de destino."
         />
 
@@ -201,22 +203,19 @@ async function submit(): Promise<void> {
                     v-else
                     class="card flex h-full flex-col items-center justify-center gap-2 px-6 py-12 text-center"
                 >
-                    <div
-                        class="flex h-14 w-14 items-center justify-center rounded-2xl"
-                        :style="{ backgroundColor: 'var(--color-brand-50)' }"
-                    >
+                    <span class="op-glyph">
                         <svg
-                            class="h-6 w-6"
+                            class="h-5 w-5"
                             viewBox="0 0 24 24"
                             fill="none"
-                            stroke="var(--color-primary)"
-                            stroke-width="1.8"
+                            stroke="currentColor"
+                            stroke-width="1.9"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                         >
                             <path d="M4 8h13m0 0-4-4m4 4-4 4M20 16H7m0 0 4 4m-4-4 4-4" />
                         </svg>
-                    </div>
+                    </span>
                     <p class="mt-2 font-semibold">Nenhuma transferência ainda</p>
                     <p class="text-sm text-muted">
                         O resultado aparece aqui, seja dentro da mesma agência ou entre agências.

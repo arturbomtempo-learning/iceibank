@@ -68,6 +68,8 @@ async function submit(): Promise<void> {
     <div class="flex flex-col gap-6">
         <PageHeader
             title="Abrir conta"
+            group="Gerência"
+            icon="M12 5v14M5 12h14"
             subtitle="Operação exclusiva do gerente. A conta é criada na agência responsável pelo número informado."
         />
 

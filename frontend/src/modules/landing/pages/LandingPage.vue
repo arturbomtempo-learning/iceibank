@@ -37,60 +37,75 @@ const metrics = [
     { value: '1h', label: 'de validade do token', detail: 'Sessão assinada e expirável' },
 ];
 
-const features = [
-    {
-        title: 'Extrato consolidado',
-        description:
-            'Suas contas nas três agências somadas em uma única chamada. Se uma agência cair, o extrato avisa o que ficou de fora em vez de mentir o total.',
-        icon: 'M4 6h16M4 12h16M4 18h10',
-    },
+const highlight = {
+    title: 'Extrato consolidado',
+    description:
+        'Somar saldos de contas espalhadas por agências diferentes não é trivial: a partição garante que nenhuma agência sozinha tenha essa informação. O extrato só responde conversando com as outras duas pela rede.',
+    rows: [
+        { agency: 'Agência 0', amount: 'R$ 2.500,00', available: true },
+        { agency: 'Agência 1', amount: 'R$ 800,00', available: true },
+        { agency: 'Agência 2', amount: 'Indisponível', available: false },
+    ],
+    partial: 'R$ 3.300,00',
+};
+
+const capabilities = [
     {
         title: 'Transferência entre agências',
         description:
-            'Você informa origem, destino e valor. O banco decide sozinho se resolve internamente ou se precisa falar com outra agência pela rede.',
-        icon: 'M4 8h13m0 0-4-4m4 4-4 4M20 16H7m0 0 4 4m-4-4 4-4',
+            'Você informa origem, destino e valor. O banco decide sozinho se resolve a operação em memória ou se precisa atravessar a rede até outra agência.',
     },
     {
         title: 'Roteamento automático',
         description:
             'Nenhuma escolha manual de agência. O aplicativo descobre quem atende cada conta e envia a requisição para o endereço certo.',
-        icon: 'M3 12h7l4-6h7m0 0-3-3m3 3-3 3M10 12l4 6h7m0 0-3-3m3 3-3 3',
     },
     {
         title: 'Autenticação por token',
         description:
             'Login com senha em hash e token assinado com expiração. Token ausente, inválido ou vencido é recusado antes de tocar em qualquer saldo.',
-        icon: 'M12 3l7.5 3.5v5c0 4.3-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5.2-7.5-9.5v-5L12 3Z',
     },
     {
         title: 'Autorização em três camadas',
         description:
             'Papel de gerente para abrir contas, posse do recurso para movimentar saldo e um token de serviço separado para as chamadas entre agências.',
-        icon: 'M12 3l7.5 3.5v5c0 4.3-3.1 8.2-7.5 9.5-4.4-1.3-7.5-5.2-7.5-9.5v-5L12 3ZM9.5 12l1.8 1.8 3.4-3.4',
     },
     {
         title: 'Ordem causal preservada',
         description:
-            'Cada operação recebe um timestamp lógico de Lamport. Os logs das três agências se juntam em uma linha do tempo única e auditável.',
-        icon: 'M12 7v5l3.2 1.9M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z',
+            'Cada operação recebe um carimbo lógico. Os registros das três agências se juntam em uma linha do tempo única e auditável.',
     },
 ];
 
+type AgencyTint = { background: string; color: string };
+
+const agencyTints: AgencyTint[] = [
+    { background: 'var(--color-brand-700)', color: '#ffffff' },
+    { background: 'var(--color-brand-400)', color: '#ffffff' },
+    { background: 'var(--color-brand-100)', color: 'var(--color-brand-800)' },
+];
+
+const fallbackTint: AgencyTint = {
+    background: 'var(--color-surface-sunken)',
+    color: 'inherit',
+};
+
+function tintForAccount(accountId: number): AgencyTint {
+    return agencyTints[accountId % agencyTints.length] ?? fallbackTint;
+}
+
 const steps = [
     {
-        number: '01',
         title: 'A conta escolhe a agência',
         description:
             'O número da conta define quem a guarda, pela regra id % 3. Nenhuma agência conhece as contas das outras, e recusa explicitamente operar o que não é seu.',
     },
     {
-        number: '02',
         title: 'A operação encontra o caminho',
         description:
             'Transferência na mesma agência é resolvida em memória. Entre agências, a origem debita e chama a agência de destino pela rede para creditar.',
     },
     {
-        number: '03',
         title: 'O evento entra na linha do tempo',
         description:
             'Cada passo é registrado com seu timestamp lógico. Mesmo sem relógio global, a ordem causal entre processos independentes se mantém legível.',
@@ -102,7 +117,7 @@ const securityPoints = [
     'Token de sessão assinado, com expiração de uma hora',
     'Chamadas internas usam token de serviço de curta duração, sem identidade de usuário',
     'A rota interna não confia no papel informado por quem chama: ela consulta o repositório',
-    'HTTP 401 e 403 distinguidos — "não sei quem você é" não é o mesmo que "você não pode"',
+    'HTTP 401 e 403 distinguidos: "não sei quem você é" não é o mesmo que "você não pode"',
 ];
 
 function handleScroll(): void {
@@ -257,7 +272,7 @@ onBeforeUnmount(() => {
                             class="h-1.5 w-1.5 rounded-full"
                             :style="{ backgroundColor: 'var(--color-accent)' }"
                         />
-                        Sprint 1 · Relógio lógico de Lamport
+                        Internet banking distribuído
                     </span>
 
                     <h1
@@ -435,45 +450,101 @@ onBeforeUnmount(() => {
 
         <!-- ================= Produto ================= -->
         <section id="produto" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
-            <div data-reveal class="reveal max-w-2xl">
-                <p class="section-title">O produto</p>
-                <h2 class="mt-3 text-[2rem] leading-tight sm:text-[2.5rem]">
-                    Tudo o que um internet banking precisa ter — e o que quase nenhum mostra.
-                </h2>
-                <p class="mt-4 text-[1.0625rem] text-muted">
-                    A complexidade fica no backend. Na tela, a pessoa vê saldo, transfere e saca sem
-                    nunca precisar saber que existem três servidores conversando.
-                </p>
-            </div>
+            <div class="grid gap-12 lg:grid-cols-[0.95fr_1fr] lg:gap-16">
+                <div>
+                    <div data-reveal class="reveal">
+                        <p class="eyebrow">O produto</p>
+                        <h2 class="mt-4 text-[2rem] leading-[1.12] sm:text-[2.5rem]">
+                            A complexidade fica no backend. Na tela, fica só o banco.
+                        </h2>
+                        <p class="mt-5 text-[1.0625rem] text-muted">
+                            A pessoa vê saldo, transfere e saca sem nunca precisar saber que existem
+                            três servidores conversando por baixo.
+                        </p>
+                    </div>
 
-            <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                <article
-                    v-for="(feature, index) in features"
-                    :key="feature.title"
-                    data-reveal
-                    class="reveal card card-interactive p-6"
-                    :style="{ transitionDelay: `${index * 60}ms` }"
-                >
-                    <span
-                        class="flex h-11 w-11 items-center justify-center rounded-2xl"
-                        :style="{ backgroundColor: 'var(--color-brand-50)' }"
+                    <!-- Destaque: a funcionalidade autoral do projeto -->
+                    <article
+                        data-reveal
+                        class="reveal surface-ink relative mt-10 overflow-hidden p-6 sm:p-7"
+                        :style="{ borderRadius: 'var(--radius-lg)' }"
                     >
-                        <svg
-                            class="h-5 w-5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="var(--color-primary)"
-                            stroke-width="1.8"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <path :d="feature.icon" />
-                        </svg>
-                    </span>
+                        <div class="grain pointer-events-none absolute inset-0 opacity-50" />
 
-                    <h3 class="mt-5 text-[1.0625rem]">{{ feature.title }}</h3>
-                    <p class="mt-2 text-sm text-muted">{{ feature.description }}</p>
-                </article>
+                        <div class="relative z-10">
+                            <div class="flex items-center gap-3">
+                                <span class="ordinal ordinal-onink">01</span>
+                                <span class="badge badge-onink">Funcionalidade autoral</span>
+                            </div>
+                            <h3 class="mt-4 text-[1.25rem] text-white">{{ highlight.title }}</h3>
+                            <p class="mt-3 text-sm" :style="{ color: 'var(--color-ink-muted)' }">
+                                {{ highlight.description }}
+                            </p>
+
+                            <ul class="mt-6">
+                                <li
+                                    v-for="row in highlight.rows"
+                                    :key="row.agency"
+                                    class="flex items-center justify-between gap-4 border-b py-3"
+                                    :style="{ borderColor: 'rgba(255, 255, 255, 0.1)' }"
+                                >
+                                    <span class="text-[0.8125rem] font-medium text-white">
+                                        {{ row.agency }}
+                                    </span>
+                                    <span
+                                        v-if="row.available"
+                                        class="numeric text-[0.8125rem] font-semibold text-white"
+                                    >
+                                        {{ row.amount }}
+                                    </span>
+                                    <span v-else class="badge badge-danger">{{ row.amount }}</span>
+                                </li>
+                            </ul>
+
+                            <div class="mt-4 flex items-baseline justify-between gap-4">
+                                <p class="text-xs" :style="{ color: 'var(--color-ink-muted)' }">
+                                    Total do que respondeu
+                                </p>
+                                <p
+                                    class="display numeric text-xl font-extrabold"
+                                    :style="{ color: 'var(--color-accent)' }"
+                                >
+                                    {{ highlight.partial }}
+                                </p>
+                            </div>
+
+                            <p class="mt-3 text-xs" :style="{ color: 'var(--color-ink-muted)' }">
+                                Quando uma agência não responde, o extrato diz quais ficaram de fora
+                                em vez de apresentar um total incompleto como se fosse o número
+                                certo.
+                            </p>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Demais recursos: lista editorial, sem repetição de ícones -->
+                <ul class="lg:pt-2">
+                    <li
+                        v-for="(capability, index) in capabilities"
+                        :key="capability.title"
+                        data-reveal
+                        class="reveal border-t py-6 last:pb-0"
+                        :style="{
+                            borderColor: 'var(--color-border)',
+                            transitionDelay: `${index * 60}ms`,
+                        }"
+                    >
+                        <div class="flex gap-5">
+                            <p class="ordinal shrink-0 pt-1">
+                                {{ String(index + 2).padStart(2, '0') }}
+                            </p>
+                            <div>
+                                <h3 class="text-[1.0625rem]">{{ capability.title }}</h3>
+                                <p class="mt-2 text-sm text-muted">{{ capability.description }}</p>
+                            </div>
+                        </div>
+                    </li>
+                </ul>
             </div>
         </section>
 
@@ -483,79 +554,93 @@ onBeforeUnmount(() => {
             class="scroll-mt-24"
             :style="{ backgroundColor: 'var(--color-surface)' }"
         >
-            <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
-                <div data-reveal class="reveal max-w-2xl">
-                    <p class="section-title">Arquitetura</p>
-                    <h2 class="mt-3 text-[2rem] leading-tight sm:text-[2.5rem]">
-                        Contas particionadas, não replicadas.
-                    </h2>
-                    <p class="mt-4 text-[1.0625rem] text-muted">
-                        Cada conta pertence a exatamente uma agência. É dessa decisão que nasce todo
-                        o resto: a chamada pela rede, o relógio lógico e o extrato que precisa
-                        conversar com os vizinhos.
-                    </p>
-                </div>
+            <div class="motif-rule h-8 opacity-60" />
 
-                <div data-reveal class="reveal mt-12 grid gap-4 sm:grid-cols-3">
-                    <div
-                        v-for="agency in [0, 1, 2]"
-                        :key="agency"
-                        class="card relative overflow-hidden p-6"
-                    >
-                        <div class="flex items-center justify-between gap-3">
-                            <p class="display numeric text-2xl font-extrabold">0{{ agency }}</p>
-                            <span
-                                class="h-2 w-2 rounded-full"
-                                :style="{ backgroundColor: 'var(--color-brand-500)' }"
-                            />
+            <div class="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
+                <div class="grid gap-12 lg:grid-cols-[0.85fr_1fr] lg:gap-16">
+                    <div data-reveal class="reveal">
+                        <p class="eyebrow">Arquitetura</p>
+                        <h2 class="mt-4 text-[2rem] leading-[1.12] sm:text-[2.5rem]">
+                            Contas particionadas, não replicadas.
+                        </h2>
+                        <p class="mt-5 text-[1.0625rem] text-muted">
+                            Cada conta pertence a exatamente uma agência, definida pelo resto da
+                            divisão do seu número por três. É dessa decisão que nasce todo o resto:
+                            a chamada pela rede, o carimbo lógico e o extrato que precisa conversar
+                            com os vizinhos.
+                        </p>
+                    </div>
+
+                    <!-- Mapa da partição -->
+                    <div data-reveal class="reveal">
+                        <div class="flex items-baseline justify-between gap-4">
+                            <p class="eyebrow">Onde cada conta vive</p>
+                            <p
+                                class="numeric text-xs font-bold"
+                                :style="{ color: 'var(--color-primary)' }"
+                            >
+                                id % 3
+                            </p>
                         </div>
-                        <p class="mt-3 text-sm font-semibold">Agência {{ agency }}</p>
-                        <p class="numeric mt-1 text-xs text-muted">
-                            Atende contas em que id % 3 = {{ agency }}
-                        </p>
-                        <p
-                            class="numeric mt-4 rounded-[var(--radius-xs)] px-2.5 py-1.5 text-xs"
-                            :style="{
-                                backgroundColor: 'var(--color-surface-sunken)',
-                                color: 'var(--color-text-muted)',
-                            }"
-                        >
-                            {{ agency }}, {{ agency + 3 }}, {{ agency + 6 }}, {{ agency + 9 }}…
-                        </p>
+
+                        <div class="mt-4 grid grid-cols-6 gap-1.5 sm:grid-cols-12">
+                            <div
+                                v-for="account in 12"
+                                :key="account"
+                                class="numeric flex aspect-square items-center justify-center rounded-[var(--radius-xs)] text-xs font-bold"
+                                :style="tintForAccount(account - 1)"
+                                :title="`Conta ${account - 1} na Agência ${(account - 1) % 3}`"
+                            >
+                                {{ account - 1 }}
+                            </div>
+                        </div>
+
+                        <ul class="mt-6">
+                            <li
+                                v-for="agency in 3"
+                                :key="agency"
+                                class="flex items-center gap-3 border-t py-3"
+                                :style="{ borderColor: 'var(--color-border)' }"
+                            >
+                                <span
+                                    class="h-3 w-3 shrink-0 rounded-[3px]"
+                                    :style="{
+                                        backgroundColor: tintForAccount(agency - 1).background,
+                                    }"
+                                />
+                                <p class="text-sm font-semibold">Agência {{ agency - 1 }}</p>
+                                <p class="numeric ml-auto text-xs text-muted">
+                                    {{ agency - 1 }}, {{ agency + 2 }}, {{ agency + 5 }},
+                                    {{ agency + 8 }}…
+                                </p>
+                            </li>
+                        </ul>
                     </div>
                 </div>
 
-                <ol class="mt-14 grid gap-8 lg:grid-cols-3">
+                <ol class="mt-16 grid gap-x-12 gap-y-10 lg:grid-cols-3">
                     <li
                         v-for="(step, index) in steps"
-                        :key="step.number"
+                        :key="step.title"
                         data-reveal
-                        class="reveal border-t pt-6"
+                        class="reveal border-t pt-5"
                         :style="{
                             borderColor: 'var(--color-border-strong)',
-                            transitionDelay: `${index * 80}ms`,
+                            transitionDelay: `${index * 70}ms`,
                         }"
                     >
-                        <p
-                            class="display numeric text-sm font-extrabold"
-                            :style="{ color: 'var(--color-primary)' }"
-                        >
-                            {{ step.number }}
-                        </p>
+                        <p class="ordinal">Passo {{ index + 1 }}</p>
                         <h3 class="mt-3 text-[1.0625rem]">{{ step.title }}</h3>
-                        <p class="mt-2 text-sm text-muted">{{ step.description }}</p>
+                        <p class="mt-2.5 text-sm text-muted">{{ step.description }}</p>
                     </li>
                 </ol>
 
-                <div
-                    data-reveal
-                    class="reveal note mt-12 flex flex-wrap items-center gap-x-3 gap-y-2"
-                >
+                <div data-reveal class="reveal mt-14 max-w-3xl">
                     <span class="badge badge-danger">Limitação conhecida</span>
-                    <p class="text-sm">
+                    <p class="mt-3 text-sm text-muted">
                         Se a agência de destino cair no meio de uma transferência, o débito já
-                        aplicado não é revertido. O sistema registra a inconsistência no log em vez
-                        de escondê-la — resolver isso de verdade é tema de transações distribuídas.
+                        aplicado não é revertido. O sistema registra a inconsistência em vez de
+                        escondê-la. Resolver isso de verdade é assunto de transações distribuídas.
                     </p>
                 </div>
             </div>
@@ -565,48 +650,39 @@ onBeforeUnmount(() => {
         <section id="seguranca" class="mx-auto max-w-6xl scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28">
             <div class="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div data-reveal class="reveal">
-                    <p class="section-title">Segurança</p>
-                    <h2 class="mt-3 text-[2rem] leading-tight sm:text-[2.5rem]">
+                    <p class="eyebrow">Segurança</p>
+                    <h2 class="mt-4 text-[2rem] leading-[1.12] sm:text-[2.5rem]">
                         Saber quem você é e saber o que você pode são perguntas diferentes.
                     </h2>
-                    <p class="mt-4 text-[1.0625rem] text-muted">
-                        A autenticação resolve a primeira. A autorização, em três camadas
-                        independentes, resolve a segunda — inclusive para as chamadas que as
+                    <p class="mt-5 text-[1.0625rem] text-muted">
+                        A autenticação responde a primeira. A autorização, em três camadas
+                        independentes, responde a segunda, inclusive para as chamadas que as
                         agências fazem entre si.
                     </p>
                 </div>
 
                 <div
                     data-reveal
-                    class="reveal surface-ink relative overflow-hidden p-7 sm:p-8"
-                    :style="{
-                        borderRadius: 'var(--radius-xl)',
-                        boxShadow: 'var(--shadow-lg)',
-                    }"
+                    class="reveal surface-ink relative overflow-hidden p-7 sm:p-9"
+                    :style="{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }"
                 >
-                    <div class="grain pointer-events-none absolute inset-0 opacity-60" />
+                    <div class="grain pointer-events-none absolute inset-0 opacity-50" />
 
-                    <ul class="relative z-10 flex flex-col gap-4">
+                    <ol class="relative z-10">
                         <li
-                            v-for="point in securityPoints"
+                            v-for="(point, index) in securityPoints"
                             :key="point"
-                            class="flex items-start gap-3 text-sm"
-                            :style="{ color: 'var(--color-ink-muted)' }"
+                            class="flex gap-4 border-b py-4 first:pt-0 last:border-b-0 last:pb-0"
+                            :style="{ borderColor: 'rgba(255, 255, 255, 0.1)' }"
                         >
-                            <svg
-                                class="mt-0.5 h-[17px] w-[17px] shrink-0"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="var(--color-accent)"
-                                stroke-width="2.4"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path d="m4 12.5 5 5L20 6.5" />
-                            </svg>
-                            {{ point }}
+                            <span class="ordinal ordinal-onink shrink-0 pt-0.5">
+                                {{ String(index + 1).padStart(2, '0') }}
+                            </span>
+                            <p class="text-sm" :style="{ color: 'var(--color-ink-muted)' }">
+                                {{ point }}
+                            </p>
                         </li>
-                    </ul>
+                    </ol>
                 </div>
             </div>
         </section>
@@ -693,7 +769,6 @@ onBeforeUnmount(() => {
                     <div>
                         <p class="section-title">Projeto</p>
                         <ul class="mt-4 flex flex-col gap-2.5 text-sm text-muted">
-                            <li>Sprint 1 — Relógio de Lamport</li>
                             <li>Flask · Vue 3 · Tailwind</li>
                             <li>Licença MIT</li>
                         </ul>

@@ -386,7 +386,6 @@
 }
 
 @layer components {
-    /* --- Landing: navegação pública ----------------------------------------- */
     .link-nav {
         position: relative;
         font-size: 0.9375rem;
@@ -416,7 +415,6 @@
         width: 100%;
     }
 
-    /* --- Landing: botão sobre superfície escura ------------------------------ */
     .btn-onink {
         background-color: rgba(255, 255, 255, 0.08);
         border-color: rgba(255, 255, 255, 0.16);
@@ -432,10 +430,8 @@
 }
 
 @layer utilities {
-    /* --- Revelação ao rolar ---------------------------------------------------
-       O estado escondido só vale quando o JS marca o container com .reveal-ready,
-       para que a página continue legível se o observer não rodar. */
-    .reveal {
+    O estado escondido só vale quando o JS marca o container com .reveal-ready,
+    para que a página continue legível se o observer não rodar. */ .reveal {
         transition:
             opacity 0.6s var(--ease-out),
             transform 0.6s var(--ease-out);
@@ -502,5 +498,71 @@
     .grain {
         background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
         background-size: 22px 22px;
+    }
+
+    .motif-rule {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            var(--color-border-strong) 0 1px,
+            transparent 1px 8px
+        );
+    }
+
+    .motif-rule-onink {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.14) 0 1px,
+            transparent 1px 8px
+        );
+    }
+}
+
+@layer components {
+    .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-family: var(--font-display);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--color-text-muted);
+    }
+
+    .eyebrow-onink {
+        color: var(--color-ink-muted);
+    }
+
+    .ordinal {
+        font-family: var(--font-display);
+        font-variant-numeric: tabular-nums;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        color: var(--color-primary);
+    }
+
+    .ordinal-onink {
+        color: var(--color-accent);
+    }
+
+    .op-glyph {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.75rem;
+        height: 2.75rem;
+        flex-shrink: 0;
+        border-radius: var(--radius);
+        background:
+            radial-gradient(120% 140% at 85% 0%, rgba(87, 227, 168, 0.32) 0%, transparent 60%),
+            var(--color-ink);
+        color: var(--color-accent);
+    }
+
+    .rule-under {
+        height: 6px;
+        border-radius: 3px;
     }
 }

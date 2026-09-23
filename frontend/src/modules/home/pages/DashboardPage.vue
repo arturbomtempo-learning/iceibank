@@ -97,7 +97,7 @@ onMounted(() => {
 
         <section v-if="accountsStore.accounts.length > 0" class="flex flex-col gap-4">
             <div class="flex items-center justify-between gap-3">
-                <h2 class="section-title">
+                <h2 class="eyebrow">
                     {{ authStore.isManager ? 'Contas do banco' : 'Suas contas' }}
                 </h2>
                 <span class="badge">{{ accountsStore.accounts.length }}</span>
@@ -141,22 +141,19 @@ onMounted(() => {
             v-else-if="accountsStore.isEmpty"
             class="card flex flex-col items-center gap-2 px-6 py-14 text-center"
         >
-            <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl"
-                :style="{ backgroundColor: 'var(--color-brand-50)' }"
-            >
+            <span class="op-glyph">
                 <svg
-                    class="h-6 w-6"
+                    class="h-5 w-5"
                     viewBox="0 0 24 24"
                     fill="none"
-                    stroke="var(--color-primary)"
-                    stroke-width="1.8"
+                    stroke="currentColor"
+                    stroke-width="1.9"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                 >
                     <path d="M4 6h16v12H4zM4 10h16" />
                 </svg>
-            </div>
+            </span>
             <p class="mt-2 font-semibold">Nenhuma conta no seu nome</p>
             <p class="max-w-sm text-sm text-muted">
                 {{
@@ -176,34 +173,42 @@ onMounted(() => {
         </p>
 
         <section>
-            <h2 class="section-title mb-4">O que você quer fazer</h2>
+            <h2 class="eyebrow mb-4">O que você quer fazer</h2>
 
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                <RouterLink
-                    v-for="action in actions"
-                    :key="action.name"
-                    :to="{ name: action.name }"
-                    class="card card-interactive group flex flex-col items-center gap-3 px-3 py-6 text-center no-underline"
-                    :style="{ color: 'var(--color-text)' }"
-                >
-                    <span
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-200"
-                        :style="{ backgroundColor: 'var(--color-brand-50)' }"
+            <!-- Barra única de atalhos, separada por fios: padrão de app bancário -->
+            <div class="card overflow-hidden">
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+                    <RouterLink
+                        v-for="action in actions"
+                        :key="action.name"
+                        :to="{ name: action.name }"
+                        class="group relative flex flex-col items-center gap-3 border-b border-l px-3 py-6 text-center no-underline transition-colors first:border-l-0 sm:border-b-0"
+                        :style="{
+                            color: 'var(--color-text)',
+                            borderColor: 'var(--color-border)',
+                        }"
                     >
                         <svg
-                            class="h-5 w-5"
+                            class="h-[22px] w-[22px] transition-colors duration-150"
+                            :style="{ color: 'var(--color-primary)' }"
                             viewBox="0 0 24 24"
                             fill="none"
-                            stroke="var(--color-primary)"
-                            stroke-width="1.9"
+                            stroke="currentColor"
+                            stroke-width="1.8"
                             stroke-linecap="round"
                             stroke-linejoin="round"
                         >
                             <path :d="action.icon" />
                         </svg>
-                    </span>
-                    <span class="text-[0.8125rem] font-semibold">{{ action.label }}</span>
-                </RouterLink>
+
+                        <span class="text-[0.8125rem] font-semibold">{{ action.label }}</span>
+
+                        <!-- Barra diagonal da marca, revelada no hover -->
+                        <span
+                            class="motif-rule absolute inset-x-0 bottom-0 h-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                        />
+                    </RouterLink>
+                </div>
             </div>
         </section>
 

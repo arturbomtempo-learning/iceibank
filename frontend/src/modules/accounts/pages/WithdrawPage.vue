@@ -8,6 +8,7 @@ import {
 } from '@/modules/schemas/account.schema';
 import AccountSelect from '@/shared/components/AccountSelect.vue';
 import BaseInput from '@/shared/components/BaseInput.vue';
+import OperationSummary from '@/shared/components/OperationSummary.vue';
 import PageHeader from '@/shared/components/PageHeader.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
@@ -66,35 +67,45 @@ async function submit(): Promise<void> {
 
 <template>
     <div class="flex flex-col gap-6">
-        <PageHeader title="Sacar" subtitle="Debite um valor de uma das suas contas." />
+        <PageHeader
+            title="Sacar"
+            group="Movimentação"
+            icon="M12 5v14M5 12l7 7 7-7"
+            subtitle="Debite um valor de uma das suas contas."
+        />
 
-        <section v-if="accountsStore.accounts.length > 0" class="card p-5 sm:p-6">
-            <form class="flex max-w-md flex-col gap-4" novalidate @submit.prevent="submit">
-                <AccountSelect
-                    v-model="selectedAccountId"
-                    label="Conta de origem"
-                    :accounts="accountsStore.accounts"
-                    :hint="
-                        selectedAccount
-                            ? `Saldo atual: ${formatCurrency(selectedAccount.saldo)}.`
-                            : undefined
-                    "
+        <div v-if="accountsStore.accounts.length > 0" class="grid gap-5 lg:grid-cols-5">
+            <section class="card p-5 sm:p-6 lg:col-span-3">
+                <form class="flex flex-col gap-4" novalidate @submit.prevent="submit">
+                    <AccountSelect
+                        v-model="selectedAccountId"
+                        label="Conta de origem"
+                        :accounts="accountsStore.accounts"
+                    />
+
+                    <BaseInput
+                        v-model="values.amount"
+                        label="Valor"
+                        type="number"
+                        prefix="R$"
+                        placeholder="0,00"
+                        :error="errors.amount"
+                    />
+
+                    <button type="submit" class="btn mt-1" :disabled="isSubmitting">
+                        {{ isSubmitting ? 'Sacando...' : 'Sacar' }}
+                    </button>
+                </form>
+            </section>
+
+            <div class="lg:col-span-2">
+                <OperationSummary
+                    :account="selectedAccount"
+                    :amount="values.amount"
+                    mode="withdraw"
                 />
-
-                <BaseInput
-                    v-model="values.amount"
-                    label="Valor"
-                    type="number"
-                    prefix="R$"
-                    placeholder="0,00"
-                    :error="errors.amount"
-                />
-
-                <button type="submit" class="btn mt-1" :disabled="isSubmitting">
-                    {{ isSubmitting ? 'Sacando...' : 'Sacar' }}
-                </button>
-            </form>
-        </section>
+            </div>
+        </div>
 
         <section v-else class="card px-6 py-12 text-center">
             <p class="font-semibold">Nenhuma conta disponível</p>
