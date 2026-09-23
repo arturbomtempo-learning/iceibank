@@ -12,6 +12,7 @@ const LIFT = 26;
 const EASING = 0.12;
 
 const cardGradientId = useId();
+const chipGradientId = useId();
 
 const root = ref<HTMLElement | null>(null);
 const target = reactive({ x: 0, y: 0 });
@@ -97,71 +98,57 @@ onBeforeUnmount(() => {
 
             <svg class="mascot__card" viewBox="0 0 224 141" fill="none">
                 <defs>
-                    <linearGradient :id="cardGradientId" x1="0" y1="0" x2="224" y2="141">
-                        <stop offset="0%" stop-color="#11402f" />
-                        <stop offset="100%" stop-color="#04211a" />
+                    <linearGradient :id="cardGradientId" x1="18" y1="0" x2="206" y2="141">
+                        <stop offset="0%" stop-color="#124a3e" />
+                        <stop offset="52%" stop-color="#0a382f" />
+                        <stop offset="100%" stop-color="#03251f" />
+                    </linearGradient>
+                    <linearGradient :id="chipGradientId" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#d8dcdb" />
+                        <stop offset="100%" stop-color="#a9afae" />
                     </linearGradient>
                 </defs>
 
-                <rect width="224" height="141" rx="14" :fill="`url(#${cardGradientId})`" />
-                <rect
-                    x="0.7"
-                    y="0.7"
-                    width="222.6"
-                    height="139.6"
-                    rx="13.3"
-                    stroke="#2fc187"
-                    stroke-opacity="0.32"
-                    stroke-width="1.4"
-                />
+                <rect width="224" height="141" rx="15" :fill="`url(#${cardGradientId})`" />
 
-                <rect x="24" y="42" width="29" height="22" rx="5" fill="#cfd8d3" />
-                <path
-                    d="M24 53h29M38.5 42v22"
-                    stroke="#11402f"
-                    stroke-opacity="0.5"
-                    stroke-width="1.5"
-                />
-
-                <g stroke="#8bb4a3" stroke-width="2.3" stroke-linecap="round">
-                    <path d="M64 46a11 11 0 0 1 0 14" />
-                    <path d="M71 41a19 19 0 0 1 0 24" />
+                <g transform="translate(32 56)">
+                    <rect width="40" height="29" rx="5.5" :fill="`url(#${chipGradientId})`" />
+                    <g stroke="#0a382f" stroke-opacity="0.45" stroke-width="1.5" fill="none">
+                        <path d="M0 10h12.5M0 19h12.5M27.5 10H40M27.5 19H40M20 0v6M20 23v6" />
+                        <rect x="12.5" y="6" width="15" height="17" rx="4" />
+                    </g>
                 </g>
 
-                <g transform="translate(24 90)">
-                    <g transform="rotate(-45 11 11)">
-                        <rect x="1" y="4" width="21" height="4.2" rx="2.1" fill="#ffffff" />
-                        <rect
-                            x="4"
-                            y="11"
-                            width="15"
-                            height="4.2"
-                            rx="2.1"
-                            fill="#ffffff"
-                            opacity="0.76"
-                        />
-                        <rect
-                            x="7"
-                            y="18"
-                            width="9"
-                            height="4.2"
-                            rx="2.1"
-                            fill="#ffffff"
-                            opacity="0.52"
-                        />
+                <g
+                    transform="translate(86 71)"
+                    stroke="#cfe3db"
+                    stroke-opacity="0.88"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    fill="none"
+                >
+                    <path d="M0 -3a4.5 4.5 0 0 1 0 6" />
+                    <path d="M4 -5.5a8 8 0 0 1 0 11" />
+                    <path d="M8 -8a11.5 11.5 0 0 1 0 16" />
+                    <path d="M12 -10.5a15 15 0 0 1 0 21" />
+                </g>
+
+                <g transform="translate(149 43)">
+                    <g transform="rotate(-45 14 14)">
+                        <rect x="-1" y="6" width="28" height="5.4" rx="2.7" fill="#ffffff" />
+                        <rect x="4" y="13.5" width="21" height="5.4" rx="2.7" fill="#9fd9c9" />
+                        <rect x="9" y="21" width="14" height="5.4" rx="2.7" fill="#3fb394" />
                     </g>
-                    <text
-                        x="33"
-                        y="19"
-                        fill="#ffffff"
-                        font-family="'Plus Jakarta Sans', sans-serif"
-                        font-size="18"
-                        font-weight="800"
-                        letter-spacing="-0.5"
-                    >
-                        ICEI
-                        <tspan fill="#57e3a8">Bank</tspan>
-                    </text>
+                </g>
+
+                <g
+                    font-family="'Plus Jakarta Sans', sans-serif"
+                    font-size="16"
+                    font-weight="800"
+                    letter-spacing="-0.5"
+                >
+                    <text x="155" y="96" text-anchor="end" fill="#ffffff">ICEI</text>
+                    <text x="155" y="96" text-anchor="start" fill="#3fb394">Bank</text>
                 </g>
             </svg>
         </div>
