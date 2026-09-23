@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import mascotFullBody from '@/assets/mascot/mascot-full-body.webp';
 import AppLogo from '@/shared/components/AppLogo.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle.vue';
 import { useAuthStore } from '@/shared/stores/auth.store';
 
 const authStore = useAuthStore();
@@ -169,7 +170,7 @@ onBeforeUnmount(() => {
             :style="
                 isScrolled
                     ? {
-                          backgroundColor: 'rgba(255, 255, 255, 0.86)',
+                          backgroundColor: 'var(--color-surface-glass)',
                           backdropFilter: 'blur(14px)',
                           borderBottom: '1px solid var(--color-border)',
                       }
@@ -197,7 +198,9 @@ onBeforeUnmount(() => {
                     </a>
                 </nav>
 
-                <div class="ml-auto flex items-center gap-3">
+                <div class="ml-auto flex items-center gap-2 sm:gap-3">
+                    <ThemeToggle :variant="isScrolled ? 'default' : 'onink'" />
+
                     <RouterLink
                         :to="primaryCta.route"
                         class="btn hidden sm:inline-flex"
@@ -376,7 +379,7 @@ onBeforeUnmount(() => {
                                 <span
                                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold"
                                     :style="{
-                                        backgroundColor: 'var(--color-brand-50)',
+                                        backgroundColor: 'var(--color-primary-soft)',
                                         color: 'var(--color-primary-dark)',
                                     }"
                                 >

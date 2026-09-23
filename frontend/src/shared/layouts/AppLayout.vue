@@ -2,10 +2,11 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { useAuthStore } from '@/shared/stores/auth.store';
 import AppLogo from '@/shared/components/AppLogo.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle.vue';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { AUTOMATIC_ROUTING, useAgencyStore } from '@/shared/stores/agency.store';
+import { useAuthStore } from '@/shared/stores/auth.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
 const router = useRouter();
@@ -163,7 +164,7 @@ function signOut(): void {
             <header
                 class="sticky top-0 z-20 flex h-[4.5rem] items-center gap-3 border-b px-4 sm:px-8"
                 :style="{
-                    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+                    backgroundColor: 'var(--color-surface-glass)',
                     borderColor: 'var(--color-border)',
                     backdropFilter: 'blur(12px)',
                 }"
@@ -196,15 +197,17 @@ function signOut(): void {
                 </span>
 
                 <div class="ml-auto flex items-center gap-3">
+                    <ThemeToggle />
+
                     <div class="hidden text-right leading-tight sm:block">
                         <p class="text-[0.8125rem] font-semibold">{{ authStore.username }}</p>
                         <p class="text-xs text-muted">{{ roleLabel }}</p>
                     </div>
                     <span
-                        class="display flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white"
+                        class="display flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold"
                         :style="{
-                            background:
-                                'linear-gradient(135deg, var(--color-brand-400), var(--color-brand-700))',
+                            backgroundColor: 'var(--color-primary)',
+                            color: 'var(--color-on-primary)',
                         }"
                     >
                         {{ initials }}

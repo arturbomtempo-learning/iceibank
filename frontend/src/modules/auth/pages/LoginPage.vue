@@ -6,6 +6,7 @@ import LoginMascot from '@/modules/auth/components/LoginMascot.vue';
 import { loginSchema, type LoginDraft, type LoginValues } from '@/modules/schemas/login.schema';
 import AppLogo from '@/shared/components/AppLogo.vue';
 import BaseInput from '@/shared/components/BaseInput.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle.vue';
 import { useForm } from '@/shared/composables/useForm';
 import { useToastStore } from '@/shared/stores/toast.store';
 
@@ -74,7 +75,11 @@ async function submit(): Promise<void> {
             </div>
         </section>
 
-        <section class="flex items-center justify-center px-5 py-12 sm:px-8">
+        <section class="relative flex items-center justify-center px-5 py-12 sm:px-8">
+            <div class="absolute top-6 right-5 sm:top-8 sm:right-8">
+                <ThemeToggle />
+            </div>
+
             <div class="w-full max-w-sm">
                 <div class="mb-8 flex flex-col items-center gap-6 lg:hidden">
                     <RouterLink :to="{ name: 'home' }" aria-label="Ir para a página inicial">

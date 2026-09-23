@@ -16,6 +16,23 @@
             rel="stylesheet"
         />
         <title>ICEIBank</title>
+        <script>
+            (function () {
+                var fallback = 'light';
+                try {
+                    var stored = localStorage.getItem('iceibank.theme');
+                    fallback =
+                        stored === 'light' || stored === 'dark'
+                            ? stored
+                            : window.matchMedia('(prefers-color-scheme: dark)').matches
+                              ? 'dark'
+                              : 'light';
+                } catch (error) {
+                    fallback = 'light';
+                }
+                document.documentElement.dataset.theme = fallback;
+            })();
+        </script>
     </head>
     <body>
         <div id="app"></div>

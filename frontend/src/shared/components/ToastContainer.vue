@@ -12,7 +12,7 @@ const accentByVariant: Record<ToastVariant, string> = {
 const surfaceByVariant: Record<ToastVariant, string> = {
     success: 'var(--color-success-soft)',
     error: 'var(--color-danger-soft)',
-    info: 'var(--color-brand-50)',
+    info: 'var(--color-primary-soft)',
 };
 
 const iconByVariant: Record<ToastVariant, string> = {
