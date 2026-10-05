@@ -1,6 +1,6 @@
 # ICEIBank
 
-Um banco distribuído em três agências independentes, onde cada agência é um serviço REST autônomo, dono de uma partição das contas, que conversa com as demais pela rede para concluir transferências e ordena os eventos do sistema com o relógio lógico de Lamport.
+Um banco distribuído em três agências independentes, onde cada agência é um serviço REST autônomo, dono de uma partição das contas, que troca mensagens com as demais por um broker para concluir transferências e ordena os eventos do sistema com relógio vetorial.
 
 ![License](https://img.shields.io/badge/License-MIT-red?style=for-the-badge&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)
@@ -9,8 +9,9 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-D63AFF?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
-![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Relógio_de_Lamport-555555?style=for-the-badge)
-![Status](https://img.shields.io/badge/Sprint_1-Finalizada-brightgreen?style=for-the-badge)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Pub%2FSub-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
+![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Relógio_Vetorial-555555?style=for-the-badge)
+![Status](https://img.shields.io/badge/Sprint_2-Em_andamento-yellow?style=for-the-badge)
 ![Repo Size](https://img.shields.io/github/repo-size/arturbomtempo-learning/iceibank?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/arturbomtempo-learning/iceibank?style=for-the-badge)
 
@@ -18,9 +19,9 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprint 1 concluída. As três agências rodam simultaneamente com partição de contas, relógio de Lamport, transferências locais e entre agências, autenticação e autorização via JWT, frontend web completo e a funcionalidade adicional de extrato consolidado. Todas as evidências de teste e as respostas conceituais estão registradas no repositório.
+Sprint 1 concluída e Sprint 2 em andamento. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT, frontend web completo e a funcionalidade adicional de extrato consolidado. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. Do Sprint 2 falta ainda a funcionalidade adicional específica da entrega.
 
-Este é o primeiro de quatro sprints de um projeto que evolui ao longo do semestre: cada sprint parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
+São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
 ---
 
@@ -64,16 +65,16 @@ O **ICEIBank** é um banco simplificado dividido em agências, desenvolvido como
 
 O ponto de partida é uma decisão de arquitetura: as contas são **particionadas**, não replicadas. Cada conta pertence a exatamente uma agência, determinada pela regra `número_da_conta % 3`. A conta 0 vive na Agência 0, a conta 1 na Agência 1, a conta 2 na Agência 2, a conta 3 volta para a Agência 0, e assim por diante. Nenhuma agência conhece as contas das outras.
 
-Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas da mesma agência é resolvida internamente, na memória do processo. Já uma transferência entre agências exige que a agência de origem debite localmente e faça uma chamada HTTP para a agência de destino creditar. Duas máquinas diferentes, dois relógios diferentes, uma operação só.
+Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas da mesma agência é resolvida internamente, na memória do processo. Já uma transferência entre agências exige que a agência de origem debite localmente e publique uma mensagem para a agência de destino creditar. Duas máquinas diferentes, dois relógios diferentes, uma operação só.
 
-É aí que entra o conceito central da sprint: o **relógio lógico de Lamport**. Como não existe um relógio global confiável em um sistema distribuído, cada agência mantém um contador próprio e segue três regras para que a ordem causal dos eventos seja preservada mesmo entre processos independentes. Todo evento do sistema é registrado em log com seu timestamp lógico, e um script mescla os logs das três agências em uma linha do tempo única.
+É aí que entram os conceitos centrais do projeto. O Sprint 1 trouxe o **relógio lógico de Lamport**, e o Sprint 2 o substituiu pelo **relógio vetorial**: em vez de um contador único por agência, cada uma passa a manter um contador por agência, o que permite afirmar com certeza se dois eventos são causalmente relacionados ou concorrentes, distinção que o Lamport não conseguia fazer. Todo evento do sistema é registrado em log com seu timestamp vetorial, e um script mescla os logs das três agências em uma linha do tempo única, apontando os pares concorrentes.
 
-O projeto também expõe, de forma deliberada, uma limitação real: se a agência de destino cair no meio de uma transferência, o débito já aplicado **não é revertido** e o dinheiro desaparece temporariamente. Essa inconsistência não é escondida, ela é registrada no log e documentada, porque resolvê-la de verdade é o tema do Sprint 4, com transações distribuídas.
+O projeto também expõe, de forma deliberada, uma limitação real: se a agência de destino cair no meio de uma transferência, o débito já aplicado **não é revertido**. Com a mensageria do Sprint 2, a mensagem fica retida na fila e é entregue quando a agência volta, mas isso garante a entrega, não a atomicidade: se a conta de destino não existir mais, o crédito falha e o dinheiro continua desaparecido. Essa inconsistência não é escondida, ela é registrada no log e documentada, porque resolvê-la de verdade é o tema do Sprint 4, com transações distribuídas.
 
 | Sprint | Conceito de Sistemas Distribuídos  |   Situação   |
 | :----: | ---------------------------------- | :----------: |
 | **1**  | **Relógio lógico de Lamport**      | ✅ Concluído |
-|   2    | Relógio vetorial                   |  Planejado   |
+| **2**  | **Relógio vetorial e mensageria**  | 🚧 Em andamento |
 |   3    | Consenso (eleição de líder)        |  Planejado   |
 |   4    | Transações distribuídas (2PC/Saga) |  Planejado   |
 
@@ -91,11 +92,13 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **Partição de contas entre agências.** Cada conta pertence a uma única agência, calculada por `id % 3`. Uma agência recusa explicitamente operar contas que não são suas, respondendo com erro em vez de fingir que a conta não existe.
 
-**Relógio lógico de Lamport.** Implementa as três regras do algoritmo: incremento antes de cada evento local, incremento e envio do timestamp junto da mensagem, e ajuste para `max(contador_local, timestamp_recebido) + 1` ao receber. O contador é protegido por lock, já que o servidor atende requisições em múltiplas threads.
+**Relógio vetorial.** Implementa as três regras do algoritmo: incremento da própria posição a cada evento local, incremento e envio do vetor junto da mensagem, e `max` posição a posição seguido de incremento da própria posição ao receber. O vetor é protegido por lock, já que o servidor atende requisições em múltiplas threads.
 
-**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp de Lamport, a hora de parede e os detalhes. Sete tipos de evento são registrados, de `CRIAR_CONTA` a `TRANSFERENCIA_FALHOU`.
+**Mensageria entre agências.** A transferência entre agências deixou de ser uma chamada HTTP direta e passa por uma exchange `topic` do RabbitMQ chamada `iceibank.eventos`, com uma fila durável por agência e routing key `agencia.<id>.creditar`. A agência de origem publica e segue adiante, sem precisar saber se o destino está no ar, e o consumidor roda em uma thread separada do servidor HTTP.
 
-**Linha do tempo unificada.** O script `mesclar_logs.py` lê os logs das três agências e monta uma ordenação única por timestamp lógico, permitindo observar concorrência real e identificar eventos causalmente independentes.
+**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Sete tipos de evento são registrados, de `CRIAR_CONTA` a `CREDITO_REMOTO_FALHOU`.
+
+**Linha do tempo causal.** O script `mesclar_logs.py` lê os logs das três agências, monta uma linha do tempo única por hora de parede e compara os vetores par a par, listando explicitamente os eventos concorrentes e separando-os dos causalmente ordenados.
 
 **API REST em arquitetura MVC.** Rotas, controllers e services separados, com CRUD de contas, depósito, saque e transferências.
 
@@ -154,7 +157,8 @@ Duas decisões de projeto que valem destaque:
 | Python        |    3.14     | Linguagem escolhida para a entrega                                     |
 | Flask         |    3.1.3    | Framework web que expõe a API REST de cada agência                     |
 | PyJWT         |   2.13.0    | Geração e validação dos tokens JWT                                     |
-| Requests      |   2.34.2    | Chamadas HTTP de uma agência para outra                                |
+| Requests      |   2.34.2    | Chamadas HTTP entre agências na rota interna do extrato consolidado    |
+| pika          |    1.4.4    | Cliente do RabbitMQ para publicar e consumir mensagens entre agências  |
 | Flask-Cors    |    6.0.5    | Autoriza o frontend, que roda em outra origem, a consumir a API        |
 | python-dotenv |    1.2.3    | Carrega a chave secreta a partir do `.env`, fora do controle de versão |
 | Werkzeug      | (via Flask) | Hash das senhas com pbkdf2                                             |
@@ -194,7 +198,7 @@ A organização interna segue MVC:
 
 - **`routes.py`** declara as rotas e, junto de cada uma, a proteção que ela exige. A política de acesso do sistema inteiro pode ser lida em um arquivo só.
 - **`controllers/`** recebem a requisição, validam a entrada, aplicam a regra de negócio e devolvem a resposta.
-- **`services/`** concentram o que não é HTTP: o relógio de Lamport, o registro de eventos, a emissão e validação de tokens e o repositório de usuários.
+- **`services/`** concentram o que não é HTTP: o relógio vetorial, a mensageria com o RabbitMQ, o registro de eventos, a emissão e validação de tokens e o repositório de usuários.
 - **`middlewares/`** guardam as três funções de proteção de rota, com nomes que dizem o que exigem: `requer_autenticacao`, `requer_admin` e `requer_servico`.
 
 As contas ficam **em memória**, uma decisão do próprio roteiro: o foco da sprint é REST, particionamento e relógio lógico, não persistência. Isso significa que as contas somem quando uma agência é reiniciada. As credenciais, por outro lado, ficam em um arquivo compartilhado pelas três agências, porque um correntista cadastrado em uma delas precisa conseguir entrar e receber conta em qualquer outra.
@@ -282,6 +286,8 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 ```
 
 Cole o resultado no campo `JWT_SECRET_KEY` do `.env`.
+
+O `.env` guarda também a `RABBITMQ_URL`, a URL AMQP da instância do RabbitMQ usada na mensageria entre as agências. Ela precisa ser a mesma nas três, e **sem ela a agência não inicia**. Em uma instância do CloudAMQP, essa URL aparece no painel no formato `amqps://usuario:senha@host.cloudamqp.com/vhost`.
 
 ### 🏦 Passo 2: subir as três agências
 
@@ -397,7 +403,7 @@ O número da conta define a agência: **0, 3, 6...** ficam na Agência 0; **1, 4
 
 ### 🕒 Linha do tempo unificada
 
-Depois de gerar alguns eventos, é possível ver a ordenação por relógio de Lamport das três agências juntas:
+Depois de gerar alguns eventos, é possível ver a linha do tempo das três agências juntas, com os pares concorrentes identificados pelo relógio vetorial:
 
 ```bash
 # macOS e Linux
@@ -458,7 +464,8 @@ iceibank/
 │   │   │   ├── usuarios_controller.py
 │   │   │   └── extrato_controller.py # ⭐ Funcionalidade adicional
 │   │   ├── services/
-│   │   │   ├── relogio_lamport.py    # As três regras do relógio lógico
+│   │   │   ├── relogio_vetorial.py   # As três regras do relógio vetorial
+│   │   │   ├── mensageria.py         # Publicação e consumo no RabbitMQ
 │   │   │   ├── registro_eventos.py   # Log de eventos em JSON Lines
 │   │   │   ├── auth_service.py       # Emissão e validação dos tokens
 │   │   │   └── repositorio_usuarios.py
@@ -488,7 +495,7 @@ iceibank/
 
 ## 🖼️ Evidências
 
-Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/), com a data visível no terminal para comprovar a execução.
+Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/) e [`evidencias/sprint2/`](evidencias/sprint2/), com a data visível no terminal para comprovar a execução.
 
 **Backend e conceitos distribuídos**
 
@@ -498,6 +505,14 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 | [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto             |
 | [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png)                           | Agência de destino fora do ar: HTTP 502 e débito não revertido |
 | [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png)                             | Eventos das 3 agências ordenados por relógio de Lamport        |
+
+**Sprint 2: mensageria e relógio vetorial**
+
+| Evidência                                                                              | O que demonstra                                                              |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png)      | Transferência entre agências concluída pela fila do RabbitMQ                 |
+| [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                      | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
+| [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)            | Pares de eventos concorrentes identificados pelo relógio vetorial            |
 
 **Autenticação (Parte F)**
 
@@ -560,7 +575,7 @@ Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-
 
 **O que continua sendo meu.** A compreensão do problema, as decisões de arquitetura, a validação de cada funcionalidade, a análise dos resultados observados nos logs e o conteúdo conceitual das respostas do [`RESPOSTAS.md`](RESPOSTAS.md), embasado nas referências bibliográficas listadas acima e no próprio roteiro.
 
-Assumo integralmente a autoria e a responsabilidade por este trabalho e **estou apto a explicar e defender qualquer trecho entregue neste repositório**, seja o algoritmo do relógio de Lamport, o fluxo de autenticação e autorização, a comunicação entre as agências ou qualquer decisão tomada no frontend.
+Assumo integralmente a autoria e a responsabilidade por este trabalho e **estou apto a explicar e defender qualquer trecho entregue neste repositório**, seja o algoritmo do relógio vetorial, o fluxo de autenticação e autorização, a mensageria entre as agências ou qualquer decisão tomada no frontend.
 
 ---
 
