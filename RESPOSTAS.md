@@ -164,6 +164,46 @@ O ponto mais misturado é justamente o Controller, que não mora em um arquivo p
 
 # Sprint 2
 
+## Funcionalidade adicional - Confirmação de entrega
+
+A funcionalidade adicional implementada, exigida pela seção 2.1, é a **confirmação de entrega**: a agência de destino publica um segundo evento informando o desfecho do crédito, e a agência de origem o consome, fechando o ciclo da transferência.
+
+A escolha recaiu sobre ela, entre as sugestões do roteiro, porque é a única que resolve um problema que este mesmo documento aponta como aberto. Na Questão 2 da Parte C ficou registrado que a mensageria trouxe desacoplamento temporal mas piorou a informação devolvida a quem chama: a origem passou a receber `HTTP 200` mesmo quando o crédito falha no destino, e o único registro da falha ficava no log da outra agência. A origem debitava, publicava e nunca mais sabia o que tinha acontecido.
+
+O funcionamento acompanha o caminho inverso do crédito. A mensagem publicada em `agencia.<destino>.creditar` passou a carregar também o campo `idOrigem`, que é a conta de onde o dinheiro saiu. Depois de processar o crédito, com sucesso ou não, o destino publica em `agencia.<origem>.confirmacao` uma mensagem com `aplicado` verdadeiro ou falso, o motivo da falha quando houver, e um `vetorEnvio` novo obtido de `ao_enviar`. A agência de origem consome essa chave e decide o que fazer:
+
+- Se `aplicado` é verdadeiro, registra `TRANSFERENCIA_CONFIRMADA` e encerra o ciclo.
+- Se é falso, **credita o valor de volta na conta de origem** e registra `TRANSFERENCIA_ESTORNADA`, anotando o motivo que veio do destino.
+- Se a própria conta de origem não existir mais, registra `ESTORNO_FALHOU`, deixando a inconsistência explícita em vez de silenciosa.
+
+Esse estorno automático é exatamente o padrão **Saga com transação compensatória** que a Questão 3 da Parte D do Sprint 1 apontou como alternativa ao 2PC, agora implementado de fato.
+
+A infraestrutura não precisou de fila nova. A chave `agencia.<id>.confirmacao` é vinculada à mesma `fila-agencia-<id>` que já existia, o que preserva a exigência de três filas, uma por agência. Para isso o `assinar` do `mensageria.py` passou a receber um dicionário de manipuladores por assunto, e o callback despacha pela última parte da routing key.
+
+Os dois cenários foram testados de ponta a ponta, com as três agências instanciadas e um broker simulado em memória.
+
+No **caminho feliz**, a transferência de R$ 300,00 da conta 0 para a conta 1 publicou `{"idConta": 1, "idOrigem": 0, "valor": 300, "vetorEnvio": [3, 0, 0], "origemAgencia": 0}`. O destino creditou, a origem recebeu a confirmação e registrou `TRANSFERENCIA_CONFIRMADA` com vetor `[4, 3, 0]`. Os saldos ficaram em R$ 700,00 na origem e R$ 800,00 no destino, somando os mesmos R$ 1.500,00 do início.
+
+No **caminho de falha**, a conta de destino foi removida antes da transferência de R$ 200,00, reproduzindo o cenário da Parte C. A sequência observada foi esta:
+
+```
+[agencia-0] TRANSFERENCIA_DEBITO      [5, 3, 0]
+[agencia-1] CREDITO_REMOTO_FALHOU     [6, 4, 0]  motivo: conta nao encontrada
+[agencia-0] TRANSFERENCIA_ESTORNADA   [7, 5, 0]  motivo: conta nao encontrada
+```
+
+O saldo da origem caiu de R$ 700,00 para R$ 500,00 no débito e voltou para R$ 700,00 após a confirmação negativa. **A soma de dinheiro do sistema foi preservada**, que é precisamente o que não acontecia antes: no teste da Parte C, os R$ 200,00 sumiram e só restou uma linha de log dizendo que o crédito falhou.
+
+O vetor também confirma que a confirmação é causalmente posterior ao crédito. O `TRANSFERENCIA_ESTORNADA` saiu com `[7, 5, 0]`, e o `5` na posição 1 só pode ter vindo da Agência 1 dentro da mensagem de confirmação, pelo `ao_receber`.
+
+Três decisões merecem registro:
+
+1. **A confirmação só é publicada para créditos vindos de outra agência.** Se `origemAgencia` for a própria agência, ou se faltar `idOrigem`, nada é publicado, porque transferência local já é resolvida de forma síncrona dentro do mesmo processo.
+2. **Mensagem malformada não gera confirmação.** Quando o corpo não passa na validação, o evento vai para `CREDITO_REMOTO_FALHOU` e o ciclo não é fechado, já que não há como confiar no remetente declarado em uma mensagem que nem o formato respeita.
+3. **Falha ao publicar a confirmação não desfaz o crédito.** A publicação fica em um `try`, e um erro ali é registrado no console sem reverter o que já foi aplicado, porque o crédito no destino é um fato consumado e desfazê-lo criaria uma inconsistência pior.
+
+A limitação conhecida é a mesma do crédito remoto: não há controle de idempotência. Se o broker reentregar uma confirmação negativa, o estorno seria aplicado duas vezes. Resolver isso exige identificador único por transferência e registro das mensagens já processadas, que é tema do Sprint 4.
+
 ## Parte B - Relógio vetorial
 
 ### Questão 1

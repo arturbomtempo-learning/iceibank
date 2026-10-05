@@ -96,7 +96,9 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **Mensageria entre agências.** A transferência entre agências deixou de ser uma chamada HTTP direta e passa por uma exchange `topic` do RabbitMQ chamada `iceibank.eventos`, com uma fila durável por agência e routing key `agencia.<id>.creditar`. A agência de origem publica e segue adiante, sem precisar saber se o destino está no ar, e o consumidor roda em uma thread separada do servidor HTTP.
 
-**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Sete tipos de evento são registrados, de `CRIAR_CONTA` a `CREDITO_REMOTO_FALHOU`.
+**Confirmação de entrega com estorno automático.** Depois de processar um crédito remoto, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`, e a origem consome essa resposta. Quando o crédito falha, por exemplo porque a conta de destino não existe, a origem devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, aplicando o padrão Saga com transação compensatória. É o que impede o dinheiro de desaparecer quando a outra ponta não consegue concluir.
+
+**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Dez tipos de evento são registrados, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`.
 
 **Linha do tempo causal.** O script `mesclar_logs.py` lê os logs das três agências, monta uma linha do tempo única por hora de parede e compara os vetores par a par, listando explicitamente os eventos concorrentes e separando-os dos causalmente ordenados.
 

@@ -29,12 +29,21 @@ def criar_app(id_agencia):
 
     assinar(
         id_agencia,
-        lambda mensagem: transferencias_controller.aplicar_credito_remoto(
-            app.config["CONTAS"],
-            app.config["RELOGIO"],
-            app.config["REGISTRO"],
-            mensagem,
-        ),
+        {
+            "creditar": lambda mensagem: transferencias_controller.aplicar_credito_remoto(
+                app.config["CONTAS"],
+                app.config["RELOGIO"],
+                app.config["REGISTRO"],
+                mensagem,
+                id_agencia,
+            ),
+            "confirmacao": lambda mensagem: transferencias_controller.aplicar_confirmacao(
+                app.config["CONTAS"],
+                app.config["RELOGIO"],
+                app.config["REGISTRO"],
+                mensagem,
+            ),
+        },
     )
 
     return app

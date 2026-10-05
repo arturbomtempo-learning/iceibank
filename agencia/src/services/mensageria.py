@@ -68,7 +68,7 @@ def publicar(routing_key, mensagem):
                     raise
 
 
-def _criar_callback(ao_receber_mensagem):
+def _criar_callback(manipuladores):
     def callback(canal, metodo, propriedades, corpo):
         try:
             mensagem = json.loads(corpo.decode("utf-8"))
@@ -77,8 +77,19 @@ def _criar_callback(ao_receber_mensagem):
             canal.basic_ack(metodo.delivery_tag)
             return
 
+        assunto = metodo.routing_key.rsplit(".", 1)[-1]
+        manipulador = manipuladores.get(assunto)
+
+        if manipulador is None:
+            print(
+                f"[mensageria] mensagem descartada: nenhum manipulador para '{assunto}'",
+                flush=True,
+            )
+            canal.basic_ack(metodo.delivery_tag)
+            return
+
         try:
-            ao_receber_mensagem(mensagem)
+            manipulador(mensagem)
         except Exception as erro:
             print(f"[mensageria] falha ao processar mensagem: {erro!r}", flush=True)
 
@@ -87,18 +98,24 @@ def _criar_callback(ao_receber_mensagem):
     return callback
 
 
-def _consumir(id_agencia, ao_receber_mensagem):
+def _consumir(id_agencia, manipuladores):
     nome_fila = f"fila-agencia-{id_agencia}"
-    routing_key = f"agencia.{id_agencia}.creditar"
+    routing_keys = [f"agencia.{id_agencia}.{assunto}" for assunto in manipuladores]
 
     while True:
         try:
             conexao, canal = _abrir_canal()
             canal.queue_declare(queue=nome_fila, durable=True)
-            canal.queue_bind(nome_fila, EXCHANGE, routing_key)
+
+            for routing_key in routing_keys:
+                canal.queue_bind(nome_fila, EXCHANGE, routing_key)
+
             canal.basic_qos(prefetch_count=1)
-            canal.basic_consume(nome_fila, _criar_callback(ao_receber_mensagem))
-            print(f"[mensageria] consumindo {nome_fila} com a chave {routing_key}", flush=True)
+            canal.basic_consume(nome_fila, _criar_callback(manipuladores))
+            print(
+                f"[mensageria] consumindo {nome_fila} com as chaves {', '.join(routing_keys)}",
+                flush=True,
+            )
             canal.start_consuming()
         except (pika.exceptions.AMQPError, OSError) as erro:
             print(
@@ -109,12 +126,12 @@ def _consumir(id_agencia, ao_receber_mensagem):
             time.sleep(SEGUNDOS_PARA_RECONECTAR)
 
 
-def assinar(id_agencia, ao_receber_mensagem):
+def assinar(id_agencia, manipuladores):
     _exigir_url()
 
     thread = threading.Thread(
         target=_consumir,
-        args=(id_agencia, ao_receber_mensagem),
+        args=(id_agencia, manipuladores),
         name=f"consumidor-agencia-{id_agencia}",
         daemon=True,
     )

@@ -83,6 +83,7 @@ def transferir():
         f"agencia.{agencia_destino}.creditar",
         {
             "idConta": id_destino,
+            "idOrigem": id_origem,
             "valor": valor,
             "vetorEnvio": vetor_envio,
             "origemAgencia": id_agencia,
@@ -94,7 +95,7 @@ def transferir():
     )
 
 
-def aplicar_credito_remoto(contas, relogio, registro, mensagem):
+def aplicar_credito_remoto(contas, relogio, registro, mensagem, id_agencia):
     id_conta = mensagem.get("idConta")
     valor = mensagem.get("valor")
     vetor_envio = mensagem.get("vetorEnvio")
@@ -121,6 +122,7 @@ def aplicar_credito_remoto(contas, relogio, registro, mensagem):
                 "motivo": "conta nao encontrada",
             },
         )
+        _confirmar(relogio, id_agencia, mensagem, False, "conta nao encontrada")
         return
 
     conta["saldo"] += valor
@@ -128,6 +130,83 @@ def aplicar_credito_remoto(contas, relogio, registro, mensagem):
         "TRANSFERENCIA_CREDITO_REMOTO",
         vetor,
         {"idConta": id_conta, "valor": valor, "origemAgencia": origem_agencia},
+    )
+    _confirmar(relogio, id_agencia, mensagem, True, None)
+
+
+def _confirmar(relogio, id_agencia, mensagem, aplicado, motivo):
+    origem_agencia = mensagem.get("origemAgencia")
+    id_origem = mensagem.get("idOrigem")
+
+    if not isinstance(origem_agencia, int) or isinstance(origem_agencia, bool):
+        return
+    if not isinstance(id_origem, int) or isinstance(id_origem, bool):
+        return
+    if origem_agencia == id_agencia:
+        return
+
+    vetor_envio = relogio.ao_enviar()
+
+    try:
+        publicar(
+            f"agencia.{origem_agencia}.confirmacao",
+            {
+                "idOrigem": id_origem,
+                "idConta": mensagem.get("idConta"),
+                "valor": mensagem.get("valor"),
+                "aplicado": aplicado,
+                "motivo": motivo,
+                "vetorEnvio": vetor_envio,
+                "agenciaConfirmadora": id_agencia,
+            },
+        )
+    except Exception as erro:
+        print(f"[mensageria] falha ao publicar confirmação: {erro!r}", flush=True)
+
+
+def aplicar_confirmacao(contas, relogio, registro, mensagem):
+    id_origem = mensagem.get("idOrigem")
+    valor = mensagem.get("valor")
+    vetor_envio = mensagem.get("vetorEnvio")
+    aplicado = mensagem.get("aplicado")
+
+    if not isinstance(id_origem, int) or isinstance(id_origem, bool):
+        return _descartar(registro, relogio, mensagem, "idOrigem ausente ou invalido")
+    if not _numero_positivo(valor):
+        return _descartar(registro, relogio, mensagem, "valor ausente ou invalido")
+    if not _vetor_valido(vetor_envio):
+        return _descartar(registro, relogio, mensagem, "vetorEnvio ausente ou invalido")
+    if not isinstance(aplicado, bool):
+        return _descartar(registro, relogio, mensagem, "aplicado ausente ou invalido")
+
+    vetor = relogio.ao_receber(vetor_envio)
+
+    detalhes = {
+        "idOrigem": id_origem,
+        "idConta": mensagem.get("idConta"),
+        "valor": valor,
+        "agenciaConfirmadora": mensagem.get("agenciaConfirmadora"),
+    }
+
+    if aplicado:
+        registro.registrar("TRANSFERENCIA_CONFIRMADA", vetor, detalhes)
+        return
+
+    conta = contas.get(id_origem)
+
+    if conta is None:
+        registro.registrar(
+            "ESTORNO_FALHOU",
+            vetor,
+            {**detalhes, "motivo": "conta de origem nao encontrada"},
+        )
+        return
+
+    conta["saldo"] += valor
+    registro.registrar(
+        "TRANSFERENCIA_ESTORNADA",
+        vetor,
+        {**detalhes, "motivo": mensagem.get("motivo"), "novoSaldo": conta["saldo"]},
     )
 
 
