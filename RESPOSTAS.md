@@ -81,7 +81,7 @@ Na prática, isso significa que um timestamp de Lamport menor não é prova de c
 
 ### Questão 2
 
-Não, o relógio de Lamport sozinho não é suficiente para isso. Ele só garante a implicação em um sentido (A antes de B causalmente implica `timestamp(A) < timestamp(B)`), mas a volta não vale, então, ao ver dois timestamps diferentes, o sistema não tem como saber se está diante de uma relação de causa e efeito ou de dois eventos concorrentes que por acaso ficaram em ordens diferentes. No passo 3, isso ficou evidente: o par do Lamport 6 (concorrente) e o par dos Lamport 6 e 7, entre a Agência 0 e a Agência 2, tinham a mesma "forma" na linha do tempo de qualquer outro par de timestamps diferentes ou iguais - só dava para concluir que eram concorrentes analisando o contexto das operações e a hora de parede, não o timestamp de Lamport isoladamente. Um sistema bancário real, que precisa decidir com certeza se duas transferências concorrentes conflitam entre si (por exemplo, para detectar dupla gasto de saldo), não pode depender dessa análise manual e contextual. É exatamente essa lacuna que motiva o relógio vetorial: em vez de um único contador por processo, cada agência passa a manter um vetor com o contador de todas as agências, o que permite comparar dois timestamps e concluir de forma determinística se um aconteceu antes do outro ou se são genuinamente concorrentes, sem precisar inspecionar o conteúdo dos eventos.
+Não, o relógio de Lamport sozinho não é suficiente para isso. Ele só garante a implicação em um sentido (A antes de B causalmente implica `timestamp(A) < timestamp(B)`), mas a volta não vale, então, ao ver dois timestamps diferentes, o sistema não tem como saber se está diante de uma relação de causa e efeito ou de dois eventos concorrentes que por acaso ficaram em ordens diferentes. No passo 3, isso ficou evidente: o par do Lamport 6 (concorrente) e o par dos Lamport 6 e 7, entre a Agência 0 e a Agência 2, tinham a mesma "forma" na linha do tempo de qualquer outro par de timestamps diferentes ou iguais, e só dava para concluir que eram concorrentes analisando o contexto das operações e a hora de parede, não o timestamp de Lamport isoladamente. Um sistema bancário real, que precisa decidir com certeza se duas transferências concorrentes conflitam entre si (por exemplo, para detectar dupla gasto de saldo), não pode depender dessa análise manual e contextual. É exatamente essa lacuna que motiva o relógio vetorial: em vez de um único contador por processo, cada agência passa a manter um vetor com o contador de todas as agências, o que permite comparar dois timestamps e concluir de forma determinística se um aconteceu antes do outro ou se são genuinamente concorrentes, sem precisar inspecionar o conteúdo dos eventos.
 
 
 ## Parte F - Autenticação (JWT)
@@ -114,10 +114,10 @@ Autenticação é responder "quem é você", e autorização é responder "o que
 
 Minha implementação faz **as duas**, em funções separadas cujos nomes deixam a intenção explícita já na declaração das rotas:
 
-1. **Autenticação** - `requer_autenticacao` valida a assinatura e a expiração do token. Token ausente, inválido ou expirado retorna **401**.
-2. **Autorização por papel (RBAC)** - `requer_admin` protege a rota de abrir conta, que é operação de gerente. Um correntista autenticado que tente criar uma conta recebe **403**.
-3. **Autorização por dono do recurso** - `auth_service.pode_operar_conta` compara o `sub` do token com o campo `dono` da conta nas rotas que leem ou movimentam uma conta específica. O gerente passa em qualquer conta, o correntista só nas dele, e a recusa é **403**.
-4. **Separação do token interno** - `requer_servico` protege a rota `creditar-remoto`, que só aceita o token emitido por outra agência.
+1. **Autenticação**: `requer_autenticacao` valida a assinatura e a expiração do token. Token ausente, inválido ou expirado retorna **401**.
+2. **Autorização por papel (RBAC)**: `requer_admin` protege a rota de abrir conta, que é operação de gerente. Um correntista autenticado que tente criar uma conta recebe **403**.
+3. **Autorização por dono do recurso**: `auth_service.pode_operar_conta` compara o `sub` do token com o campo `dono` da conta nas rotas que leem ou movimentam uma conta específica. O gerente passa em qualquer conta, o correntista só nas dele, e a recusa é **403**.
+4. **Separação do token interno**: `requer_servico` protege a rota `creditar-remoto`, que só aceita o token emitido por outra agência.
 
 Respondendo ao exemplo do enunciado: não, um usuário autenticado **não** consegue sacar de uma conta que não é dele, a API responde `403 Forbidden`. O token está válido, o que falta é permissão, e é exatamente essa a diferença entre os dois conceitos. Vale notar que a transferência valida a posse apenas da conta de **origem**, já que receber dinheiro em conta de terceiro é justamente o objetivo de uma transferência.
 
@@ -147,7 +147,7 @@ A pessoa é avisada de forma explícita, não recebe um erro genérico. O tratam
 
 A primeira é preventiva e local: como o `token-storage` valida o prazo de expiração a cada leitura, uma sessão já vencida é descartada antes mesmo de a requisição sair, e a navegação é barrada pelo guard de rotas.
 
-A segunda vale para o caso em que o token vence entre uma tela e outra, ou é recusado pelo servidor por qualquer motivo. O **interceptor de resposta** identifica o `401`, exibe um aviso escrito "Sessão encerrada - Faça login novamente para continuar", limpa a sessão do storage e redireciona para a tela de login. Testei isso injetando um token realmente expirado no navegador: a aplicação mostrou o aviso e voltou para o login, sem deixar a pessoa presa em uma tela quebrada.
+A segunda vale para o caso em que o token vence entre uma tela e outra, ou é recusado pelo servidor por qualquer motivo. O **interceptor de resposta** identifica o `401`, exibe um aviso com o título "Sessão encerrada" e o texto "Faça login novamente para continuar", limpa a sessão do storage e redireciona para a tela de login. Testei isso injetando um token realmente expirado no navegador: a aplicação mostrou o aviso e voltou para o login, sem deixar a pessoa presa em uma tela quebrada.
 
 Um detalhe de implementação: o interceptor não importa o roteador nem a store de autenticação diretamente, porque isso criaria uma dependência circular. Em vez disso, ele expõe um `setUnauthorizedHandler`, e o `app/init.ts` registra ali a ação de deslogar e redirecionar quando a aplicação sobe.
 
@@ -160,3 +160,61 @@ O padrão existe, mas não de forma tão literal quanto no backend, e vale ser h
 - **Controller**: fica dividido entre as ações das stores e o `<script setup>` de cada página, que orquestra formulário, serviço e store. O `app/router` também assume parte desse papel, decidindo o que cada rota exige (autenticação, papel de gerente) antes de liberar a navegação.
 
 O ponto mais misturado é justamente o Controller, que não mora em um arquivo próprio: ele está espalhado entre a store e o script da página. Na `TransferPage`, por exemplo, o script valida o formulário, chama o serviço, monta o resultado e manda a store recarregar os saldos, ou seja, faz trabalho de controller dentro do arquivo do componente. Foi uma escolha consciente por seguir a arquitetura por módulos definida no `INSTRUCTIONS.md` do projeto, que organiza o código por funcionalidade em vez de por camada, mas reconheço que isso afasta o frontend do MVC estrito. Quem segue o padrão à risca é o backend, onde `routes.py`, `controllers/` e `services/` separam as camadas de forma bem mais clara.
+
+## Sprint 2: Parte B - Relógio vetorial
+
+### Questão 1
+
+O vetor cresce **linearmente** com o número de processos, porque guarda exatamente um contador por agência. Com 10 agências, cada mensagem passaria a carregar 10 inteiros em vez de 3, e o mesmo vale para cada linha gravada nos arquivos de evento, já que o `registro_eventos.py` serializa o vetor inteiro no campo `timestampVetorial`.
+
+Medi o custo real serializando em JSON o corpo que o `transferencias_controller.py` envia para a rota `creditar-remoto` (`valor`, `timestampVetorial` e `origemAgencia`) e a linha correspondente no `.jsonl`:
+
+| Agências | Corpo do `creditar-remoto` | Linha no log | Comparado ao Lamport |
+| :---: | :---: | :---: | :---: |
+| 3 | 65 B | 200 B | 1,2x |
+| 10 | 86 B | 221 B | 1,5x |
+| 50 | 206 B | 341 B | 3,7x |
+| 100 | 356 B | 491 B | 6,4x |
+| 1000 | 3056 B | 3191 B | 54,6x |
+
+Com Lamport o mesmo corpo ocupa 56 B, porque o timestamp é um único inteiro. Subir de 3 para 10 agências custa 21 bytes por mensagem, o que é irrelevante diante do próprio cabeçalho HTTP e do token JWT que já viajam em cada chamada. Nessa escala, portanto, **não é um problema**: o ganho de poder determinar concorrência com certeza compensa com folga alguns bytes a mais.
+
+O custo só passa a pesar quando o número de processos cresce de verdade. Com 1000 agências o corpo fica quase 55 vezes maior que o de Lamport, e aí o vetor deixa de ser um detalhe e passa a dominar o tamanho da mensagem. Pior que o tráfego é o armazenamento: como cada evento registrado carrega o vetor completo, o log cresce na mesma proporção, e um script de análise como o `mesclar_logs.py` precisa manter todos esses vetores em memória para comparar pares.
+
+No código deste projeto, porém, o limite mais concreto não é o tamanho em bytes, e sim o fato de o número de agências ser **fixo e conhecido na inicialização**. O relógio é construído em `app.py` como `RelogioVetorial(id_agencia, config.NUMERO_AGENCIAS)`, e o `_vetor_valido` do `transferencias_controller.py` recusa qualquer vetor cujo comprimento seja diferente de `config.NUMERO_AGENCIAS`. Testei esse comportamento enviando para a Agência 1 um corpo com `"timestampVetorial": [1, 2]`, de duas posições: a resposta foi **HTTP 400**, e o relógio da agência não foi alterado, continuando no mesmo vetor anterior. Ou seja, crescer de 3 para 10 agências não é uma troca de número no `config.py`: as mensagens em trânsito com 3 posições passariam a ser rejeitadas, e todos os eventos já gravados ficariam com vetores de comprimento incompatível com os novos, inviabilizando a comparação entre eventos antigos e recentes. Em um sistema real com entrada e saída dinâmica de nós, é esse acoplamento a uma composição fixa de participantes, mais do que os bytes, que torna o relógio vetorial difícil de escalar.
+
+### Questão 2
+
+Dado `V1 = [3, 1, 0]` e `V2 = [3, 2, 0]`, **V1 aconteceu antes de V2**.
+
+Comparando posição a posição, `V1[i] <= V2[i]` vale para todas as três posições, e os vetores são diferentes:
+
+| Posição | V1 | V2 | `V1[i] <= V2[i]` |
+| :---: | :---: | :---: | :---: |
+| 0 (Agência 0) | 3 | 3 | sim (igual) |
+| 1 (Agência 1) | 1 | 2 | sim |
+| 2 (Agência 2) | 0 | 0 | sim (igual) |
+
+Como nenhuma posição de V1 é maior que a de V2, e a posição 1 é estritamente menor, V1 domina em nenhum ponto e é dominado em um: essa é exatamente a definição de `V1 -> V2`, ou seja, existe relação de causa e efeito.
+
+Reproduzi esse par com a própria classe `RelogioVetorial` do projeto para confirmar que ele corresponde a uma sequência possível do sistema. A Agência 0 registra dois eventos locais, chegando a `[2, 0, 0]`, e então chama `ao_enviar()`, que incrementa a própria posição e produz `[3, 0, 0]`, o vetor que viaja dentro da mensagem. A Agência 1, ainda zerada, executa `ao_receber([3, 0, 0])`: o `max` posição a posição dá `[3, 0, 0]` e o incremento da posição 1 resulta em `V1 = [3, 1, 0]`. Em seguida, um `evento_local()` na mesma Agência 1 produz `V2 = [3, 2, 0]`. Os dois eventos são consecutivos **dentro do mesmo processo**, o que torna a relação causal evidente: o segundo só pôde acontecer depois do primeiro.
+
+Esse mesmo formato apareceu no servidor rodando de verdade. No teste que fiz com as três agências, a Agência 1 registrou `[0, 1, 0]` no `CRIAR_CONTA` e `[5, 2, 0]` no `TRANSFERENCIA_CREDITO_REMOTO`, e a comparação posição a posição classifica o par como **ANTES**, pelo mesmo motivo: um vetor é menor ou igual ao outro em todas as posições.
+
+### Questão 3
+
+Dado `V1 = [3, 1, 0]` e `V2 = [1, 3, 0]`, os eventos são **concorrentes**.
+
+Aqui nenhum dos dois vetores domina o outro:
+
+| Posição | V1 | V2 | Relação |
+| :---: | :---: | :---: | :---: |
+| 0 (Agência 0) | 3 | 1 | V1 **maior** |
+| 1 (Agência 1) | 1 | 3 | V1 **menor** |
+| 2 (Agência 2) | 0 | 0 | iguais |
+
+Como `V1 <= V2` falha na posição 0 e `V2 <= V1` falha na posição 1, não vale nem `V1 -> V2` nem `V2 -> V1`. Isso significa que nenhum dos dois eventos teve como influenciar o outro: cada processo avançou por um caminho que o outro não conhecia. Lendo o conteúdo dos vetores, V1 pertence a um ponto da execução em que já se sabia de 3 eventos da Agência 0 mas de apenas 1 da Agência 1, enquanto V2 vem de um ponto em que se sabia de 3 eventos da Agência 1 mas de apenas 1 da Agência 0. Nenhum dos dois estados é alcançável a partir do outro.
+
+Reproduzi os dois vetores com a classe real, em cenários independentes. No primeiro, a Agência 0 avança dois eventos locais e envia, e a Agência 1, ainda zerada, recebe: o resultado é `[3, 1, 0]`. No segundo, é a Agência 1 que avança dois eventos locais antes de receber uma mensagem de uma Agência 0 recém-iniciada, produzindo `[1, 3, 0]`. São duas histórias que não se cruzam, e é por isso que a comparação devolve `CONCORRENTES`.
+
+Esse é justamente o cenário que o relógio de Lamport não conseguia distinguir, como anotei na Parte E do Sprint 1. No teste com o servidor real, gerei um depósito na Agência 2 sem nenhuma relação com a transferência que acontecia entre as Agências 0 e 1: o `TRANSFERENCIA_DEBITO` da Agência 0, com `[4, 0, 0]`, e o `DEPOSITO` da Agência 2, com `[0, 0, 2]`, saem como **CONCORRENTES** pela mesma regra desta questão, com cada vetor maior em uma posição e menor em outra. Dos 20 pares entre agências diferentes naquele log, 16 foram classificados como concorrentes e 4 como causalmente ordenados, e todos os 4 causais eram justamente os que envolviam o crédito remoto, ou seja, os únicos pares ligados por uma mensagem de verdade.
