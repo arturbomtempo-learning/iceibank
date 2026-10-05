@@ -161,7 +161,9 @@ O padrão existe, mas não de forma tão literal quanto no backend, e vale ser h
 
 O ponto mais misturado é justamente o Controller, que não mora em um arquivo próprio: ele está espalhado entre a store e o script da página. Na `TransferPage`, por exemplo, o script valida o formulário, chama o serviço, monta o resultado e manda a store recarregar os saldos, ou seja, faz trabalho de controller dentro do arquivo do componente. Foi uma escolha consciente por seguir a arquitetura por módulos definida no `INSTRUCTIONS.md` do projeto, que organiza o código por funcionalidade em vez de por camada, mas reconheço que isso afasta o frontend do MVC estrito. Quem segue o padrão à risca é o backend, onde `routes.py`, `controllers/` e `services/` separam as camadas de forma bem mais clara.
 
-## Sprint 2: Parte B - Relógio vetorial
+# Sprint 2
+
+## Parte B - Relógio vetorial
 
 ### Questão 1
 
@@ -218,3 +220,24 @@ Como `V1 <= V2` falha na posição 0 e `V2 <= V1` falha na posição 1, não val
 Reproduzi os dois vetores com a classe real, em cenários independentes. No primeiro, a Agência 0 avança dois eventos locais e envia, e a Agência 1, ainda zerada, recebe: o resultado é `[3, 1, 0]`. No segundo, é a Agência 1 que avança dois eventos locais antes de receber uma mensagem de uma Agência 0 recém-iniciada, produzindo `[1, 3, 0]`. São duas histórias que não se cruzam, e é por isso que a comparação devolve `CONCORRENTES`.
 
 Esse é justamente o cenário que o relógio de Lamport não conseguia distinguir, como anotei na Parte E do Sprint 1. No teste com o servidor real, gerei um depósito na Agência 2 sem nenhuma relação com a transferência que acontecia entre as Agências 0 e 1: o `TRANSFERENCIA_DEBITO` da Agência 0, com `[4, 0, 0]`, e o `DEPOSITO` da Agência 2, com `[0, 0, 2]`, saem como **CONCORRENTES** pela mesma regra desta questão, com cada vetor maior em uma posição e menor em outra. Dos 20 pares entre agências diferentes naquele log, 16 foram classificados como concorrentes e 4 como causalmente ordenados, e todos os 4 causais eram justamente os que envolviam o crédito remoto, ou seja, os únicos pares ligados por uma mensagem de verdade.
+
+## Sprint 2: Parte C - Publish/Subscribe entre agências
+
+### Questão 1
+
+Quando a Agência 1 voltou, **a mensagem foi entregue, mas a conta não existia mais para receber o crédito**. Assim que o processo subiu e o consumidor se ligou à fila, o log dela registrou:
+
+```
+[mensageria] consumindo fila-agencia-1 com a chave agencia.1.creditar
+[Vetor [5,1,0]] CREDITO_REMOTO_FALHOU {'idConta': 1, 'valor': 200, 'origemAgencia': 0, 'motivo': 'conta nao encontrada'}
+```
+
+A mensagem, portanto, **não sumiu**: ela ficou retida no broker durante todo o tempo em que a Agência 1 esteve fora do ar e foi entregue no instante da reconexão. É o que a configuração do `mensageria.py` garante, com `durable=True` na exchange e na fila e `delivery_mode=2` na publicação, que fazem o RabbitMQ gravar a mensagem em disco em vez de descartá-la por falta de consumidor.
+
+O próprio vetor comprova a entrega. A Agência 1 reiniciada tinha o relógio zerado em `[0, 0, 0]`, e mesmo assim o evento foi registrado com `[5, 1, 0]`. O `5` na posição 0 não poderia ter sido produzido por ela, já que ela nunca executou nenhum evento da Agência 0: esse valor só pode ter chegado dentro da mensagem, pelo `ao_receber`, que fez o `max` entre `[0, 0, 0]` e o `[5, 0, 0]` publicado pela origem e depois incrementou a própria posição.
+
+Confirmei também que a publicação aconteceu mesmo com o destino fora do ar. A resposta da transferência, capturada com `curl -i`, foi `HTTP/1.1 200 OK` às 00:58:30, com o corpo `{"mensagem":"Transferência publicada para a agência de destino (entrega assíncrona)."}`, e o log da Agência 0 marcou `[Vetor [4,0,0]] TRANSFERENCIA_DEBITO` no mesmo instante. Ou seja, a origem debitou e publicou normalmente, sem nem saber que a outra agência estava desligada, que é exatamente a indireção que a mensageria introduz.
+
+**A falha, então, não foi da mensageria.** O motivo registrado é `conta nao encontrada`, e a causa é a ausência de persistência das contas. No `app.py`, o estado é criado como `app.config["CONTAS"] = {}`, um dicionário em memória: ao encerrar o processo da Agência 1, a conta 1 deixou de existir junto com ele. Quando a mensagem chegou, o consumidor encontrou a fila funcionando, o vetor correto e o valor certo, mas nenhuma conta onde aplicar o crédito. O relógio vetorial também é perdido pelo mesmo motivo, e é por isso que ele reiniciou em `[0, 0, 0]`.
+
+O efeito prático é que o dinheiro continua desaparecido, só que por um motivo diferente do Sprint 1. Conferindo os saldos depois do teste, a conta 0 ficou com R$ 500,00, resultado de R$ 1.000,00 iniciais menos os R$ 300,00 da primeira transferência e os R$ 200,00 desta, enquanto a consulta à conta 1 responde "Conta não encontrada nesta agência". Os R$ 200,00 saíram da origem e não chegaram a lugar nenhum. A diferença é que agora essa perda está registrada de forma explícita como `CREDITO_REMOTO_FALHOU`, com o motivo anotado no log, em vez de apenas um erro de rede do lado de quem chamou.
