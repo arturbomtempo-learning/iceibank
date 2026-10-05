@@ -1,5 +1,7 @@
 # Respostas
 
+# Sprint 1
+
 ## Funcionalidade adicional - Extrato consolidado
 
 A funcionalidade adicional que escolhi implementar, exigida pela seção 2.1, é o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado **nas três agências** e devolve o saldo somado, em uma única chamada.
@@ -221,7 +223,7 @@ Reproduzi os dois vetores com a classe real, em cenários independentes. No prim
 
 Esse é justamente o cenário que o relógio de Lamport não conseguia distinguir, como anotei na Parte E do Sprint 1. No teste com o servidor real, gerei um depósito na Agência 2 sem nenhuma relação com a transferência que acontecia entre as Agências 0 e 1: o `TRANSFERENCIA_DEBITO` da Agência 0, com `[4, 0, 0]`, e o `DEPOSITO` da Agência 2, com `[0, 0, 2]`, saem como **CONCORRENTES** pela mesma regra desta questão, com cada vetor maior em uma posição e menor em outra. Dos 20 pares entre agências diferentes naquele log, 16 foram classificados como concorrentes e 4 como causalmente ordenados, e todos os 4 causais eram justamente os que envolviam o crédito remoto, ou seja, os únicos pares ligados por uma mensagem de verdade.
 
-## Sprint 2: Parte C - Publish/Subscribe entre agências
+## Parte C - Publish/Subscribe entre agências
 
 ### Questão 1
 
@@ -241,3 +243,31 @@ Confirmei também que a publicação aconteceu mesmo com o destino fora do ar. A
 **A falha, então, não foi da mensageria.** O motivo registrado é `conta nao encontrada`, e a causa é a ausência de persistência das contas. No `app.py`, o estado é criado como `app.config["CONTAS"] = {}`, um dicionário em memória: ao encerrar o processo da Agência 1, a conta 1 deixou de existir junto com ele. Quando a mensagem chegou, o consumidor encontrou a fila funcionando, o vetor correto e o valor certo, mas nenhuma conta onde aplicar o crédito. O relógio vetorial também é perdido pelo mesmo motivo, e é por isso que ele reiniciou em `[0, 0, 0]`.
 
 O efeito prático é que o dinheiro continua desaparecido, só que por um motivo diferente do Sprint 1. Conferindo os saldos depois do teste, a conta 0 ficou com R$ 500,00, resultado de R$ 1.000,00 iniciais menos os R$ 300,00 da primeira transferência e os R$ 200,00 desta, enquanto a consulta à conta 1 responde "Conta não encontrada nesta agência". Os R$ 200,00 saíram da origem e não chegaram a lugar nenhum. A diferença é que agora essa perda está registrada de forma explícita como `CREDITO_REMOTO_FALHOU`, com o motivo anotado no log, em vez de apenas um erro de rede do lado de quem chamou.
+
+### Questão 2
+
+O que melhorou foi o **desacoplamento temporal** entre as duas agências. No Sprint 1, a origem chamava `POST /contas/<id>/creditar-remoto` na agência de destino e ficava presa ao resultado daquela chamada: se o destino estivesse fora do ar, o `requests` levantava exceção, o evento `TRANSFERENCIA_FALHOU` era gravado e o cliente recebia `HTTP 502` com a frase "Falha ao contatar agência de destino. Débito já aplicado.". A tentativa de crédito morria ali, sem nenhum registro do lado do destino, e nada no sistema guardava a intenção de creditar. Com a mensageria, a mesma situação devolveu `HTTP 200` e a mensagem ficou retida na fila até a Agência 1 voltar, momento em que foi entregue. A origem nem precisa saber se o destino está no ar, que é justamente o ponto da comunicação indireta: ela publica num broker e segue em frente.
+
+O que continua em aberto é a **correção do sistema**, e essa distinção é o centro da pergunta. Que a mensagem não se perca diz apenas que a intenção de creditar sobreviveu à queda. Não diz que ela foi cumprida. No meu teste, ela foi entregue e mesmo assim o crédito não aconteceu, porque a conta tinha desaparecido junto com o processo, gerando `CREDITO_REMOTO_FALHOU`. O saldo final comprova: a conta 0 ficou com R$ 500,00 e os R$ 200,00 debitados não estão em lugar nenhum. A soma de dinheiro do sistema diminuiu, exatamente como no Sprint 1. A mensageria resolveu a perda da mensagem, não a atomicidade da operação.
+
+Há ainda um ponto em que a mudança **piorou** a situação, e vale registrar com honestidade. No Sprint 1, o cliente recebia `502` e sabia que algo tinha dado errado; a resposta era ruim, mas informativa. Agora ele recebe `200` com a mensagem "Transferência publicada", e esse `200` significa apenas que o broker aceitou a publicação. Ele não promete que o crédito vai ser aplicado, e no meu teste não foi. Ou seja, quem chamou a API ficou com **menos** informação do que tinha antes, porque o sucesso aparente esconde uma falha que só vai aparecer no log da outra agência. O frontend herda esse problema: ele mostra a transferência como concluída e recarrega os saldos, mas o saldo do destino pode nunca ser atualizado.
+
+Resolver isso de verdade exige garantir atomicidade entre as duas pontas, que é o tema do Sprint 4. Com o que existe hoje, dariam para reduzir os sintomas uma persistência das contas em disco, que evitaria o caso específico que reproduzi, e um evento de confirmação publicado de volta pelo destino, que permitiria à origem saber se o crédito foi aplicado e estornar o débito quando não tiver sido.
+
+### Questão 3
+
+**Sim, é um problema de segurança**, e ele é maior do que parece, porque representa uma proteção que existia no Sprint 1 e deixou de existir.
+
+Na versão anterior, o crédito remoto entrava por uma rota HTTP registrada como `requer_servico(transferencias_controller.creditar_remoto)`. Qualquer requisição precisava apresentar um token de serviço assinado com a chave do sistema, e eu confirmei que a proteção funciona: chamando uma rota de serviço com um token comum de usuário, a resposta é `HTTP 403`. Agora o crédito entra pela fila, e o `aplicar_credito_remoto` valida apenas o formato da mensagem, ou seja, se `idConta` é inteiro, se `valor` é positivo e se `vetorEnvio` tem o tamanho certo. Nada ali verifica **quem** publicou.
+
+Testei essa exposição publicando na fila da Agência 1 uma mensagem forjada, sem credencial nenhuma:
+
+```
+{"idConta": 7, "valor": 999999, "vetorEnvio": [1, 0, 0], "origemAgencia": 0}
+```
+
+O consumidor aceitou e registrou um `TRANSFERENCIA_CREDITO_REMOTO` normal, levando o saldo da conta de R$ 100,00 para R$ 1.000.099,00. O campo `origemAgencia` é apenas um dado dentro do corpo, declarado por quem publica, então não serve como identificação: é o mesmo tipo de confiança indevida que eu já tinha evitado na rota interna do extrato consolidado, onde o papel do usuário é consultado no repositório em vez de aceito do chamador.
+
+A pergunta sugere pensar em quem consegue publicar na exchange hoje, e a resposta é o ponto central. O `RABBITMQ_URL` da instância CloudAMQP contém usuário e senha com permissão total sobre o vhost, e **as três agências compartilham exatamente a mesma credencial**. Não existe usuário por agência nem restrição de routing key: qualquer processo que tenha essa URL pode publicar em `agencia.0.creditar`, `agencia.1.creditar` ou `agencia.2.creditar`, se passando por qualquer uma das outras. A única barreira real é o sigilo da URL, que hoje vive em uma variável de ambiente.
+
+No ambiente de desenvolvimento o risco prático é baixo, já que a instância é individual e a URL não é publicada. Mas a propriedade de segurança que sustenta isso deixou de ser "o sistema verifica quem está pedindo" e passou a ser "ninguém mais conhece a senha do broker", o que é bem mais frágil e não sobreviveria a um ambiente real. Duas correções seriam possíveis sem sair do que o projeto já tem: incluir no corpo da mensagem o mesmo token de serviço do Sprint 1 e verificá-lo no consumidor antes de aplicar o crédito, mantendo a autenticação independente do transporte; ou criar um usuário por agência no RabbitMQ com permissão de publicação restrita por routing key, de modo que a Agência 0 sequer consiga publicar na fila fingindo ser a Agência 2.
