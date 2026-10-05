@@ -44,8 +44,8 @@ function compararVetores(v1, v2) {
     return 'CONCORRENTES';
 }
 
-console.log('\n=== Pares de eventos CONCORRENTES entre agências diferentes ===');
-let encontrouConcorrente = false;
+const concorrentes = [];
+const causais = [];
 
 for (let i = 0; i < todosEventos.length; i++) {
     for (let j = i + 1; j < todosEventos.length; j++) {
@@ -57,16 +57,44 @@ for (let i = 0; i < todosEventos.length; i++) {
         const relacao = compararVetores(e1.timestampVetorial, e2.timestampVetorial);
 
         if (relacao === 'CONCORRENTES') {
-            encontrouConcorrente = true;
-            console.log(
-                `[${e1.agencia}] ${e1.tipo} (${JSON.stringify(e1.timestampVetorial)})  x  [${e2.agencia}] ${e2.tipo} (${JSON.stringify(e2.timestampVetorial)})`
-            );
+            concorrentes.push([e1, e2]);
+        } else if (relacao === 'ANTES') {
+            causais.push([e1, e2]);
+        } else if (relacao === 'DEPOIS') {
+            causais.push([e2, e1]);
         }
     }
 }
 
-if (!encontrouConcorrente) {
+function descrever(evento) {
+    return `[${evento.agencia}] ${evento.tipo} (${JSON.stringify(evento.timestampVetorial)})`;
+}
+
+console.log('\n=== Pares de eventos CONCORRENTES entre agências diferentes ===');
+
+for (const [e1, e2] of concorrentes) {
+    console.log(`${descrever(e1)}  x  ${descrever(e2)}`);
+}
+
+if (concorrentes.length === 0) {
     console.log(
-        '(nenhum par concorrente encontrado nesta execução - gere mais eventos em paralelo e rode de novo)'
+        '(nenhum par concorrente encontrado nesta execução, gere mais eventos em paralelo e rode de novo)'
     );
 }
+
+console.log('\n=== Pares CAUSALMENTE RELACIONADOS entre agências diferentes ===');
+
+for (const [anterior, posterior] of causais) {
+    console.log(`${descrever(anterior)}  ->  ${descrever(posterior)}`);
+}
+
+if (causais.length === 0) {
+    console.log(
+        '(nenhum par causal encontrado nesta execução, faça uma transferência entre agências e rode de novo)'
+    );
+}
+
+console.log(
+    `\nTotal: ${concorrentes.length + causais.length} pares entre agências diferentes, ` +
+        `${concorrentes.length} concorrentes e ${causais.length} causalmente ordenados.`
+);

@@ -49,8 +49,8 @@ def comparar_vetores(v1, v2):
     return "CONCORRENTES"
 
 
-print("\n=== Pares de eventos CONCORRENTES entre agências diferentes ===")
-encontrou_concorrente = False
+concorrentes = []
+causais = []
 
 for i in range(len(todos_eventos)):
     for j in range(i + 1, len(todos_eventos)):
@@ -63,14 +63,40 @@ for i in range(len(todos_eventos)):
         relacao = comparar_vetores(e1["timestampVetorial"], e2["timestampVetorial"])
 
         if relacao == "CONCORRENTES":
-            encontrou_concorrente = True
-            print(
-                f"[{e1['agencia']}] {e1['tipo']} ({formatar_vetor(e1['timestampVetorial'])})"
-                f"  x  [{e2['agencia']}] {e2['tipo']} ({formatar_vetor(e2['timestampVetorial'])})"
-            )
+            concorrentes.append((e1, e2))
+        elif relacao == "ANTES":
+            causais.append((e1, e2))
+        elif relacao == "DEPOIS":
+            causais.append((e2, e1))
 
-if not encontrou_concorrente:
+
+def descrever(evento):
+    return f"[{evento['agencia']}] {evento['tipo']} ({formatar_vetor(evento['timestampVetorial'])})"
+
+
+print("\n=== Pares de eventos CONCORRENTES entre agências diferentes ===")
+
+for e1, e2 in concorrentes:
+    print(f"{descrever(e1)}  x  {descrever(e2)}")
+
+if not concorrentes:
     print(
         "(nenhum par concorrente encontrado nesta execução, "
         "gere mais eventos em paralelo e rode de novo)"
     )
+
+print("\n=== Pares CAUSALMENTE RELACIONADOS entre agências diferentes ===")
+
+for anterior, posterior in causais:
+    print(f"{descrever(anterior)}  ->  {descrever(posterior)}")
+
+if not causais:
+    print(
+        "(nenhum par causal encontrado nesta execução, "
+        "faça uma transferência entre agências e rode de novo)"
+    )
+
+print(
+    f"\nTotal: {len(concorrentes) + len(causais)} pares entre agências diferentes, "
+    f"{len(concorrentes)} concorrentes e {len(causais)} causalmente ordenados."
+)
