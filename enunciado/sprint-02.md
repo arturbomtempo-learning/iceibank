@@ -32,12 +32,12 @@
 
 Relembrando o mapeamento completo dos 4 sprints:
 
-| Sprint | Unidade da ementa | Tecnologia | Conceito de Sistemas Distribuídos aplicado |
-| --- | --- | --- | --- |
-| 1 | U2 - Desenvolvimento Web | API REST / MVC | Relógio lógico de Lamport |
-| **2 (este)** | U3 - Comunicação indireta | Mensageria / Pub-Sub | Relógio vetorial |
-| 3 | U4 - Desenvolvimento Móvel | App Flutter | Consenso (eleição de líder) |
-| 4 | U5 - Computação em Nuvem | Containers | Transações distribuídas (2PC/Saga) |
+| Sprint       | Unidade da ementa          | Tecnologia           | Conceito de Sistemas Distribuídos aplicado |
+| ------------ | -------------------------- | -------------------- | ------------------------------------------ |
+| 1            | U2 - Desenvolvimento Web   | API REST / MVC       | Relógio lógico de Lamport                  |
+| **2 (este)** | U3 - Comunicação indireta  | Mensageria / Pub-Sub | Relógio vetorial                           |
+| 3            | U4 - Desenvolvimento Móvel | App Flutter          | Consenso (eleição de líder)                |
+| 4            | U5 - Computação em Nuvem   | Containers           | Transações distribuídas (2PC/Saga)         |
 
 ---
 
@@ -83,16 +83,16 @@ Use a mesma linguagem escolhida no Sprint 1 (Java ou Python) - este projeto evol
 
 Assim como no Sprint 1, planeje 3 semanas, começando cedo:
 
-| Etapa | Quando | Conteúdo |
-| --- | --- | --- |
-| RabbitMQ configurado e testado (fora da aplicação) | Semana 1 (início) | Seção 5: Parte A |
-| Relógio vetorial | Semana 1 | Seção 6: Parte B - implemente e teste isoladamente antes de integrar |
-| Publish/Subscribe entre agências | Semana 1-2 | Seção 7: Parte C - substitui a chamada REST direta do Sprint 1 |
-| Teste de resiliência (agência fora do ar) | Semana 2 | Seção 7 - reproduza o cenário descrito na seção 2 |
-| Linha do tempo causal | Semana 2-3 | Seção 8: Parte D - identificar pares concorrentes |
-| Funcionalidade adicional | Ao longo do sprint | Seção 2.1 |
-| Revisão de respostas, commits e regressão (JWT/frontend ainda funcionam?) | Semana 3 | Antes de entregar |
-| Entrega | Fim da Semana 3 | Checklist da seção 10 |
+| Etapa                                                                     | Quando             | Conteúdo                                                             |
+| ------------------------------------------------------------------------- | ------------------ | -------------------------------------------------------------------- |
+| RabbitMQ configurado e testado (fora da aplicação)                        | Semana 1 (início)  | Seção 5: Parte A                                                     |
+| Relógio vetorial                                                          | Semana 1           | Seção 6: Parte B - implemente e teste isoladamente antes de integrar |
+| Publish/Subscribe entre agências                                          | Semana 1-2         | Seção 7: Parte C - substitui a chamada REST direta do Sprint 1       |
+| Teste de resiliência (agência fora do ar)                                 | Semana 2           | Seção 7 - reproduza o cenário descrito na seção 2                    |
+| Linha do tempo causal                                                     | Semana 2-3         | Seção 8: Parte D - identificar pares concorrentes                    |
+| Funcionalidade adicional                                                  | Ao longo do sprint | Seção 2.1                                                            |
+| Revisão de respostas, commits e regressão (JWT/frontend ainda funcionam?) | Semana 3           | Antes de entregar                                                    |
+| Entrega                                                                   | Fim da Semana 3    | Checklist da seção 10                                                |
 
 ---
 
@@ -185,10 +185,10 @@ Mesma orientação do Sprint 1: trabalho individual, commits pequenos e incremen
 
 ## 5. Parte A: Configurando o RabbitMQ
 
-**Conceito:** um message broker como o RabbitMQ recebe mensagens de quem publica (*producer*) e as entrega a quem consome (*consumer*), sem que um precise conhecer o outro diretamente - é essa indireção que dá nome à unidade "Comunicação Indireta". Nesta arquitetura usaremos:
+**Conceito:** um message broker como o RabbitMQ recebe mensagens de quem publica (_producer_) e as entrega a quem consome (_consumer_), sem que um precise conhecer o outro diretamente - é essa indireção que dá nome à unidade "Comunicação Indireta". Nesta arquitetura usaremos:
 
 - Uma **exchange** do tipo `topic`, chamada `iceibank.eventos` - é para ela que as agências publicam.
-- Uma **fila por agência** (`fila-agencia-0`, `fila-agencia-1`, `fila-agencia-2`), cada uma vinculada (*bound*) à exchange por uma *routing key* no formato `agencia.<id>.creditar`.
+- Uma **fila por agência** (`fila-agencia-0`, `fila-agencia-1`, `fila-agencia-2`), cada uma vinculada (_bound_) à exchange por uma _routing key_ no formato `agencia.<id>.creditar`.
 - Quando a Agência 0 quer creditar uma conta da Agência 1, ela publica na exchange com a routing key `agencia.1.creditar` - só a fila da Agência 1 recebe essa mensagem, mesmo a exchange sendo compartilhada por todas.
 
 Isso é o padrão **Publish/Subscribe**: quem publica não sabe (nem precisa saber) quem vai consumir.
@@ -224,28 +224,28 @@ Com dois vetores `V1` e `V2`, dá para determinar a relação entre os eventos q
 
 ```javascript
 class RelogioVetorial {
-  constructor(idAgencia, numeroAgencias) {
-    this.idAgencia = idAgencia;
-    this.vetor = new Array(numeroAgencias).fill(0);
-  }
-
-  eventoLocal() {
-    this.vetor[this.idAgencia] += 1;
-    return [...this.vetor];
-  }
-
-  aoEnviar() {
-    this.vetor[this.idAgencia] += 1;
-    return [...this.vetor];
-  }
-
-  aoReceber(vetorRecebido) {
-    for (let i = 0; i < this.vetor.length; i++) {
-      this.vetor[i] = Math.max(this.vetor[i], vetorRecebido[i]);
+    constructor(idAgencia, numeroAgencias) {
+        this.idAgencia = idAgencia;
+        this.vetor = new Array(numeroAgencias).fill(0);
     }
-    this.vetor[this.idAgencia] += 1;
-    return [...this.vetor];
-  }
+
+    eventoLocal() {
+        this.vetor[this.idAgencia] += 1;
+        return [...this.vetor];
+    }
+
+    aoEnviar() {
+        this.vetor[this.idAgencia] += 1;
+        return [...this.vetor];
+    }
+
+    aoReceber(vetorRecebido) {
+        for (let i = 0; i < this.vetor.length; i++) {
+            this.vetor[i] = Math.max(this.vetor[i], vetorRecebido[i]);
+        }
+        this.vetor[this.idAgencia] += 1;
+        return [...this.vetor];
+    }
 }
 
 export default RelogioVetorial;
@@ -266,24 +266,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class RegistroEventos {
-  constructor(nomeAgencia) {
-    this.nomeAgencia = nomeAgencia;
-    this.caminhoArquivo = path.join(__dirname, '..', '..', 'data', `eventos-${nomeAgencia}.jsonl`);
-    fs.mkdirSync(path.dirname(this.caminhoArquivo), { recursive: true });
-  }
+    constructor(nomeAgencia) {
+        this.nomeAgencia = nomeAgencia;
+        this.caminhoArquivo = path.join(
+            __dirname,
+            '..',
+            '..',
+            'data',
+            `eventos-${nomeAgencia}.jsonl`
+        );
+        fs.mkdirSync(path.dirname(this.caminhoArquivo), { recursive: true });
+    }
 
-  registrar(tipo, timestampVetorial, detalhes) {
-    const evento = {
-      agencia: this.nomeAgencia,
-      tipo,
-      timestampVetorial,
-      horaParede: new Date().toISOString(),
-      detalhes,
-    };
-    fs.appendFileSync(this.caminhoArquivo, JSON.stringify(evento) + '\n');
-    console.log(`[Vetor ${JSON.stringify(timestampVetorial)}] ${tipo}`, detalhes);
-    return evento;
-  }
+    registrar(tipo, timestampVetorial, detalhes) {
+        const evento = {
+            agencia: this.nomeAgencia,
+            tipo,
+            timestampVetorial,
+            horaParede: new Date().toISOString(),
+            detalhes,
+        };
+        fs.appendFileSync(this.caminhoArquivo, JSON.stringify(evento) + '\n');
+        console.log(`[Vetor ${JSON.stringify(timestampVetorial)}] ${tipo}`, detalhes);
+        return evento;
+    }
 }
 
 export default RegistroEventos;
@@ -315,38 +321,42 @@ const URL_RABBITMQ = process.env.RABBITMQ_URL;
 const EXCHANGE = 'iceibank.eventos';
 
 if (!URL_RABBITMQ) {
-  console.error('Defina a variável de ambiente RABBITMQ_URL com a URL AMQP da sua instância CloudAMQP antes de iniciar.');
-  process.exit(1);
+    console.error(
+        'Defina a variável de ambiente RABBITMQ_URL com a URL AMQP da sua instância CloudAMQP antes de iniciar.'
+    );
+    process.exit(1);
 }
 
 let canalCache = null;
 
 async function obterCanal() {
-  if (canalCache) return canalCache;
-  const conexao = await amqp.connect(URL_RABBITMQ);
-  const canal = await conexao.createChannel();
-  await canal.assertExchange(EXCHANGE, 'topic', { durable: true });
-  canalCache = canal;
-  return canal;
+    if (canalCache) return canalCache;
+    const conexao = await amqp.connect(URL_RABBITMQ);
+    const canal = await conexao.createChannel();
+    await canal.assertExchange(EXCHANGE, 'topic', { durable: true });
+    canalCache = canal;
+    return canal;
 }
 
 async function publicar(routingKey, mensagem) {
-  const canal = await obterCanal();
-  canal.publish(EXCHANGE, routingKey, Buffer.from(JSON.stringify(mensagem)), { persistent: true });
+    const canal = await obterCanal();
+    canal.publish(EXCHANGE, routingKey, Buffer.from(JSON.stringify(mensagem)), {
+        persistent: true,
+    });
 }
 
 async function assinar(idAgencia, aoReceberMensagem) {
-  const canal = await obterCanal();
-  const nomeFila = `fila-agencia-${idAgencia}`;
-  await canal.assertQueue(nomeFila, { durable: true });
-  await canal.bindQueue(nomeFila, EXCHANGE, `agencia.${idAgencia}.creditar`);
-  canal.consume(nomeFila, (msg) => {
-    if (msg) {
-      const conteudo = JSON.parse(msg.content.toString());
-      aoReceberMensagem(conteudo);
-      canal.ack(msg);
-    }
-  });
+    const canal = await obterCanal();
+    const nomeFila = `fila-agencia-${idAgencia}`;
+    await canal.assertQueue(nomeFila, { durable: true });
+    await canal.bindQueue(nomeFila, EXCHANGE, `agencia.${idAgencia}.creditar`);
+    canal.consume(nomeFila, (msg) => {
+        if (msg) {
+            const conteudo = JSON.parse(msg.content.toString());
+            aoReceberMensagem(conteudo);
+            canal.ack(msg);
+        }
+    });
 }
 
 export { publicar, assinar };
@@ -363,44 +373,47 @@ import * as config from '../config.js';
 import { publicar } from '../services/mensageria.js';
 
 async function transferir(req, res) {
-  const { contas, relogio, registro, idAgencia } = req.app.locals;
-  const { idOrigem, idDestino, valor } = req.body;
+    const { contas, relogio, registro, idAgencia } = req.app.locals;
+    const { idOrigem, idDestino, valor } = req.body;
 
-  const contaOrigem = contas.get(idOrigem);
-  if (!contaOrigem) return res.status(404).json({ erro: 'Conta de origem não encontrada nesta agência.' });
-  if (contaOrigem.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
+    const contaOrigem = contas.get(idOrigem);
+    if (!contaOrigem)
+        return res.status(404).json({ erro: 'Conta de origem não encontrada nesta agência.' });
+    if (contaOrigem.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
 
-  const agenciaDestino = config.agenciaResponsavel(idDestino);
+    const agenciaDestino = config.agenciaResponsavel(idDestino);
 
-  const vetorDebito = relogio.eventoLocal();
-  contaOrigem.saldo -= valor;
-  registro.registrar('TRANSFERENCIA_DEBITO', vetorDebito, { idOrigem, idDestino, valor });
+    const vetorDebito = relogio.eventoLocal();
+    contaOrigem.saldo -= valor;
+    registro.registrar('TRANSFERENCIA_DEBITO', vetorDebito, { idOrigem, idDestino, valor });
 
-  if (agenciaDestino === idAgencia) {
-    const contaDestino = contas.get(idDestino);
-    if (!contaDestino) {
-      contaOrigem.saldo += valor;
-      return res.status(404).json({ erro: 'Conta de destino não encontrada.' });
+    if (agenciaDestino === idAgencia) {
+        const contaDestino = contas.get(idDestino);
+        if (!contaDestino) {
+            contaOrigem.saldo += valor;
+            return res.status(404).json({ erro: 'Conta de destino não encontrada.' });
+        }
+        const vetorCredito = relogio.eventoLocal();
+        contaDestino.saldo += valor;
+        registro.registrar('TRANSFERENCIA_CREDITO', vetorCredito, { idOrigem, idDestino, valor });
+        return res.json({ mensagem: 'Transferência concluída (mesma agência).' });
     }
-    const vetorCredito = relogio.eventoLocal();
-    contaDestino.saldo += valor;
-    registro.registrar('TRANSFERENCIA_CREDITO', vetorCredito, { idOrigem, idDestino, valor });
-    return res.json({ mensagem: 'Transferência concluída (mesma agência).' });
-  }
 
-  // Em vez de chamar a outra agência diretamente (Sprint 1), publicamos um
-  // evento na exchange do RabbitMQ. A agência de destino consome quando
-  // estiver disponível - mesmo que esteja fora do ar agora, a mensagem fica
-  // retida na fila (durable) e é entregue quando ela voltar.
-  const vetorEnvio = relogio.aoEnviar();
-  await publicar(`agencia.${agenciaDestino}.creditar`, {
-    idConta: idDestino,
-    valor,
-    vetorEnvio,
-    origemAgencia: idAgencia,
-  });
+    // Em vez de chamar a outra agência diretamente (Sprint 1), publicamos um
+    // evento na exchange do RabbitMQ. A agência de destino consome quando
+    // estiver disponível - mesmo que esteja fora do ar agora, a mensagem fica
+    // retida na fila (durable) e é entregue quando ela voltar.
+    const vetorEnvio = relogio.aoEnviar();
+    await publicar(`agencia.${agenciaDestino}.creditar`, {
+        idConta: idDestino,
+        valor,
+        vetorEnvio,
+        origemAgencia: idAgencia,
+    });
 
-  res.json({ mensagem: 'Transferência publicada para a agência de destino (entrega assíncrona).' });
+    res.json({
+        mensagem: 'Transferência publicada para a agência de destino (entrega assíncrona).',
+    });
 }
 
 export { transferir };
@@ -424,8 +437,8 @@ const idAgencia = parseInt(process.env.AGENCIA_ID || '0', 10);
 const agenciaConfig = config.AGENCIAS.find((a) => a.id === idAgencia);
 
 if (!agenciaConfig) {
-  console.error(`Agência ${idAgencia} não configurada em config.js`);
-  process.exit(1);
+    console.error(`Agência ${idAgencia} não configurada em config.js`);
+    process.exit(1);
 }
 
 const app = express();
@@ -444,22 +457,27 @@ app.use('/', routes);
 
 // Consumidor: processa creditos vindos de outras agencias via RabbitMQ
 assinar(idAgencia, (mensagem) => {
-  const { idConta, valor, vetorEnvio, origemAgencia } = mensagem;
-  const vetor = relogio.aoReceber(vetorEnvio);
+    const { idConta, valor, vetorEnvio, origemAgencia } = mensagem;
+    const vetor = relogio.aoReceber(vetorEnvio);
 
-  const conta = contas.get(idConta);
-  if (!conta) {
-    registro.registrar('CREDITO_REMOTO_FALHOU', vetor, { idConta, valor, origemAgencia, motivo: 'conta nao encontrada' });
-    return;
-  }
+    const conta = contas.get(idConta);
+    if (!conta) {
+        registro.registrar('CREDITO_REMOTO_FALHOU', vetor, {
+            idConta,
+            valor,
+            origemAgencia,
+            motivo: 'conta nao encontrada',
+        });
+        return;
+    }
 
-  conta.saldo += valor;
-  registro.registrar('TRANSFERENCIA_CREDITO_REMOTO', vetor, { idConta, valor, origemAgencia });
+    conta.saldo += valor;
+    registro.registrar('TRANSFERENCIA_CREDITO_REMOTO', vetor, { idConta, valor, origemAgencia });
 });
 
 const porta = new URL(agenciaConfig.url).port;
 app.listen(porta, () => {
-  console.log(`[Agência ${idAgencia}] ouvindo na porta ${porta}`);
+    console.log(`[Agência ${idAgencia}] ouvindo na porta ${porta}`);
 });
 ```
 
@@ -507,55 +525,57 @@ const arquivos = fs.readdirSync(pastaDados).filter((f) => f.endsWith('.jsonl'));
 
 let todosEventos = [];
 for (const arquivo of arquivos) {
-  const linhas = fs
-    .readFileSync(path.join(pastaDados, arquivo), 'utf-8')
-    .trim()
-    .split('\n')
-    .filter(Boolean);
-  todosEventos.push(...linhas.map((l) => JSON.parse(l)));
+    const linhas = fs
+        .readFileSync(path.join(pastaDados, arquivo), 'utf-8')
+        .trim()
+        .split('\n')
+        .filter(Boolean);
+    todosEventos.push(...linhas.map((l) => JSON.parse(l)));
 }
 
 todosEventos.sort((a, b) => new Date(a.horaParede) - new Date(b.horaParede));
 
 console.log('=== Linha do tempo (ordenada por hora de parede) ===');
 for (const evento of todosEventos) {
-  console.log(
-    `[${evento.agencia}] vetor=${JSON.stringify(evento.timestampVetorial)} ${evento.tipo}`,
-    JSON.stringify(evento.detalhes)
-  );
+    console.log(
+        `[${evento.agencia}] vetor=${JSON.stringify(evento.timestampVetorial)} ${evento.tipo}`,
+        JSON.stringify(evento.detalhes)
+    );
 }
 
 function compararVetores(v1, v2) {
-  let v1MenorOuIgual = true;
-  let v2MenorOuIgual = true;
-  for (let i = 0; i < v1.length; i++) {
-    if (v1[i] > v2[i]) v1MenorOuIgual = false;
-    if (v2[i] > v1[i]) v2MenorOuIgual = false;
-  }
-  if (v1MenorOuIgual && v2MenorOuIgual) return 'IGUAIS';
-  if (v1MenorOuIgual) return 'ANTES';
-  if (v2MenorOuIgual) return 'DEPOIS';
-  return 'CONCORRENTES';
+    let v1MenorOuIgual = true;
+    let v2MenorOuIgual = true;
+    for (let i = 0; i < v1.length; i++) {
+        if (v1[i] > v2[i]) v1MenorOuIgual = false;
+        if (v2[i] > v1[i]) v2MenorOuIgual = false;
+    }
+    if (v1MenorOuIgual && v2MenorOuIgual) return 'IGUAIS';
+    if (v1MenorOuIgual) return 'ANTES';
+    if (v2MenorOuIgual) return 'DEPOIS';
+    return 'CONCORRENTES';
 }
 
 console.log('\n=== Pares de eventos CONCORRENTES entre agências diferentes ===');
 let encontrouConcorrente = false;
 for (let i = 0; i < todosEventos.length; i++) {
-  for (let j = i + 1; j < todosEventos.length; j++) {
-    const e1 = todosEventos[i];
-    const e2 = todosEventos[j];
-    if (e1.agencia === e2.agencia) continue;
-    const relacao = compararVetores(e1.timestampVetorial, e2.timestampVetorial);
-    if (relacao === 'CONCORRENTES') {
-      encontrouConcorrente = true;
-      console.log(
-        `[${e1.agencia}] ${e1.tipo} (${JSON.stringify(e1.timestampVetorial)})  x  [${e2.agencia}] ${e2.tipo} (${JSON.stringify(e2.timestampVetorial)})`
-      );
+    for (let j = i + 1; j < todosEventos.length; j++) {
+        const e1 = todosEventos[i];
+        const e2 = todosEventos[j];
+        if (e1.agencia === e2.agencia) continue;
+        const relacao = compararVetores(e1.timestampVetorial, e2.timestampVetorial);
+        if (relacao === 'CONCORRENTES') {
+            encontrouConcorrente = true;
+            console.log(
+                `[${e1.agencia}] ${e1.tipo} (${JSON.stringify(e1.timestampVetorial)})  x  [${e2.agencia}] ${e2.tipo} (${JSON.stringify(e2.timestampVetorial)})`
+            );
+        }
     }
-  }
 }
 if (!encontrouConcorrente) {
-  console.log('(nenhum par concorrente encontrado nesta execução - gere mais eventos em paralelo e rode de novo)');
+    console.log(
+        '(nenhum par concorrente encontrado nesta execução - gere mais eventos em paralelo e rode de novo)'
+    );
 }
 ```
 
@@ -675,16 +695,16 @@ Nenhum código de mensageria é fornecido em Java/Python aqui - a pesquisa e a a
 
 ## 11. Critérios de avaliação (20 pontos)
 
-| Critério | Pontos | O que é observado |
-| --- | :---: | --- |
-| RabbitMQ configurado corretamente | 3 | Exchange `topic`, filas por agência, routing keys corretas, mensagens duráveis |
-| Relógio vetorial | 5 | As três regras implementadas corretamente, inclusive na integração com as mensagens |
-| Publish/Subscribe entre agências | 4 | Transferência entre agências funcionando de ponta a ponta via mensageria |
-| Linha do tempo causal | 3 | Script identifica corretamente pares concorrentes e pares causalmente relacionados |
-| Continuidade (JWT, frontend, particionamento) | 2 | O que já funcionava no Sprint 1 continua funcionando sem regressão |
-| Funcionalidade adicional | 1 | Funcionalidade nova e genuína (seção 2.1), funcionando e documentada |
-| Commits | 1 | Histórico incremental ao longo do sprint |
-| Respostas às questões | 1 | Compreensão demonstrada, com referência ao comportamento observado no código |
+| Critério                                      | Pontos | O que é observado                                                                   |
+| --------------------------------------------- | :----: | ----------------------------------------------------------------------------------- |
+| RabbitMQ configurado corretamente             |   3    | Exchange `topic`, filas por agência, routing keys corretas, mensagens duráveis      |
+| Relógio vetorial                              |   5    | As três regras implementadas corretamente, inclusive na integração com as mensagens |
+| Publish/Subscribe entre agências              |   4    | Transferência entre agências funcionando de ponta a ponta via mensageria            |
+| Linha do tempo causal                         |   3    | Script identifica corretamente pares concorrentes e pares causalmente relacionados  |
+| Continuidade (JWT, frontend, particionamento) |   2    | O que já funcionava no Sprint 1 continua funcionando sem regressão                  |
+| Funcionalidade adicional                      |   1    | Funcionalidade nova e genuína (seção 2.1), funcionando e documentada                |
+| Commits                                       |   1    | Histórico incremental ao longo do sprint                                            |
+| Respostas às questões                         |   1    | Compreensão demonstrada, com referência ao comportamento observado no código        |
 
 A ponderação exata é definida pelo professor responsável pela turma (T1 ou T2), conforme os critérios apresentados em sala.
 
@@ -692,13 +712,13 @@ A ponderação exata é definida pelo professor responsável pela turma (T1 ou T
 
 ## 12. Referências
 
-- LAMPORT, Leslie. *Time, Clocks, and the Ordering of Events in a Distributed System.* Communications of the ACM, v. 21, n. 7, 1978.
-- FIDGE, Colin J. *Timestamps in Message-Passing Systems That Preserve the Partial Ordering.* Australian Computer Science Communications, 1988. (Um dos artigos originais sobre relógios vetoriais.)
-- MATTERN, Friedemann. *Virtual Time and Global States of Distributed Systems.* Parallel and Distributed Algorithms, 1989. (O outro artigo original sobre relógios vetoriais.)
-- COULOURIS, George et al. *Distributed Systems: Concepts and Design.* 5th ed. Addison-Wesley, 2011.
-- TANENBAUM, A. S.; VAN STEEN, M. *Sistemas Distribuídos: Princípios e Paradigmas.* Tradução da 2ª edição. Pearson, 2007.
-- RabbitMQ. *Documentação oficial - Tutorials (Publish/Subscribe).* Disponível em: <https://www.rabbitmq.com/tutorials>
-- CloudAMQP. *RabbitMQ gerenciado - planos, incluindo o gratuito "Little Lemur".* Disponível em: <https://www.cloudamqp.com/>
-- RabbitMQ. *Instalação no Windows (alternativa local ao CloudAMQP).* Disponível em: <https://www.rabbitmq.com/docs/install-windows>
+- LAMPORT, Leslie. _Time, Clocks, and the Ordering of Events in a Distributed System._ Communications of the ACM, v. 21, n. 7, 1978.
+- FIDGE, Colin J. _Timestamps in Message-Passing Systems That Preserve the Partial Ordering._ Australian Computer Science Communications, 1988. (Um dos artigos originais sobre relógios vetoriais.)
+- MATTERN, Friedemann. _Virtual Time and Global States of Distributed Systems._ Parallel and Distributed Algorithms, 1989. (O outro artigo original sobre relógios vetoriais.)
+- COULOURIS, George et al. _Distributed Systems: Concepts and Design._ 5th ed. Addison-Wesley, 2011.
+- TANENBAUM, A. S.; VAN STEEN, M. _Sistemas Distribuídos: Princípios e Paradigmas._ Tradução da 2ª edição. Pearson, 2007.
+- RabbitMQ. _Documentação oficial - Tutorials (Publish/Subscribe)._ Disponível em: <https://www.rabbitmq.com/tutorials>
+- CloudAMQP. _RabbitMQ gerenciado - planos, incluindo o gratuito "Little Lemur"._ Disponível em: <https://www.cloudamqp.com/>
+- RabbitMQ. _Instalação no Windows (alternativa local ao CloudAMQP)._ Disponível em: <https://www.rabbitmq.com/docs/install-windows>
 - amqplib (Node.js). Disponível em: <https://www.npmjs.com/package/amqplib>
 - pika (Python). Disponível em: <https://pika.readthedocs.io/>

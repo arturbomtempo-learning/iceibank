@@ -37,12 +37,12 @@
 
 Este é o primeiro de 4 sprints de um único projeto que evolui ao longo do semestre - cada sprint parte do código do anterior, não recomeça do zero. A aplicação é o **ICEIBank**, um banco simplificado dividido em agências: cada agência é uma partição independente de contas, e o sistema evolui conforme a ementa avança:
 
-| Sprint | Unidade da ementa | Tecnologia | Conceito de Sistemas Distribuídos aplicado |
-| --- | --- | --- | --- |
-| **1 (este)** | U2 - Desenvolvimento Web | API REST / MVC | Relógio lógico de Lamport |
-| 2 | U3 - Comunicação indireta | Mensageria / Pub-Sub | Relógio vetorial |
-| 3 | U4 - Desenvolvimento Móvel | App Flutter | Consenso (eleição de líder) |
-| 4 | U5 - Computação em Nuvem | Containers | Transações distribuídas (2PC/Saga) |
+| Sprint       | Unidade da ementa          | Tecnologia           | Conceito de Sistemas Distribuídos aplicado |
+| ------------ | -------------------------- | -------------------- | ------------------------------------------ |
+| **1 (este)** | U2 - Desenvolvimento Web   | API REST / MVC       | Relógio lógico de Lamport                  |
+| 2            | U3 - Comunicação indireta  | Mensageria / Pub-Sub | Relógio vetorial                           |
+| 3            | U4 - Desenvolvimento Móvel | App Flutter          | Consenso (eleição de líder)                |
+| 4            | U5 - Computação em Nuvem   | Containers           | Transações distribuídas (2PC/Saga)         |
 
 Os quatro temas de Sistemas Distribuídos (Lamport, vetorial, consenso, transações) já foram vistos na disciplina teórica - aqui o foco é aplicá-los em um sistema real, não reaprendê-los do zero. Cada roteiro de sprint abre com uma revisão curta do conceito, não uma aula completa sobre o tema.
 
@@ -104,19 +104,19 @@ Os conceitos e a arquitetura deste roteiro (partição, relógio de Lamport, est
 
 Diferente dos laboratórios de aula única, este é um projeto de sprint (várias semanas). O ritmo abaixo é intenso - com autenticação e frontend somados ao backend, este sprint tem bastante conteúdo para 3 semanas, então comece cedo e não deixe partes acumulando para o fim:
 
-| Etapa | Quando | Conteúdo |
-| --- | --- | --- |
-| Preparação do ambiente | Semana 1 (início) | Seção 4: ambiente, estrutura do repositório, evidências, portas |
-| Modelagem e partição de contas | Semana 1 | Seção 5: Parte A |
-| Relógio de Lamport + eventos | Semana 1 | Seção 6: Parte B - implementar e testar isoladamente, antes de plugar na API |
-| API REST/MVC (contas) | Semana 1 (fim) | Seção 7: Parte C - CRUD de contas |
-| Transferências | Semana 2 (início) | Seção 8: Parte D - local, entre agências, e a limitação conhecida |
-| Linha do tempo | Semana 2 | Seção 10: Parte E - mesclar logs, observar concorrência |
-| Autenticação JWT | Semana 2 (fim) | Seção 11: Parte F - protege a API que já está pronta e testada |
-| Frontend | Semana 3 (início) | Seção 12: Parte G - só faz sentido depois que a API (com autenticação) já está estável |
-| Funcionalidade adicional | Ao longo do sprint | Seção 2.1 - encaixe onde fizer sentido, não precisa esperar o fim |
-| Revisão de respostas e commits | Semana 3 | Revisar `RESPOSTAS.md` e o histórico de commits antes de entregar |
-| Entrega | Fim da Semana 3 | Checklist da seção 13 |
+| Etapa                          | Quando             | Conteúdo                                                                               |
+| ------------------------------ | ------------------ | -------------------------------------------------------------------------------------- |
+| Preparação do ambiente         | Semana 1 (início)  | Seção 4: ambiente, estrutura do repositório, evidências, portas                        |
+| Modelagem e partição de contas | Semana 1           | Seção 5: Parte A                                                                       |
+| Relógio de Lamport + eventos   | Semana 1           | Seção 6: Parte B - implementar e testar isoladamente, antes de plugar na API           |
+| API REST/MVC (contas)          | Semana 1 (fim)     | Seção 7: Parte C - CRUD de contas                                                      |
+| Transferências                 | Semana 2 (início)  | Seção 8: Parte D - local, entre agências, e a limitação conhecida                      |
+| Linha do tempo                 | Semana 2           | Seção 10: Parte E - mesclar logs, observar concorrência                                |
+| Autenticação JWT               | Semana 2 (fim)     | Seção 11: Parte F - protege a API que já está pronta e testada                         |
+| Frontend                       | Semana 3 (início)  | Seção 12: Parte G - só faz sentido depois que a API (com autenticação) já está estável |
+| Funcionalidade adicional       | Ao longo do sprint | Seção 2.1 - encaixe onde fizer sentido, não precisa esperar o fim                      |
+| Revisão de respostas e commits | Semana 3           | Revisar `RESPOSTAS.md` e o histórico de commits antes de entregar                      |
+| Entrega                        | Fim da Semana 3    | Checklist da seção 13                                                                  |
 
 ---
 
@@ -223,13 +223,13 @@ const NUMERO_AGENCIAS = 3;
 const PORTA_BASE = 4000 + OFFSET;
 
 const AGENCIAS = [
-  { id: 0, url: `http://localhost:${PORTA_BASE}` },
-  { id: 1, url: `http://localhost:${PORTA_BASE + 1}` },
-  { id: 2, url: `http://localhost:${PORTA_BASE + 2}` },
+    { id: 0, url: `http://localhost:${PORTA_BASE}` },
+    { id: 1, url: `http://localhost:${PORTA_BASE + 1}` },
+    { id: 2, url: `http://localhost:${PORTA_BASE + 2}` },
 ];
 
 function agenciaResponsavel(idConta) {
-  return idConta % NUMERO_AGENCIAS;
+    return idConta % NUMERO_AGENCIAS;
 }
 
 export { NUMERO_AGENCIAS, AGENCIAS, agenciaResponsavel, OFFSET };
@@ -260,24 +260,24 @@ Essas três regras garantem que, se o evento A "aconteceu antes" do evento B cau
 
 ```javascript
 class RelogioLamport {
-  constructor() {
-    this.contador = 0;
-  }
+    constructor() {
+        this.contador = 0;
+    }
 
-  eventoLocal() {
-    this.contador += 1;
-    return this.contador;
-  }
+    eventoLocal() {
+        this.contador += 1;
+        return this.contador;
+    }
 
-  aoEnviar() {
-    this.contador += 1;
-    return this.contador;
-  }
+    aoEnviar() {
+        this.contador += 1;
+        return this.contador;
+    }
 
-  aoReceber(timestampRecebido) {
-    this.contador = Math.max(this.contador, timestampRecebido) + 1;
-    return this.contador;
-  }
+    aoReceber(timestampRecebido) {
+        this.contador = Math.max(this.contador, timestampRecebido) + 1;
+        return this.contador;
+    }
 }
 
 export default RelogioLamport;
@@ -296,24 +296,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class RegistroEventos {
-  constructor(nomeAgencia) {
-    this.nomeAgencia = nomeAgencia;
-    this.caminhoArquivo = path.join(__dirname, '..', '..', 'data', `eventos-${nomeAgencia}.jsonl`);
-    fs.mkdirSync(path.dirname(this.caminhoArquivo), { recursive: true });
-  }
+    constructor(nomeAgencia) {
+        this.nomeAgencia = nomeAgencia;
+        this.caminhoArquivo = path.join(
+            __dirname,
+            '..',
+            '..',
+            'data',
+            `eventos-${nomeAgencia}.jsonl`
+        );
+        fs.mkdirSync(path.dirname(this.caminhoArquivo), { recursive: true });
+    }
 
-  registrar(tipo, timestampLamport, detalhes) {
-    const evento = {
-      agencia: this.nomeAgencia,
-      tipo,
-      timestampLamport,
-      horaParede: new Date().toISOString(),
-      detalhes,
-    };
-    fs.appendFileSync(this.caminhoArquivo, JSON.stringify(evento) + '\n');
-    console.log(`[Lamport ${timestampLamport}] ${tipo}`, detalhes);
-    return evento;
-  }
+    registrar(tipo, timestampLamport, detalhes) {
+        const evento = {
+            agencia: this.nomeAgencia,
+            tipo,
+            timestampLamport,
+            horaParede: new Date().toISOString(),
+            detalhes,
+        };
+        fs.appendFileSync(this.caminhoArquivo, JSON.stringify(evento) + '\n');
+        console.log(`[Lamport ${timestampLamport}] ${tipo}`, detalhes);
+        return evento;
+    }
 }
 
 export default RegistroEventos;
@@ -343,18 +349,18 @@ git commit -m "feat(lamport): implementa relogio logico e registro de eventos"
 
 ```json
 {
-  "name": "iceibank-agencia",
-  "version": "1.0.0",
-  "description": "Agencia do ICEIBank - Sprint 1 (REST/MVC + Relogio de Lamport)",
-  "type": "module",
-  "main": "src/app.js",
-  "scripts": {
-    "start": "node src/app.js"
-  },
-  "dependencies": {
-    "express": "^5.0.0",
-    "axios": "^1.7.2"
-  }
+    "name": "iceibank-agencia",
+    "version": "1.0.0",
+    "description": "Agencia do ICEIBank - Sprint 1 (REST/MVC + Relogio de Lamport)",
+    "type": "module",
+    "main": "src/app.js",
+    "scripts": {
+        "start": "node src/app.js"
+    },
+    "dependencies": {
+        "express": "^5.0.0",
+        "axios": "^1.7.2"
+    }
 }
 ```
 
@@ -371,58 +377,58 @@ npm install
 import * as config from '../config.js';
 
 function criarConta(req, res) {
-  const { id, nomeAluno, saldoInicial } = req.body;
-  const { contas, relogio, registro, idAgencia } = req.app.locals;
+    const { id, nomeAluno, saldoInicial } = req.body;
+    const { contas, relogio, registro, idAgencia } = req.app.locals;
 
-  if (config.agenciaResponsavel(id) !== idAgencia) {
-    return res.status(400).json({ erro: `Conta ${id} não pertence a esta agência.` });
-  }
-  if (contas.has(id)) {
-    return res.status(409).json({ erro: 'Conta já existe.' });
-  }
+    if (config.agenciaResponsavel(id) !== idAgencia) {
+        return res.status(400).json({ erro: `Conta ${id} não pertence a esta agência.` });
+    }
+    if (contas.has(id)) {
+        return res.status(409).json({ erro: 'Conta já existe.' });
+    }
 
-  const ts = relogio.eventoLocal();
-  contas.set(id, { id, nomeAluno, saldo: saldoInicial || 0 });
-  registro.registrar('CRIAR_CONTA', ts, { id, nomeAluno, saldoInicial });
+    const ts = relogio.eventoLocal();
+    contas.set(id, { id, nomeAluno, saldo: saldoInicial || 0 });
+    registro.registrar('CRIAR_CONTA', ts, { id, nomeAluno, saldoInicial });
 
-  res.status(201).json(contas.get(id));
+    res.status(201).json(contas.get(id));
 }
 
 function consultarSaldo(req, res) {
-  const { contas } = req.app.locals;
-  const id = parseInt(req.params.id, 10);
-  const conta = contas.get(id);
-  if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
-  res.json(conta);
+    const { contas } = req.app.locals;
+    const id = parseInt(req.params.id, 10);
+    const conta = contas.get(id);
+    if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
+    res.json(conta);
 }
 
 function depositar(req, res) {
-  const { contas, relogio, registro } = req.app.locals;
-  const id = parseInt(req.params.id, 10);
-  const { valor } = req.body;
-  const conta = contas.get(id);
-  if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
+    const { contas, relogio, registro } = req.app.locals;
+    const id = parseInt(req.params.id, 10);
+    const { valor } = req.body;
+    const conta = contas.get(id);
+    if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
 
-  const ts = relogio.eventoLocal();
-  conta.saldo += valor;
-  registro.registrar('DEPOSITO', ts, { id, valor, novoSaldo: conta.saldo });
+    const ts = relogio.eventoLocal();
+    conta.saldo += valor;
+    registro.registrar('DEPOSITO', ts, { id, valor, novoSaldo: conta.saldo });
 
-  res.json(conta);
+    res.json(conta);
 }
 
 function sacar(req, res) {
-  const { contas, relogio, registro } = req.app.locals;
-  const id = parseInt(req.params.id, 10);
-  const { valor } = req.body;
-  const conta = contas.get(id);
-  if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
-  if (conta.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
+    const { contas, relogio, registro } = req.app.locals;
+    const id = parseInt(req.params.id, 10);
+    const { valor } = req.body;
+    const conta = contas.get(id);
+    if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
+    if (conta.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
 
-  const ts = relogio.eventoLocal();
-  conta.saldo -= valor;
-  registro.registrar('SAQUE', ts, { id, valor, novoSaldo: conta.saldo });
+    const ts = relogio.eventoLocal();
+    conta.saldo -= valor;
+    registro.registrar('SAQUE', ts, { id, valor, novoSaldo: conta.saldo });
 
-  res.json(conta);
+    res.json(conta);
 }
 
 export { criarConta, consultarSaldo, depositar, sacar };
@@ -465,8 +471,8 @@ const idAgencia = parseInt(process.env.AGENCIA_ID || '0', 10);
 const agenciaConfig = config.AGENCIAS.find((a) => a.id === idAgencia);
 
 if (!agenciaConfig) {
-  console.error(`Agência ${idAgencia} não configurada em config.js`);
-  process.exit(1);
+    console.error(`Agência ${idAgencia} não configurada em config.js`);
+    process.exit(1);
 }
 
 const app = express();
@@ -481,7 +487,7 @@ app.use('/', routes);
 
 const porta = new URL(agenciaConfig.url).port;
 app.listen(porta, () => {
-  console.log(`[Agência ${idAgencia}] ouvindo na porta ${porta}`);
+    console.log(`[Agência ${idAgencia}] ouvindo na porta ${porta}`);
 });
 ```
 
@@ -538,75 +544,79 @@ import axios from 'axios';
 import * as config from '../config.js';
 
 async function transferir(req, res) {
-  const { contas, relogio, registro, idAgencia } = req.app.locals;
-  const { idOrigem, idDestino, valor } = req.body;
+    const { contas, relogio, registro, idAgencia } = req.app.locals;
+    const { idOrigem, idDestino, valor } = req.body;
 
-  const contaOrigem = contas.get(idOrigem);
-  if (!contaOrigem) return res.status(404).json({ erro: 'Conta de origem não encontrada nesta agência.' });
-  if (contaOrigem.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
+    const contaOrigem = contas.get(idOrigem);
+    if (!contaOrigem)
+        return res.status(404).json({ erro: 'Conta de origem não encontrada nesta agência.' });
+    if (contaOrigem.saldo < valor) return res.status(400).json({ erro: 'Saldo insuficiente.' });
 
-  const agenciaDestino = config.agenciaResponsavel(idDestino);
+    const agenciaDestino = config.agenciaResponsavel(idDestino);
 
-  // O débito é sempre local, pois esta agência é a dona da conta de origem
-  const tsDebito = relogio.eventoLocal();
-  contaOrigem.saldo -= valor;
-  registro.registrar('TRANSFERENCIA_DEBITO', tsDebito, { idOrigem, idDestino, valor });
+    // O débito é sempre local, pois esta agência é a dona da conta de origem
+    const tsDebito = relogio.eventoLocal();
+    contaOrigem.saldo -= valor;
+    registro.registrar('TRANSFERENCIA_DEBITO', tsDebito, { idOrigem, idDestino, valor });
 
-  if (agenciaDestino === idAgencia) {
-    // Caso simples: mesma agência, credita direto
-    const contaDestino = contas.get(idDestino);
-    if (!contaDestino) {
-      contaOrigem.saldo += valor;
-      return res.status(404).json({ erro: 'Conta de destino não encontrada.' });
+    if (agenciaDestino === idAgencia) {
+        // Caso simples: mesma agência, credita direto
+        const contaDestino = contas.get(idDestino);
+        if (!contaDestino) {
+            contaOrigem.saldo += valor;
+            return res.status(404).json({ erro: 'Conta de destino não encontrada.' });
+        }
+        const tsCredito = relogio.eventoLocal();
+        contaDestino.saldo += valor;
+        registro.registrar('TRANSFERENCIA_CREDITO', tsCredito, { idOrigem, idDestino, valor });
+        return res.json({ mensagem: 'Transferência concluída (mesma agência).' });
     }
-    const tsCredito = relogio.eventoLocal();
-    contaDestino.saldo += valor;
-    registro.registrar('TRANSFERENCIA_CREDITO', tsCredito, { idOrigem, idDestino, valor });
-    return res.json({ mensagem: 'Transferência concluída (mesma agência).' });
-  }
 
-  // Caso entre agências: chama a agência de destino diretamente via REST
-  const tsEnvio = relogio.aoEnviar();
-  const urlDestino = config.AGENCIAS.find((a) => a.id === agenciaDestino).url;
+    // Caso entre agências: chama a agência de destino diretamente via REST
+    const tsEnvio = relogio.aoEnviar();
+    const urlDestino = config.AGENCIAS.find((a) => a.id === agenciaDestino).url;
 
-  try {
-    await axios.post(`${urlDestino}/contas/${idDestino}/creditar-remoto`, {
-      valor,
-      timestampLamport: tsEnvio,
-      origemAgencia: idAgencia,
-    });
-    res.json({ mensagem: 'Transferência concluída (entre agências).' });
-  } catch (erro) {
-    // LIMITAÇÃO CONHECIDA: se esta chamada falhar, o débito já aplicado acima
-    // NÃO é revertido - o dinheiro "desaparece" temporariamente. Resolver isso
-    // de forma correta (garantir atomicidade mesmo sob falha) é o assunto do
-    // Sprint 4, com uma transação distribuída de verdade (2PC/Saga). Por
-    // enquanto, só registramos a inconsistência no log.
-    registro.registrar('TRANSFERENCIA_FALHOU', relogio.eventoLocal(), {
-      idOrigem, idDestino, valor, erro: erro.message,
-    });
-    res.status(502).json({
-      erro: 'Falha ao contatar agência de destino. Débito já aplicado - inconsistência conhecida (ver Sprint 4).',
-    });
-  }
+    try {
+        await axios.post(`${urlDestino}/contas/${idDestino}/creditar-remoto`, {
+            valor,
+            timestampLamport: tsEnvio,
+            origemAgencia: idAgencia,
+        });
+        res.json({ mensagem: 'Transferência concluída (entre agências).' });
+    } catch (erro) {
+        // LIMITAÇÃO CONHECIDA: se esta chamada falhar, o débito já aplicado acima
+        // NÃO é revertido - o dinheiro "desaparece" temporariamente. Resolver isso
+        // de forma correta (garantir atomicidade mesmo sob falha) é o assunto do
+        // Sprint 4, com uma transação distribuída de verdade (2PC/Saga). Por
+        // enquanto, só registramos a inconsistência no log.
+        registro.registrar('TRANSFERENCIA_FALHOU', relogio.eventoLocal(), {
+            idOrigem,
+            idDestino,
+            valor,
+            erro: erro.message,
+        });
+        res.status(502).json({
+            erro: 'Falha ao contatar agência de destino. Débito já aplicado - inconsistência conhecida (ver Sprint 4).',
+        });
+    }
 }
 
 async function creditarRemoto(req, res) {
-  const { contas, relogio, registro } = req.app.locals;
-  const idConta = parseInt(req.params.id, 10);
-  const { valor, timestampLamport, origemAgencia } = req.body;
+    const { contas, relogio, registro } = req.app.locals;
+    const idConta = parseInt(req.params.id, 10);
+    const { valor, timestampLamport, origemAgencia } = req.body;
 
-  // Ao RECEBER uma mensagem de outra agência, o relógio de Lamport é
-  // atualizado com base no timestamp recebido - é a regra 3 do algoritmo.
-  const ts = relogio.aoReceber(timestampLamport);
+    // Ao RECEBER uma mensagem de outra agência, o relógio de Lamport é
+    // atualizado com base no timestamp recebido - é a regra 3 do algoritmo.
+    const ts = relogio.aoReceber(timestampLamport);
 
-  const conta = contas.get(idConta);
-  if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
+    const conta = contas.get(idConta);
+    if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
 
-  conta.saldo += valor;
-  registro.registrar('TRANSFERENCIA_CREDITO_REMOTO', ts, { idConta, valor, origemAgencia });
+    conta.saldo += valor;
+    registro.registrar('TRANSFERENCIA_CREDITO_REMOTO', ts, { idConta, valor, origemAgencia });
 
-  res.json({ mensagem: 'Crédito remoto aplicado.', saldoAtual: conta.saldo });
+    res.json({ mensagem: 'Crédito remoto aplicado.', saldoAtual: conta.saldo });
 }
 
 export { transferir, creditarRemoto };
@@ -617,19 +627,19 @@ export { transferir, creditarRemoto };
 1. Com as 3 agências rodando, crie ao menos duas contas em agências diferentes (ex.: conta 0 na Agência 0, conta 1 na Agência 1).
 2. Faça uma transferência **entre agências diferentes** e confirme os saldos em ambas:
 
-   ```powershell
-   Invoke-RestMethod -Uri "http://localhost:4000/transferencias" -Method Post -ContentType "application/json" -Body '{"idOrigem":0,"idDestino":1,"valor":30}'
-   ```
+    ```powershell
+    Invoke-RestMethod -Uri "http://localhost:4000/transferencias" -Method Post -ContentType "application/json" -Body '{"idOrigem":0,"idDestino":1,"valor":30}'
+    ```
 
 3. Crie uma terceira conta na mesma agência de uma conta existente e faça uma **transferência local**, comparando o comportamento (e o log gerado) com o da transferência entre agências.
 4. Capture prints para `evidencias/sprint1/transferencia-local.png` e `evidencias/sprint1/transferencia-entre-agencias.png`.
 5. **Reproduza a falha conhecida:** feche o terminal de uma das agências de destino e tente transferir para uma conta dela. Observe a resposta 502 e o log de `TRANSFERENCIA_FALHOU`. Capture um print para `evidencias/sprint1/falha-conhecida.png`.
 6. Faça o commit:
 
-   ```powershell
-   git add agencia/src/controllers/transferenciasController.js evidencias/sprint1
-   git commit -m "feat(transferencias): implementa transferencia local e entre agencias"
-   ```
+    ```powershell
+    git add agencia/src/controllers/transferenciasController.js evidencias/sprint1
+    git commit -m "feat(transferencias): implementa transferencia local e entre agencias"
+    ```
 
 ### 8.3 Perguntas - Parte D
 
@@ -821,22 +831,22 @@ const arquivos = fs.readdirSync(pastaDados).filter((f) => f.endsWith('.jsonl'));
 
 let todosEventos = [];
 for (const arquivo of arquivos) {
-  const linhas = fs
-    .readFileSync(path.join(pastaDados, arquivo), 'utf-8')
-    .trim()
-    .split('\n')
-    .filter(Boolean);
-  todosEventos.push(...linhas.map((l) => JSON.parse(l)));
+    const linhas = fs
+        .readFileSync(path.join(pastaDados, arquivo), 'utf-8')
+        .trim()
+        .split('\n')
+        .filter(Boolean);
+    todosEventos.push(...linhas.map((l) => JSON.parse(l)));
 }
 
 todosEventos.sort((a, b) => a.timestampLamport - b.timestampLamport);
 
 console.log('=== Linha do tempo unificada (ordenada por relogio de Lamport) ===');
 for (const evento of todosEventos) {
-  console.log(
-    `[Lamport ${evento.timestampLamport}] (${evento.horaParede}) ${evento.agencia} - ${evento.tipo}`,
-    JSON.stringify(evento.detalhes)
-  );
+    console.log(
+        `[Lamport ${evento.timestampLamport}] (${evento.horaParede}) ${evento.agencia} - ${evento.tipo}`,
+        JSON.stringify(evento.detalhes)
+    );
 }
 ```
 
@@ -856,10 +866,10 @@ node mesclar-logs.js
 5. Responda em `RESPOSTAS.md` o que observou no passo 3.
 6. Faça o commit final do sprint:
 
-   ```powershell
-   git add agencia/mesclar-logs.js evidencias/sprint1 RESPOSTAS.md
-   git commit -m "feat(observabilidade): adiciona script de linha do tempo unificada"
-   ```
+    ```powershell
+    git add agencia/mesclar-logs.js evidencias/sprint1 RESPOSTAS.md
+    git commit -m "feat(observabilidade): adiciona script de linha do tempo unificada"
+    ```
 
 ### 10.3 Perguntas - Parte E
 
@@ -895,10 +905,10 @@ Esta parte **não vem com código de exemplo**. Diferente do resto do roteiro, a
 4. Capture prints para `evidencias/sprint1/auth-sem-token.png`, `evidencias/sprint1/auth-com-token.png` e `evidencias/sprint1/auth-token-expirado.png`.
 5. Faça o commit:
 
-   ```powershell
-   git add agencia evidencias/sprint1 RESPOSTAS.md
-   git commit -m "feat(auth): protege a API com autenticacao JWT"
-   ```
+    ```powershell
+    git add agencia evidencias/sprint1 RESPOSTAS.md
+    git commit -m "feat(auth): protege a API com autenticacao JWT"
+    ```
 
 ### 11.3 Perguntas - Parte F
 
@@ -932,10 +942,10 @@ Esta parte também **não vem com código de exemplo**. A escolha do framework, 
 3. Capture prints do frontend em uso para cada uma dessas ações e salve em `evidencias/sprint1/frontend-login.png`, `evidencias/sprint1/frontend-transferencia.png` e `evidencias/sprint1/frontend-erro.png` (pelo menos esses três; adicione mais se quiser documentar melhor).
 4. Faça o commit:
 
-   ```powershell
-   git add frontend evidencias/sprint1
-   git commit -m "feat(frontend): implementa interface web para o ICEIBank"
-   ```
+    ```powershell
+    git add frontend evidencias/sprint1
+    git commit -m "feat(frontend): implementa interface web para o ICEIBank"
+    ```
 
 ### 12.3 Perguntas - Parte G
 
@@ -963,26 +973,26 @@ Esta parte também **não vem com código de exemplo**. A escolha do framework, 
 
 ## 14. Critérios de avaliação (20 pontos)
 
-| Critério | Pontos | O que é observado |
-| --- | :---: | --- |
-| API REST/MVC de contas | 3 | Criar, consultar, depositar e sacar funcionando corretamente, com separação clara de rotas/controllers |
-| Particionamento correto | 2 | Contas atribuídas à agência certa; agência recusa operar contas que não são suas |
-| Relógio de Lamport | 3 | As três regras (evento local, ao enviar, ao receber) implementadas e aplicadas corretamente em cada operação, inclusive nas chamadas entre agências |
-| Transferências e limitação conhecida | 2 | Transferência local e entre agências funcionando; a falha sob queda de agência é reproduzida e registrada corretamente, não ignorada |
-| Autenticação JWT | 2 | Login, expiração, proteção das rotas e os três cenários de teste funcionando; decisões de design justificadas |
-| Frontend | 3 | Fluxo completo funcionando pela interface, com tratamento visível de erros |
-| Funcionalidade adicional | 1 | Funcionalidade nova e genuína (seção 2.1), funcionando, evidenciada e documentada em `RESPOSTAS.md` |
-| Commits | 1 | Histórico incremental ao longo do sprint, mensagens claras |
-| Respostas às questões | 1 | Compreensão demonstrada, com referência ao comportamento observado no código |
-| Vídeo de apresentação | 2 | Funcionalidades e principais decisões do projeto |
+| Critério                             | Pontos | O que é observado                                                                                                                                   |
+| ------------------------------------ | :----: | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API REST/MVC de contas               |   3    | Criar, consultar, depositar e sacar funcionando corretamente, com separação clara de rotas/controllers                                              |
+| Particionamento correto              |   2    | Contas atribuídas à agência certa; agência recusa operar contas que não são suas                                                                    |
+| Relógio de Lamport                   |   3    | As três regras (evento local, ao enviar, ao receber) implementadas e aplicadas corretamente em cada operação, inclusive nas chamadas entre agências |
+| Transferências e limitação conhecida |   2    | Transferência local e entre agências funcionando; a falha sob queda de agência é reproduzida e registrada corretamente, não ignorada                |
+| Autenticação JWT                     |   2    | Login, expiração, proteção das rotas e os três cenários de teste funcionando; decisões de design justificadas                                       |
+| Frontend                             |   3    | Fluxo completo funcionando pela interface, com tratamento visível de erros                                                                          |
+| Funcionalidade adicional             |   1    | Funcionalidade nova e genuína (seção 2.1), funcionando, evidenciada e documentada em `RESPOSTAS.md`                                                 |
+| Commits                              |   1    | Histórico incremental ao longo do sprint, mensagens claras                                                                                          |
+| Respostas às questões                |   1    | Compreensão demonstrada, com referência ao comportamento observado no código                                                                        |
+| Vídeo de apresentação                |   2    | Funcionalidades e principais decisões do projeto                                                                                                    |
 
 ---
 
 ## 15. Referências
 
-- LAMPORT, Leslie. *Time, Clocks, and the Ordering of Events in a Distributed System.* Communications of the ACM, v. 21, n. 7, 1978.
-- COULOURIS, George et al. *Distributed Systems: Concepts and Design.* 5th ed. Addison-Wesley, 2011.
-- TANENBAUM, A. S.; VAN STEEN, M. *Sistemas Distribuídos: Princípios e Paradigmas.* Tradução da 2ª edição. Pearson, 2007.
-- MARTIN, Robert C. *Arquitetura Limpa: o guia do artesão para estrutura e design de software.* Alta Books, 2019. (Padrões arquiteturais, incluindo MVC.)
+- LAMPORT, Leslie. _Time, Clocks, and the Ordering of Events in a Distributed System._ Communications of the ACM, v. 21, n. 7, 1978.
+- COULOURIS, George et al. _Distributed Systems: Concepts and Design._ 5th ed. Addison-Wesley, 2011.
+- TANENBAUM, A. S.; VAN STEEN, M. _Sistemas Distribuídos: Princípios e Paradigmas._ Tradução da 2ª edição. Pearson, 2007.
+- MARTIN, Robert C. _Arquitetura Limpa: o guia do artesão para estrutura e design de software._ Alta Books, 2019. (Padrões arquiteturais, incluindo MVC.)
 - Express.js. Documentação oficial. Disponível em: <https://expressjs.com/>
-- JONES, M.; BRADLEY, J.; SAKIMURA, N. *RFC 7519 - JSON Web Token (JWT).* IETF, 2015. Disponível em: <https://datatracker.ietf.org/doc/html/rfc7519>
+- JONES, M.; BRADLEY, J.; SAKIMURA, N. _RFC 7519 - JSON Web Token (JWT)._ IETF, 2015. Disponível em: <https://datatracker.ietf.org/doc/html/rfc7519>
