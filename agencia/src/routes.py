@@ -48,11 +48,6 @@ rotas.add_url_rule(
 )
 
 rotas.add_url_rule(
-    "/contas/<int:id_conta>/creditar-remoto",
-    view_func=requer_servico(transferencias_controller.creditar_remoto),
-    methods=["POST"],
-)
-rotas.add_url_rule(
     "/interno/contas/<usuario>",
     view_func=requer_servico(extrato_controller.listar_contas_para_servico),
     methods=["GET"],

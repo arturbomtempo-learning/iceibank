@@ -6,7 +6,9 @@ from flask import Flask
 from flask_cors import CORS
 
 import config
+from controllers import transferencias_controller
 from routes import rotas
+from services.mensageria import assinar
 from services.registro_eventos import RegistroEventos
 from services.relogio_vetorial import RelogioVetorial
 
@@ -24,6 +26,16 @@ def criar_app(id_agencia):
     app.config["CONTAS"] = {}
 
     app.register_blueprint(rotas)
+
+    assinar(
+        id_agencia,
+        lambda mensagem: transferencias_controller.aplicar_credito_remoto(
+            app.config["CONTAS"],
+            app.config["RELOGIO"],
+            app.config["REGISTRO"],
+            mensagem,
+        ),
+    )
 
     return app
 

@@ -1,8 +1,8 @@
-import requests
 from flask import current_app, jsonify, request
 
 import config
 from services import auth_service
+from services.mensageria import publicar
 
 
 def _estado():
@@ -18,21 +18,15 @@ def _vetor_valido(vetor):
     return (
         isinstance(vetor, list)
         and len(vetor) == config.NUMERO_AGENCIAS
-        and all(isinstance(posicao, int) and not isinstance(posicao, bool) and posicao >= 0 for posicao in vetor)
+        and all(
+            isinstance(posicao, int) and not isinstance(posicao, bool) and posicao >= 0
+            for posicao in vetor
+        )
     )
 
 
-def _resumir_erro(erro, url_destino):
-    resposta = getattr(erro, "response", None)
-
-    if resposta is not None:
-        return f"{url_destino} respondeu HTTP {resposta.status_code}"
-    if isinstance(erro, requests.Timeout):
-        return f"Tempo esgotado ao contatar {url_destino}"
-    if isinstance(erro, requests.ConnectionError):
-        return f"Conexão recusada por {url_destino}"
-
-    return f"{type(erro).__name__} ao contatar {url_destino}"
+def _numero_positivo(valor):
+    return isinstance(valor, (int, float)) and not isinstance(valor, bool) and valor > 0
 
 
 def transferir():
@@ -45,7 +39,7 @@ def transferir():
 
     if not isinstance(id_origem, int) or not isinstance(id_destino, int):
         return jsonify({"erro": "Os campos 'idOrigem' e 'idDestino' devem ser números inteiros."}), 400
-    if not isinstance(valor, (int, float)) or isinstance(valor, bool) or valor <= 0:
+    if not _numero_positivo(valor):
         return jsonify({"erro": "O campo 'valor' deve ser um número positivo."}), 400
 
     conta_origem = contas.get(id_origem)
@@ -84,65 +78,50 @@ def transferir():
         return jsonify({"mensagem": "Transferência concluída (mesma agência)."})
 
     vetor_envio = relogio.ao_enviar()
-    url_destino = config.agencia_por_id(agencia_destino)["url"]
 
-    token_servico = auth_service.gerar_token_servico(id_agencia)
+    publicar(
+        f"agencia.{agencia_destino}.creditar",
+        {
+            "idConta": id_destino,
+            "valor": valor,
+            "vetorEnvio": vetor_envio,
+            "origemAgencia": id_agencia,
+        },
+    )
 
-    try:
-        resposta = requests.post(
-            f"{url_destino}/contas/{id_destino}/creditar-remoto",
-            json={
-                "valor": valor,
-                "timestampVetorial": vetor_envio,
-                "origemAgencia": id_agencia,
-            },
-            headers={"Authorization": f"Bearer {token_servico}"},
-            timeout=5,
-        )
-
-        resposta.raise_for_status()
-        return jsonify({"mensagem": "Transferência concluída (entre agências)."})
-    except requests.RequestException as erro:
-        registro.registrar(
-            "TRANSFERENCIA_FALHOU",
-            relogio.evento_local(),
-            {
-                "idOrigem": id_origem,
-                "idDestino": id_destino,
-                "valor": valor,
-                "erro": _resumir_erro(erro, url_destino),
-            },
-        )
-        return (
-            jsonify({"erro": "Falha ao contatar agência de destino. Débito já aplicado."}),
-            502,
-        )
+    return jsonify(
+        {"mensagem": "Transferência publicada para a agência de destino (entrega assíncrona)."}
+    )
 
 
-def creditar_remoto(id_conta):
-    corpo = request.get_json(silent=True) or {}
-    valor = corpo.get("valor")
-    vetor_recebido = corpo.get("timestampVetorial")
-    origem_agencia = corpo.get("origemAgencia")
+def aplicar_credito_remoto(contas, relogio, registro, mensagem):
+    id_conta = mensagem.get("idConta")
+    valor = mensagem.get("valor")
+    vetor_envio = mensagem.get("vetorEnvio")
+    origem_agencia = mensagem.get("origemAgencia")
 
-    contas, relogio, registro, _ = _estado()
+    if not isinstance(id_conta, int) or isinstance(id_conta, bool):
+        return _descartar(registro, relogio, mensagem, "idConta ausente ou invalido")
+    if not _numero_positivo(valor):
+        return _descartar(registro, relogio, mensagem, "valor ausente ou invalido")
+    if not _vetor_valido(vetor_envio):
+        return _descartar(registro, relogio, mensagem, "vetorEnvio ausente ou invalido")
 
-    if not _vetor_valido(vetor_recebido):
-        return (
-            jsonify(
-                {
-                    "erro": "O campo 'timestampVetorial' deve ser uma lista de "
-                    f"{config.NUMERO_AGENCIAS} inteiros não negativos."
-                }
-            ),
-            400,
-        )
-
-    vetor = relogio.ao_receber(vetor_recebido)
+    vetor = relogio.ao_receber(vetor_envio)
 
     conta = contas.get(id_conta)
     if conta is None:
-        return jsonify({"erro": "Conta não encontrada nesta agência."}), 404
+        registro.registrar(
+            "CREDITO_REMOTO_FALHOU",
+            vetor,
+            {
+                "idConta": id_conta,
+                "valor": valor,
+                "origemAgencia": origem_agencia,
+                "motivo": "conta nao encontrada",
+            },
+        )
+        return
 
     conta["saldo"] += valor
     registro.registrar(
@@ -151,4 +130,10 @@ def creditar_remoto(id_conta):
         {"idConta": id_conta, "valor": valor, "origemAgencia": origem_agencia},
     )
 
-    return jsonify({"mensagem": "Crédito remoto aplicado.", "saldoAtual": conta["saldo"]})
+
+def _descartar(registro, relogio, mensagem, motivo):
+    registro.registrar(
+        "CREDITO_REMOTO_FALHOU",
+        relogio.evento_local(),
+        {"motivo": motivo, "mensagem": mensagem},
+    )
