@@ -8,7 +8,7 @@ from flask_cors import CORS
 import config
 from routes import rotas
 from services.registro_eventos import RegistroEventos
-from services.relogio_lamport import RelogioLamport
+from services.relogio_vetorial import RelogioVetorial
 
 
 def criar_app(id_agencia):
@@ -19,7 +19,7 @@ def criar_app(id_agencia):
     app.json.ensure_ascii = False
 
     app.config["ID_AGENCIA"] = id_agencia
-    app.config["RELOGIO"] = RelogioLamport()
+    app.config["RELOGIO"] = RelogioVetorial(id_agencia, config.NUMERO_AGENCIAS)
     app.config["REGISTRO"] = RegistroEventos(f"agencia-{id_agencia}")
     app.config["CONTAS"] = {}
 

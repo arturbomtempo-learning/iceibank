@@ -14,11 +14,11 @@ class RegistroEventos:
 
         self.caminho_arquivo = os.path.join(pasta_dados, f"eventos-{nome_agencia}.jsonl")
 
-    def registrar(self, tipo, timestamp_lamport, detalhes):
+    def registrar(self, tipo, timestamp_vetorial, detalhes):
         evento = {
             "agencia": self.nome_agencia,
             "tipo": tipo,
-            "timestampLamport": timestamp_lamport,
+            "timestampVetorial": timestamp_vetorial,
             "horaParede": datetime.now(timezone.utc).isoformat(),
             "detalhes": detalhes,
         }
@@ -26,5 +26,6 @@ class RegistroEventos:
         with open(self.caminho_arquivo, "a", encoding="utf-8") as arquivo:
             arquivo.write(json.dumps(evento, ensure_ascii=False) + "\n")
 
-        print(f"[Lamport {timestamp_lamport}] {tipo} {detalhes}", flush=True)
+        vetor = json.dumps(timestamp_vetorial, separators=(",", ":"))
+        print(f"[Vetor {vetor}] {tipo} {detalhes}", flush=True)
         return evento

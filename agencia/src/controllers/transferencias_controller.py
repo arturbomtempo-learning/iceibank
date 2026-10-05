@@ -14,6 +14,14 @@ def _estado():
     )
 
 
+def _vetor_valido(vetor):
+    return (
+        isinstance(vetor, list)
+        and len(vetor) == config.NUMERO_AGENCIAS
+        and all(isinstance(posicao, int) and not isinstance(posicao, bool) and posicao >= 0 for posicao in vetor)
+    )
+
+
 def _resumir_erro(erro, url_destino):
     resposta = getattr(erro, "response", None)
 
@@ -50,11 +58,11 @@ def transferir():
 
     agencia_destino = config.agencia_responsavel(id_destino)
 
-    ts_debito = relogio.evento_local()
+    vetor_debito = relogio.evento_local()
     conta_origem["saldo"] -= valor
     registro.registrar(
         "TRANSFERENCIA_DEBITO",
-        ts_debito,
+        vetor_debito,
         {"idOrigem": id_origem, "idDestino": id_destino, "valor": valor},
     )
 
@@ -65,17 +73,17 @@ def transferir():
             conta_origem["saldo"] += valor
             return jsonify({"erro": "Conta de destino não encontrada."}), 404
 
-        ts_credito = relogio.evento_local()
+        vetor_credito = relogio.evento_local()
 
         conta_destino["saldo"] += valor
         registro.registrar(
             "TRANSFERENCIA_CREDITO",
-            ts_credito,
+            vetor_credito,
             {"idOrigem": id_origem, "idDestino": id_destino, "valor": valor},
         )
         return jsonify({"mensagem": "Transferência concluída (mesma agência)."})
 
-    ts_envio = relogio.ao_enviar()
+    vetor_envio = relogio.ao_enviar()
     url_destino = config.agencia_por_id(agencia_destino)["url"]
 
     token_servico = auth_service.gerar_token_servico(id_agencia)
@@ -85,7 +93,7 @@ def transferir():
             f"{url_destino}/contas/{id_destino}/creditar-remoto",
             json={
                 "valor": valor,
-                "timestampLamport": ts_envio,
+                "timestampVetorial": vetor_envio,
                 "origemAgencia": id_agencia,
             },
             headers={"Authorization": f"Bearer {token_servico}"},
@@ -114,12 +122,23 @@ def transferir():
 def creditar_remoto(id_conta):
     corpo = request.get_json(silent=True) or {}
     valor = corpo.get("valor")
-    timestamp_lamport = corpo.get("timestampLamport")
+    vetor_recebido = corpo.get("timestampVetorial")
     origem_agencia = corpo.get("origemAgencia")
 
     contas, relogio, registro, _ = _estado()
 
-    ts = relogio.ao_receber(timestamp_lamport)
+    if not _vetor_valido(vetor_recebido):
+        return (
+            jsonify(
+                {
+                    "erro": "O campo 'timestampVetorial' deve ser uma lista de "
+                    f"{config.NUMERO_AGENCIAS} inteiros não negativos."
+                }
+            ),
+            400,
+        )
+
+    vetor = relogio.ao_receber(vetor_recebido)
 
     conta = contas.get(id_conta)
     if conta is None:
@@ -128,7 +147,7 @@ def creditar_remoto(id_conta):
     conta["saldo"] += valor
     registro.registrar(
         "TRANSFERENCIA_CREDITO_REMOTO",
-        ts,
+        vetor,
         {"idConta": id_conta, "valor": valor, "origemAgencia": origem_agencia},
     )
 

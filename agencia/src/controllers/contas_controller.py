@@ -42,7 +42,7 @@ def criar_conta():
     if id_conta in contas:
         return jsonify({"erro": "Conta já existe."}), 409
 
-    ts = relogio.evento_local()
+    vetor = relogio.evento_local()
     contas[id_conta] = {
         "id": id_conta,
         "nomeAluno": nome_aluno,
@@ -51,7 +51,7 @@ def criar_conta():
     }
     registro.registrar(
         "CRIAR_CONTA",
-        ts,
+        vetor,
         {"id": id_conta, "nomeAluno": nome_aluno, "dono": dono, "saldoInicial": saldo_inicial},
     )
 
@@ -84,9 +84,9 @@ def depositar(id_conta):
     if not _numero_valido(valor) or valor <= 0:
         return jsonify({"erro": "O campo 'valor' deve ser um número positivo."}), 400
 
-    ts = relogio.evento_local()
+    vetor = relogio.evento_local()
     conta["saldo"] += valor
-    registro.registrar("DEPOSITO", ts, {"id": id_conta, "valor": valor, "novoSaldo": conta["saldo"]})
+    registro.registrar("DEPOSITO", vetor, {"id": id_conta, "valor": valor, "novoSaldo": conta["saldo"]})
 
     return jsonify(conta)
 
@@ -107,8 +107,8 @@ def sacar(id_conta):
     if conta["saldo"] < valor:
         return jsonify({"erro": "Saldo insuficiente."}), 400
 
-    ts = relogio.evento_local()
+    vetor = relogio.evento_local()
     conta["saldo"] -= valor
-    registro.registrar("SAQUE", ts, {"id": id_conta, "valor": valor, "novoSaldo": conta["saldo"]})
+    registro.registrar("SAQUE", vetor, {"id": id_conta, "valor": valor, "novoSaldo": conta["saldo"]})
 
     return jsonify(conta)
