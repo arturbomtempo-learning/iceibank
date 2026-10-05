@@ -515,6 +515,7 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 | [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png)      | Transferência entre agências concluída pela fila do RabbitMQ                 |
 | [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                      | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
 | [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)            | Pares de eventos concorrentes identificados pelo relógio vetorial            |
+| [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png)      | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
 
 **Autenticação (Parte F)**
 

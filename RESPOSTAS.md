@@ -180,7 +180,7 @@ Esse estorno automático é exatamente o padrão **Saga com transação compensa
 
 A infraestrutura não precisou de fila nova. A chave `agencia.<id>.confirmacao` é vinculada à mesma `fila-agencia-<id>` que já existia, o que preserva a exigência de três filas, uma por agência. Para isso o `assinar` do `mensageria.py` passou a receber um dicionário de manipuladores por assunto, e o callback despacha pela última parte da routing key.
 
-Os dois cenários foram testados de ponta a ponta, com as três agências instanciadas e um broker simulado em memória.
+Os dois cenários foram testados de ponta a ponta com as três agências rodando e o RabbitMQ real da instância do CloudAMQP, e estão registrados em `evidencias/sprint2/funcionalidade-adicional.png`.
 
 No **caminho feliz**, a transferência de R$ 300,00 da conta 0 para a conta 1 publicou `{"idConta": 1, "idOrigem": 0, "valor": 300, "vetorEnvio": [3, 0, 0], "origemAgencia": 0}`. O destino creditou, a origem recebeu a confirmação e registrou `TRANSFERENCIA_CONFIRMADA` com vetor `[4, 3, 0]`. Os saldos ficaram em R$ 700,00 na origem e R$ 800,00 no destino, somando os mesmos R$ 1.500,00 do início.
 
