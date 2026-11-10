@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 
+defineOptions({ name: 'AppLogo' });
+
 const props = withDefaults(
     defineProps<{
         variant?: 'light' | 'dark';

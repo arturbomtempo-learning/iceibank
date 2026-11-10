@@ -4,6 +4,8 @@ import { useId } from 'vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import type { OwnedAccount } from '@/shared/stores/accounts.store';
 
+defineOptions({ name: 'AccountSelect' });
+
 defineProps<{
     label: string;
     accounts: OwnedAccount[];

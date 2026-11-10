@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
-import ColorSwatch from '@/modules/brand/components/ColorSwatch.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
+import ColorSwatch from '@/modules/brand/components/ColorSwatch/index.vue';
 import { brandScale, coreColors, semanticGroups } from '@/modules/brand/data/brand.data';
 import { readableText } from '@/modules/brand/utils/contrast';
 import { useClipboard } from '@/shared/composables/useClipboard';
+
+defineOptions({ name: 'ColorSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ name: 'PageHeader' });
+
 defineProps<{
     title: string;
     subtitle?: string;

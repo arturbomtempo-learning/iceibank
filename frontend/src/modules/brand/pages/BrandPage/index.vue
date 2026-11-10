@@ -2,20 +2,22 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import mascotHead from '@/assets/mascot/mascot-head.webp';
-import ColorSection from '@/modules/brand/components/sections/ColorSection.vue';
-import ComponentsSection from '@/modules/brand/components/sections/ComponentsSection.vue';
-import IconSection from '@/modules/brand/components/sections/IconSection.vue';
-import LogoSection from '@/modules/brand/components/sections/LogoSection.vue';
-import MascotSection from '@/modules/brand/components/sections/MascotSection.vue';
-import PrinciplesSection from '@/modules/brand/components/sections/PrinciplesSection.vue';
-import ShapeSection from '@/modules/brand/components/sections/ShapeSection.vue';
-import ThemeSection from '@/modules/brand/components/sections/ThemeSection.vue';
-import TypographySection from '@/modules/brand/components/sections/TypographySection.vue';
-import VoiceSection from '@/modules/brand/components/sections/VoiceSection.vue';
+import ColorSection from '@/modules/brand/components/sections/ColorSection/index.vue';
+import ComponentsSection from '@/modules/brand/components/sections/ComponentsSection/index.vue';
+import IconSection from '@/modules/brand/components/sections/IconSection/index.vue';
+import LogoSection from '@/modules/brand/components/sections/LogoSection/index.vue';
+import MascotSection from '@/modules/brand/components/sections/MascotSection/index.vue';
+import PrinciplesSection from '@/modules/brand/components/sections/PrinciplesSection/index.vue';
+import ShapeSection from '@/modules/brand/components/sections/ShapeSection/index.vue';
+import ThemeSection from '@/modules/brand/components/sections/ThemeSection/index.vue';
+import TypographySection from '@/modules/brand/components/sections/TypographySection/index.vue';
+import VoiceSection from '@/modules/brand/components/sections/VoiceSection/index.vue';
 import { brandScale, coreColors } from '@/modules/brand/data/brand.data';
-import AppLogo from '@/shared/components/AppLogo.vue';
-import ThemeToggle from '@/shared/components/ThemeToggle.vue';
+import AppLogo from '@/shared/components/AppLogo/index.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle/index.vue';
 import { useAuthStore } from '@/shared/stores/auth.store';
+
+defineOptions({ name: 'BrandPage' });
 
 const authStore = useAuthStore();
 

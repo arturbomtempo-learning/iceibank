@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import { themeVariables } from '@/modules/brand/data/brand.data';
 import type { Theme } from '@/shared/stores/theme.store';
 
+defineOptions({ name: 'ThemePreview' });
+
 const props = defineProps<{ theme: Theme }>();
 
 const label = computed(() => (props.theme === 'dark' ? 'Tema escuro' : 'Tema claro'));

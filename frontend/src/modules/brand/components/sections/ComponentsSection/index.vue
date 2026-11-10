@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
-import BalanceCard from '@/shared/components/BalanceCard.vue';
-import BaseInput from '@/shared/components/BaseInput.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
+import BalanceCard from '@/shared/components/BalanceCard/index.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
 import type { OwnedAccount } from '@/shared/stores/accounts.store';
 import { useToastStore } from '@/shared/stores/toast.store';
+
+defineOptions({ name: 'ComponentsSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

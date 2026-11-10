@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import type { OwnedAccount } from '@/shared/stores/accounts.store';
 
+defineOptions({ name: 'OperationSummary' });
+
 const props = defineProps<{
     account?: OwnedAccount;
     amount: number | null;

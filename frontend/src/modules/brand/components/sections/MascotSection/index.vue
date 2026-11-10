@@ -3,8 +3,10 @@ import { ref } from 'vue';
 
 import mascotFullBody from '@/assets/mascot/mascot-full-body.webp';
 import mascotHead from '@/assets/mascot/mascot-head.webp';
-import LoginMascot from '@/modules/auth/components/LoginMascot.vue';
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
+import LoginMascot from '@/modules/auth/components/LoginMascot/index.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
+
+defineOptions({ name: 'MascotSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

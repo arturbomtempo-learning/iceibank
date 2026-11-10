@@ -2,9 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import mascotFullBody from '@/assets/mascot/mascot-full-body.webp';
-import AppLogo from '@/shared/components/AppLogo.vue';
-import ThemeToggle from '@/shared/components/ThemeToggle.vue';
+import AppLogo from '@/shared/components/AppLogo/index.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle/index.vue';
 import { useAuthStore } from '@/shared/stores/auth.store';
+
+defineOptions({ name: 'LandingPage' });
 
 const authStore = useAuthStore();
 

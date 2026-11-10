@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useUiStore } from '@/shared/stores/ui.store';
 
+defineOptions({ name: 'LoadingBar' });
+
 const uiStore = useUiStore();
 </script>
 

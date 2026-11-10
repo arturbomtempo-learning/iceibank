@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
 import { typeScale, type TypeStyle } from '@/modules/brand/data/brand.data';
+
+defineOptions({ name: 'TypographySection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

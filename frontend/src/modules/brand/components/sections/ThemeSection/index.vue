@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
-import ThemePreview from '@/modules/brand/components/ThemePreview.vue';
-import ThemeToggle from '@/shared/components/ThemeToggle.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
+import ThemePreview from '@/modules/brand/components/ThemePreview/index.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle/index.vue';
 import { useThemeStore } from '@/shared/stores/theme.store';
+
+defineOptions({ name: 'ThemeSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

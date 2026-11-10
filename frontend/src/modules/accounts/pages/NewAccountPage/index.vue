@@ -6,14 +6,16 @@ import {
     type CreateAccountDraft,
     type CreateAccountValues,
 } from '@/modules/schemas/account.schema';
-import BaseInput from '@/shared/components/BaseInput.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
+import PageHeader from '@/shared/components/PageHeader/index.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
 import { createAccount } from '@/shared/services/accounts.service';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { AUTOMATIC_ROUTING, useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
+
+defineOptions({ name: 'NewAccountPage' });
 
 const accountsStore = useAccountsStore();
 const agencyStore = useAgencyStore();

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
 import { motionTokens, radiusTokens, shadowTokens } from '@/modules/brand/data/brand.data';
+
+defineOptions({ name: 'ShapeSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

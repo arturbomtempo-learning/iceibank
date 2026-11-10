@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import type { StyleValue } from 'vue';
 
-import BrandSection from '@/modules/brand/components/BrandSection.vue';
-import AppLogo from '@/shared/components/AppLogo.vue';
+import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
+import AppLogo from '@/shared/components/AppLogo/index.vue';
+
+defineOptions({ name: 'LogoSection' });
 
 defineProps<{ id: string; ordinal: string }>();
 

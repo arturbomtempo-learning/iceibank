@@ -7,9 +7,9 @@ import {
     type TransferAmountDraft,
     type TransferAmountValues,
 } from '@/modules/schemas/transfer.schema';
-import AccountSelect from '@/shared/components/AccountSelect.vue';
-import BaseInput from '@/shared/components/BaseInput.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import AccountSelect from '@/shared/components/AccountSelect/index.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
+import PageHeader from '@/shared/components/PageHeader/index.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
 import { extractErrorMessage } from '@/shared/services/api';
@@ -17,7 +17,9 @@ import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useAgencyStore } from '@/shared/stores/agency.store';
 import { useToastStore } from '@/shared/stores/toast.store';
 
-import { transfer } from '../services/transfers.service';
+import { transfer } from '@/modules/transfers/services/transfers.service';
+
+defineOptions({ name: 'TransferPage' });
 
 interface TransferOutcome {
     status: 'success' | 'failure';

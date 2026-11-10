@@ -4,6 +4,8 @@ import { computed } from 'vue';
 import { formatRatio, readableText } from '@/modules/brand/utils/contrast';
 import { useClipboard } from '@/shared/composables/useClipboard';
 
+defineOptions({ name: 'ColorSwatch' });
+
 const props = defineProps<{
     name: string;
     hex: string;

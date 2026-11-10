@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ name: 'BrandSection' });
+
 defineProps<{
     id: string;
     ordinal: string;

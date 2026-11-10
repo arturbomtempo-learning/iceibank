@@ -6,15 +6,17 @@ import {
     type AmountDraft,
     type AmountValues,
 } from '@/modules/schemas/account.schema';
-import AccountSelect from '@/shared/components/AccountSelect.vue';
-import BaseInput from '@/shared/components/BaseInput.vue';
-import OperationSummary from '@/shared/components/OperationSummary.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import AccountSelect from '@/shared/components/AccountSelect/index.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
+import OperationSummary from '@/shared/components/OperationSummary/index.vue';
+import PageHeader from '@/shared/components/PageHeader/index.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useForm } from '@/shared/composables/useForm';
 import { withdraw } from '@/shared/services/accounts.service';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useToastStore } from '@/shared/stores/toast.store';
+
+defineOptions({ name: 'WithdrawPage' });
 
 const accountsStore = useAccountsStore();
 const toastStore = useToastStore();

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import LoadingBar from '@/shared/components/LoadingBar.vue';
-import ToastContainer from '@/shared/components/ToastContainer.vue';
+import LoadingBar from '@/shared/components/LoadingBar/index.vue';
+import ToastContainer from '@/shared/components/ToastContainer/index.vue';
 </script>
 
 <template>

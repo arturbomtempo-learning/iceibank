@@ -2,15 +2,17 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import LoginMascot from '@/modules/auth/components/LoginMascot.vue';
+import LoginMascot from '@/modules/auth/components/LoginMascot/index.vue';
 import { loginSchema, type LoginDraft, type LoginValues } from '@/modules/schemas/login.schema';
-import AppLogo from '@/shared/components/AppLogo.vue';
-import BaseInput from '@/shared/components/BaseInput.vue';
-import ThemeToggle from '@/shared/components/ThemeToggle.vue';
+import AppLogo from '@/shared/components/AppLogo/index.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle/index.vue';
 import { useForm } from '@/shared/composables/useForm';
 import { useToastStore } from '@/shared/stores/toast.store';
 
 import { useAuthStore } from '@/shared/stores/auth.store';
+
+defineOptions({ name: 'LoginPage' });
 
 const isPasswordFocused = ref(false);
 

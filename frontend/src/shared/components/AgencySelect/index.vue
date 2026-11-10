@@ -7,6 +7,8 @@ import {
     type AgencySelection,
 } from '@/shared/stores/agency.store';
 
+defineOptions({ name: 'AgencySelect' });
+
 defineProps<{
     label?: string;
     hint?: string;

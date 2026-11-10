@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useToastStore, type ToastVariant } from '@/shared/stores/toast.store';
 
+defineOptions({ name: 'ToastContainer' });
+
 const toastStore = useToastStore();
 
 const accentByVariant: Record<ToastVariant, string> = {

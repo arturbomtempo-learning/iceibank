@@ -2,12 +2,14 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import AppLogo from '@/shared/components/AppLogo.vue';
-import ThemeToggle from '@/shared/components/ThemeToggle.vue';
+import AppLogo from '@/shared/components/AppLogo/index.vue';
+import ThemeToggle from '@/shared/components/ThemeToggle/index.vue';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { AUTOMATIC_ROUTING, useAgencyStore } from '@/shared/stores/agency.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
 import { useToastStore } from '@/shared/stores/toast.store';
+
+defineOptions({ name: 'AppLayout' });
 
 const router = useRouter();
 const authStore = useAuthStore();

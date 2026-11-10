@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, useId, watch } fro
 
 import mascotHead from '@/assets/mascot/mascot-head.webp';
 
+defineOptions({ name: 'LoginMascot' });
+
 const props = withDefaults(defineProps<{ covered?: boolean }>(), { covered: false });
 
 const TURN_Y = 17;

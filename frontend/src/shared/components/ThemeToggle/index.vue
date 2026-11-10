@@ -3,6 +3,8 @@ import { computed } from 'vue';
 
 import { useThemeStore } from '@/shared/stores/theme.store';
 
+defineOptions({ name: 'ThemeToggle' });
+
 withDefaults(defineProps<{ variant?: 'default' | 'onink' }>(), { variant: 'default' });
 
 const themeStore = useThemeStore();

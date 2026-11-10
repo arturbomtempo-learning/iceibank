@@ -2,6 +2,8 @@
 import { useCurrency } from '@/shared/composables/useCurrency';
 import type { OwnedAccount } from '@/shared/stores/accounts.store';
 
+defineOptions({ name: 'BalanceCard' });
+
 defineProps<{
     account: OwnedAccount;
     revealed: boolean;

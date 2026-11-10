@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue';
 
+defineOptions({ name: 'BaseInput' });
+
 const props = defineProps<{
     label: string;
     modelValue: string | number | null;

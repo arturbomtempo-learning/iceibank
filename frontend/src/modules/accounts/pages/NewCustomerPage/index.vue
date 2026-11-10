@@ -6,12 +6,14 @@ import {
     type CreateCustomerDraft,
     type CreateCustomerValues,
 } from '@/modules/schemas/customer.schema';
-import BaseInput from '@/shared/components/BaseInput.vue';
-import PageHeader from '@/shared/components/PageHeader.vue';
+import BaseInput from '@/shared/components/BaseInput/index.vue';
+import PageHeader from '@/shared/components/PageHeader/index.vue';
 import { useForm } from '@/shared/composables/useForm';
 import { useToastStore } from '@/shared/stores/toast.store';
 
-import { createCustomer } from '../services/users.service';
+import { createCustomer } from '@/modules/accounts/services/users.service';
+
+defineOptions({ name: 'NewCustomerPage' });
 
 const toastStore = useToastStore();
 

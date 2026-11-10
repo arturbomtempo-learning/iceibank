@@ -2,12 +2,14 @@
 import { computed, onMounted, ref } from 'vue';
 
 import mascotHead from '@/assets/mascot/mascot-head.webp';
-import AgencySelect from '@/shared/components/AgencySelect.vue';
-import BalanceCard from '@/shared/components/BalanceCard.vue';
+import AgencySelect from '@/shared/components/AgencySelect/index.vue';
+import BalanceCard from '@/shared/components/BalanceCard/index.vue';
 import { useCurrency } from '@/shared/composables/useCurrency';
 import { useAccountsStore } from '@/shared/stores/accounts.store';
 import { useAgencyStore } from '@/shared/stores/agency.store';
 import { useAuthStore } from '@/shared/stores/auth.store';
+
+defineOptions({ name: 'DashboardPage' });
 
 const authStore = useAuthStore();
 const accountsStore = useAccountsStore();
