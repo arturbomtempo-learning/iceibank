@@ -81,7 +81,35 @@ function criarServicoBully(idAgencia, relogio, registro) {
         return liderAtual;
     }
 
-    return { iniciarEleicao, receberEleicao, receberCoordenador, obterLiderAtual };
+    async function verificarLider() {
+        if (liderAtual === null) {
+            await iniciarEleicao();
+            return;
+        }
+        if (liderAtual === idAgencia) return; // eu sou a lider, nada a verificar
+
+        const liderInfo = config.AGENCIAS.find((a) => a.id === liderAtual);
+        try {
+            await axios.get(`${liderInfo.url}/bully/lider`, { timeout: TIMEOUT_MS });
+        } catch (erro) {
+            const vetor = relogio.eventoLocal();
+            registro.registrar('LIDER_NAO_RESPONDEU', vetor, { liderAtual, agencia: idAgencia });
+            liderAtual = null;
+            await iniciarEleicao();
+        }
+    }
+
+    function iniciarHeartbeat(intervaloMs = 3000) {
+        setInterval(verificarLider, intervaloMs);
+    }
+
+    return {
+        iniciarEleicao,
+        receberEleicao,
+        receberCoordenador,
+        obterLiderAtual,
+        iniciarHeartbeat,
+    };
 }
 
 export default criarServicoBully;
