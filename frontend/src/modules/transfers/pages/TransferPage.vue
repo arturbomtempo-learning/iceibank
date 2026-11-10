@@ -209,7 +209,7 @@ async function submit(): Promise<void> {
                         width="320"
                         height="279"
                         alt=""
-                        class="w-[88px]"
+                        class="w-22"
                         loading="lazy"
                         decoding="async"
                     />

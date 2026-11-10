@@ -50,7 +50,7 @@ const downloads = [
                         width="642"
                         height="760"
                         alt="Mascote do ICEIBank de corpo inteiro: um castor de moletom verde segurando um cartão do banco"
-                        class="float-slow w-full max-w-[15rem] sm:max-w-[17rem]"
+                        class="float-slow w-full max-w-60 sm:max-w-68"
                         loading="lazy"
                         decoding="async"
                     />
@@ -74,7 +74,7 @@ const downloads = [
                             width="320"
                             height="279"
                             alt="Cabeça do mascote do ICEIBank"
-                            class="w-[5.5rem]"
+                            class="w-22"
                             loading="lazy"
                             decoding="async"
                         />
@@ -92,7 +92,7 @@ const downloads = [
                     :style="{ borderRadius: 'var(--radius-card)' }"
                 >
                     <div class="grain pointer-events-none absolute inset-0 opacity-60" />
-                    <div class="relative z-10 w-full max-w-[9.5rem] shrink-0">
+                    <div class="relative z-10 w-full max-w-38 shrink-0">
                         <LoginMascot :covered="isCardRaised" />
                     </div>
                     <figcaption class="relative z-10 mt-5 w-full lg:mt-0">

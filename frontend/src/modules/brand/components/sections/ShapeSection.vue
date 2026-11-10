@@ -21,7 +21,7 @@ const isMotionPlaying = ref(false);
         <ul class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             <li v-for="radius in radiusTokens" :key="radius.token">
                 <div
-                    class="aspect-[4/3] border-2"
+                    class="aspect-4/3 border-2"
                     :style="{
                         borderRadius: `var(${radius.token})`,
                         borderColor: 'var(--color-primary-line)',

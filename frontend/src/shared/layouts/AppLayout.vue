@@ -73,10 +73,10 @@ function signOut(): void {
         </Transition>
 
         <aside
-            class="surface-ink fixed inset-y-0 left-0 z-40 flex w-[17rem] shrink-0 flex-col transition-transform duration-300 ease-out lg:translate-x-0"
+            class="surface-ink fixed inset-y-0 left-0 z-40 flex w-68 shrink-0 flex-col transition-transform duration-300 ease-out lg:translate-x-0"
             :class="isMenuOpen ? 'translate-x-0' : '-translate-x-full'"
         >
-            <div class="relative z-10 flex h-[4.5rem] items-center px-5">
+            <div class="relative z-10 flex h-18 items-center px-5">
                 <RouterLink :to="{ name: 'dashboard' }" aria-label="Ir para o início">
                     <AppLogo variant="light" size="sm" />
                 </RouterLink>
@@ -94,7 +94,7 @@ function signOut(): void {
                     @click="closeMenu"
                 >
                     <svg
-                        class="h-[18px] w-[18px] shrink-0 transition-colors"
+                        class="h-4.5 w-4.5 shrink-0 transition-colors"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -111,7 +111,7 @@ function signOut(): void {
 
             <div class="relative z-10 px-3 pb-4">
                 <div
-                    class="flex items-center gap-3 rounded-[var(--radius-md)] border px-3 py-3"
+                    class="flex items-center gap-3 rounded-md border px-3 py-3"
                     :style="{
                         backgroundColor: 'rgba(255, 255, 255, 0.04)',
                         borderColor: 'var(--color-ink-line)',
@@ -136,14 +136,14 @@ function signOut(): void {
                     </div>
                     <button
                         type="button"
-                        class="shrink-0 cursor-pointer rounded-lg p-1.5 transition-colors hover:bg-white/8 hover:text-white"
+                        class="shrink-0 cursor-pointer rounded-xs p-1.5 transition-colors hover:bg-white/8 hover:text-white"
                         :style="{ color: 'var(--color-ink-muted)' }"
                         aria-label="Sair"
                         title="Sair"
                         @click="signOut"
                     >
                         <svg
-                            class="h-[18px] w-[18px]"
+                            class="h-4.5 w-4.5"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -160,9 +160,9 @@ function signOut(): void {
             </div>
         </aside>
 
-        <div class="flex min-w-0 flex-1 flex-col lg:pl-[17rem]">
+        <div class="flex min-w-0 flex-1 flex-col lg:pl-68">
             <header
-                class="sticky top-0 z-20 flex h-[4.5rem] items-center gap-3 border-b px-4 sm:px-8"
+                class="sticky top-0 z-20 flex h-18 items-center gap-3 border-b px-4 sm:px-8"
                 :style="{
                     backgroundColor: 'var(--color-surface-glass)',
                     borderColor: 'var(--color-border)',
@@ -171,7 +171,7 @@ function signOut(): void {
             >
                 <button
                     type="button"
-                    class="cursor-pointer rounded-lg p-2 transition-colors hover:bg-[var(--color-surface-hover)] lg:hidden"
+                    class="cursor-pointer rounded-xs p-2 transition-colors hover:bg-surface-hover lg:hidden"
                     :style="{ color: 'var(--color-text)' }"
                     aria-label="Abrir menu"
                     @click="isMenuOpen = true"

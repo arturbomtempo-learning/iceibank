@@ -177,7 +177,7 @@ onBeforeUnmount(() => {
                     : { borderBottom: '1px solid transparent' }
             "
         >
-            <div class="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-8 px-5 sm:px-8">
+            <div class="mx-auto flex h-18 max-w-6xl items-center gap-8 px-5 sm:px-8">
                 <RouterLink
                     :to="{ name: 'home' }"
                     aria-label="ICEIBank, voltar ao topo"
@@ -211,7 +211,7 @@ onBeforeUnmount(() => {
 
                     <button
                         type="button"
-                        class="-mr-2 cursor-pointer rounded-lg p-2 md:hidden"
+                        class="-mr-2 cursor-pointer rounded-xs p-2 md:hidden"
                         :style="{ color: isScrolled ? 'var(--color-text)' : '#ffffff' }"
                         :aria-expanded="isMenuOpen"
                         aria-label="Abrir menu"
@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
                         v-for="link in navLinks"
                         :key="link.href"
                         :href="link.href"
-                        class="rounded-[var(--radius)] px-3 py-2.5 text-[0.9375rem] font-medium no-underline"
+                        class="rounded-(--radius) px-3 py-2.5 text-[0.9375rem] font-medium no-underline"
                         :style="{ color: 'var(--color-text)' }"
                         @click="isMenuOpen = false"
                     >
@@ -263,15 +263,15 @@ onBeforeUnmount(() => {
             </div>
         </header>
 
-        <section class="surface-ink relative overflow-hidden pt-[4.5rem]">
+        <section class="surface-ink relative overflow-hidden pt-18">
             <div class="grain pointer-events-none absolute inset-0 opacity-70" />
 
             <div
-                class="pointer-events-none absolute -top-40 -right-32 h-[34rem] w-[34rem] rounded-full opacity-[0.07]"
+                class="pointer-events-none absolute -top-40 -right-32 h-136 w-136 rounded-full opacity-[0.07]"
                 :style="{ border: '1px solid #ffffff' }"
             />
             <div
-                class="pointer-events-none absolute -top-20 -right-10 h-[22rem] w-[22rem] rounded-full opacity-[0.07]"
+                class="pointer-events-none absolute -top-20 -right-10 h-88 w-88 rounded-full opacity-[0.07]"
                 :style="{ border: '1px solid #ffffff' }"
             />
 
@@ -424,7 +424,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div
-                        class="float-slow absolute -right-3 -bottom-7 z-20 rounded-[var(--radius-md)] px-4 py-3 sm:-right-8"
+                        class="float-slow absolute -right-3 -bottom-7 z-20 rounded-md px-4 py-3 sm:-right-8"
                         :style="{
                             backgroundColor: 'var(--color-surface)',
                             border: '1px solid var(--color-border)',
@@ -593,7 +593,7 @@ onBeforeUnmount(() => {
                             <div
                                 v-for="account in 12"
                                 :key="account"
-                                class="numeric flex aspect-square items-center justify-center rounded-[var(--radius-xs)] text-xs font-bold"
+                                class="numeric flex aspect-square items-center justify-center rounded-xs text-xs font-bold"
                                 :style="tintForAccount(account - 1)"
                                 :title="`Conta ${account - 1} na Agência ${(account - 1) % 3}`"
                             >
@@ -743,7 +743,7 @@ onBeforeUnmount(() => {
                         width="642"
                         height="760"
                         alt="Mascote do ICEIBank, um castor de moletom segurando um cartão do banco"
-                        class="mx-auto w-full max-w-[200px] lg:max-w-[280px]"
+                        class="mx-auto w-full max-w-50 lg:max-w-70"
                         loading="lazy"
                         decoding="async"
                     />

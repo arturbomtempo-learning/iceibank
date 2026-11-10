@@ -102,7 +102,7 @@ onBeforeUnmount(() => {
                 borderColor: 'var(--color-border)',
             }"
         >
-            <div class="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-4 px-5 sm:px-8">
+            <div class="mx-auto flex h-18 max-w-6xl items-center gap-4 px-5 sm:px-8">
                 <RouterLink :to="{ name: 'home' }" aria-label="Ir para a página inicial">
                     <AppLogo size="sm" />
                 </RouterLink>
@@ -126,7 +126,7 @@ onBeforeUnmount(() => {
                     <ThemeToggle />
                     <RouterLink
                         :to="primaryCta.route"
-                        class="btn px-4 py-2 text-sm sm:px-[1.375rem] sm:py-[0.6875rem] sm:text-[0.9375rem]"
+                        class="btn px-4 py-2 text-sm sm:px-5.5 sm:py-2.75 sm:text-[0.9375rem]"
                     >
                         <span class="sm:hidden">{{ primaryCta.shortLabel }}</span>
                         <span class="hidden sm:inline">{{ primaryCta.label }}</span>
@@ -138,7 +138,7 @@ onBeforeUnmount(() => {
         <section class="surface-ink relative overflow-hidden">
             <div class="grain pointer-events-none absolute inset-0 opacity-70" />
             <div
-                class="pointer-events-none absolute -top-40 -right-32 h-[34rem] w-[34rem] rounded-full opacity-[0.07]"
+                class="pointer-events-none absolute -top-40 -right-32 h-136 w-136 rounded-full opacity-[0.07]"
                 :style="{ border: '1px solid #ffffff' }"
             />
 
@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
 
         <nav
             ref="chipBar"
-            class="chip-bar sticky top-[4.5rem] z-40 flex gap-2 overflow-x-auto border-b px-5 py-3 backdrop-blur-[14px] sm:px-8 lg:hidden"
+            class="chip-bar sticky top-18 z-40 flex gap-2 overflow-x-auto border-b px-5 py-3 backdrop-blur-[14px] sm:px-8 lg:hidden"
             :style="{
                 backgroundColor: 'var(--color-surface-glass)',
                 borderColor: 'var(--color-border)',
@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
 
         <div class="mx-auto max-w-6xl px-5 sm:px-8 lg:grid lg:grid-cols-[12.5rem_1fr] lg:gap-14">
             <aside class="hidden lg:block">
-                <nav class="sticky top-[4.5rem] py-16" aria-label="Seções do design system">
+                <nav class="sticky top-18 py-16" aria-label="Seções do design system">
                     <p class="eyebrow">Nesta página</p>
                     <ol class="mt-4 flex flex-col">
                         <li v-for="(section, index) in sections" :key="section.id">

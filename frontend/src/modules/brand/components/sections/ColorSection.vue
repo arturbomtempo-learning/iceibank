@@ -116,7 +116,7 @@ const { copy } = useClipboard();
                                     v-for="mode in ['light', 'dark'] as const"
                                     :key="mode"
                                     type="button"
-                                    class="token-value flex cursor-pointer items-center gap-2.5 rounded-[var(--radius-xs)] p-1.5 text-left"
+                                    class="token-value flex cursor-pointer items-center gap-2.5 rounded-xs p-1.5 text-left"
                                     :aria-label="`Copiar ${token.name} no tema ${mode === 'light' ? 'claro' : 'escuro'}, ${token[mode]}`"
                                     @click="
                                         copy(
@@ -126,7 +126,7 @@ const { copy } = useClipboard();
                                     "
                                 >
                                     <span
-                                        class="h-8 w-8 shrink-0 rounded-[var(--radius-xs)] border"
+                                        class="h-8 w-8 shrink-0 rounded-xs border"
                                         :style="{
                                             backgroundColor: token[mode],
                                             borderColor: 'var(--color-border)',

@@ -89,7 +89,7 @@ function specFor(style: TypeStyle): string {
                 </ul>
 
                 <p
-                    class="mt-5 border-t pt-5 text-sm break-words text-muted"
+                    class="mt-5 border-t pt-5 text-sm wrap-break-word text-muted"
                     :style="{ fontFamily: item.family, borderColor: 'var(--color-border)' }"
                 >
                     ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 R$ ç ã é
@@ -110,7 +110,7 @@ function specFor(style: TypeStyle): string {
                     <p class="numeric mt-0.5 text-xs text-muted">{{ specFor(style) }}</p>
                 </div>
                 <p
-                    class="min-w-0 break-words"
+                    class="min-w-0 wrap-break-word"
                     :style="{
                         fontFamily: familyFor(style),
                         fontSize: style.previewSize,

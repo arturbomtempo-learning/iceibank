@@ -98,11 +98,11 @@ const misuses: { label: string; logoStyle: StyleValue; background?: string }[] =
                 <p class="eyebrow">Área de proteção</p>
                 <div class="flex flex-1 items-center justify-center py-6">
                     <div
-                        class="clearspace rounded-[var(--radius-xs)] p-4"
+                        class="clearspace rounded-xs p-4"
                         :style="{ backgroundColor: 'var(--color-primary-soft)' }"
                     >
                         <div
-                            class="rounded-[4px] px-1 py-0.5"
+                            class="rounded-sm px-1 py-0.5"
                             :style="{ backgroundColor: 'var(--color-surface)' }"
                         >
                             <AppLogo size="md" />

@@ -58,7 +58,7 @@ async function submit(): Promise<void> {
             <div class="relative z-10 flex flex-1 flex-col items-center justify-center gap-9">
                 <LoginMascot :covered="isPasswordFocused" />
 
-                <div class="flex min-h-[1.75rem] max-w-sm flex-col items-center text-center">
+                <div class="flex min-h-7 max-w-sm flex-col items-center text-center">
                     <p
                         class="display text-[1.0625rem] font-bold transition-colors duration-300"
                         :style="{
@@ -86,7 +86,7 @@ async function submit(): Promise<void> {
                         <AppLogo size="md" />
                     </RouterLink>
 
-                    <LoginMascot :covered="isPasswordFocused" class="max-w-[9.5rem]" />
+                    <LoginMascot :covered="isPasswordFocused" class="max-w-38" />
                 </div>
 
                 <h1 class="text-[1.75rem] leading-tight">Acessar sua conta</h1>

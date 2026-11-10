@@ -13,7 +13,7 @@ const uiStore = useUiStore();
     >
         <div
             v-if="uiStore.isLoading"
-            class="fixed inset-x-0 top-0 z-60 h-[3px] overflow-hidden"
+            class="fixed inset-x-0 top-0 z-60 h-0.75 overflow-hidden"
             role="status"
             aria-label="Carregando"
         >

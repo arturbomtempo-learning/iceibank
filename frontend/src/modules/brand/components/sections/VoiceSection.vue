@@ -24,7 +24,7 @@ defineProps<{ id: string; ordinal: string }>();
 
                 <dl class="mt-5 grid flex-1 gap-3 sm:grid-cols-2">
                     <div
-                        class="rounded-[var(--radius)] border p-4"
+                        class="rounded-(--radius) border p-4"
                         :style="{
                             borderColor: 'var(--color-primary-line)',
                             backgroundColor: 'var(--color-success-soft)',
@@ -34,7 +34,7 @@ defineProps<{ id: string; ordinal: string }>();
                         <dd class="mt-2 text-sm font-medium">{{ guideline.prefer }}</dd>
                     </div>
                     <div
-                        class="rounded-[var(--radius)] border p-4"
+                        class="rounded-(--radius) border p-4"
                         :style="{
                             borderColor: 'var(--color-border)',
                             backgroundColor: 'var(--color-danger-soft)',

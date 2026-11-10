@@ -44,7 +44,7 @@ const iconByVariant: Record<ToastVariant, string> = {
                     :style="{ backgroundColor: surfaceByVariant[toast.variant] }"
                 >
                     <svg
-                        class="h-[17px] w-[17px]"
+                        class="h-4.25 w-4.25"
                         viewBox="0 0 24 24"
                         fill="none"
                         :stroke="accentByVariant[toast.variant]"
@@ -65,7 +65,7 @@ const iconByVariant: Record<ToastVariant, string> = {
 
                 <button
                     type="button"
-                    class="-mt-0.5 shrink-0 cursor-pointer rounded-lg p-1 text-lg leading-none transition-colors hover:bg-[var(--color-surface-hover)]"
+                    class="-mt-0.5 shrink-0 cursor-pointer rounded-xs p-1 text-lg leading-none transition-colors hover:bg-surface-hover"
                     :style="{ color: 'var(--color-text-muted)' }"
                     aria-label="Fechar aviso"
                     @click="toastStore.dismiss(toast.id)"

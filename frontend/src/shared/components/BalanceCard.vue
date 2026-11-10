@@ -58,7 +58,7 @@ const { formatCurrency } = useCurrency();
                         @click="emit('toggle')"
                     >
                         <svg
-                            class="h-[18px] w-[18px]"
+                            class="h-4.5 w-4.5"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"

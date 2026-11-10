@@ -147,7 +147,7 @@ onMounted(() => {
                 width="320"
                 height="279"
                 alt=""
-                class="w-[88px]"
+                class="w-22"
                 loading="lazy"
                 decoding="async"
             />
@@ -185,7 +185,7 @@ onMounted(() => {
                         }"
                     >
                         <svg
-                            class="h-[22px] w-[22px] transition-colors duration-150"
+                            class="h-5.5 w-5.5 transition-colors duration-150"
                             :style="{ color: 'var(--color-primary)' }"
                             viewBox="0 0 24 24"
                             fill="none"
