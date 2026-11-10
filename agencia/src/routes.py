@@ -2,6 +2,7 @@ from flask import Blueprint
 
 from controllers import (
     auth_controller,
+    bully_controller,
     contas_controller,
     extrato_controller,
     transferencias_controller,
@@ -52,3 +53,11 @@ rotas.add_url_rule(
     view_func=requer_servico(extrato_controller.listar_contas_para_servico),
     methods=["GET"],
 )
+
+rotas.add_url_rule("/bully/eleicao", view_func=bully_controller.receber_eleicao, methods=["POST"])
+
+rotas.add_url_rule(
+    "/bully/coordenador", view_func=bully_controller.receber_coordenador, methods=["POST"]
+)
+
+rotas.add_url_rule("/bully/lider", view_func=bully_controller.consultar_lider, methods=["GET"])

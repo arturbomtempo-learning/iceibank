@@ -3,6 +3,7 @@ from flask import current_app, jsonify, request
 import config
 from services import auth_service
 from services.mensageria import publicar
+from services.relogio_vetorial import vetor_valido
 
 
 def _estado():
@@ -11,17 +12,6 @@ def _estado():
         current_app.config["RELOGIO"],
         current_app.config["REGISTRO"],
         current_app.config["ID_AGENCIA"],
-    )
-
-
-def _vetor_valido(vetor):
-    return (
-        isinstance(vetor, list)
-        and len(vetor) == config.NUMERO_AGENCIAS
-        and all(
-            isinstance(posicao, int) and not isinstance(posicao, bool) and posicao >= 0
-            for posicao in vetor
-        )
     )
 
 
@@ -105,7 +95,7 @@ def aplicar_credito_remoto(contas, relogio, registro, mensagem, id_agencia):
         return _descartar(registro, relogio, mensagem, "idConta ausente ou invalido")
     if not _numero_positivo(valor):
         return _descartar(registro, relogio, mensagem, "valor ausente ou invalido")
-    if not _vetor_valido(vetor_envio):
+    if not vetor_valido(vetor_envio, config.NUMERO_AGENCIAS):
         return _descartar(registro, relogio, mensagem, "vetorEnvio ausente ou invalido")
 
     vetor = relogio.ao_receber(vetor_envio)
@@ -174,7 +164,7 @@ def aplicar_confirmacao(contas, relogio, registro, mensagem):
         return _descartar(registro, relogio, mensagem, "idOrigem ausente ou invalido")
     if not _numero_positivo(valor):
         return _descartar(registro, relogio, mensagem, "valor ausente ou invalido")
-    if not _vetor_valido(vetor_envio):
+    if not vetor_valido(vetor_envio, config.NUMERO_AGENCIAS):
         return _descartar(registro, relogio, mensagem, "vetorEnvio ausente ou invalido")
     if not isinstance(aplicado, bool):
         return _descartar(registro, relogio, mensagem, "aplicado ausente ou invalido")

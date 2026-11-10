@@ -1,6 +1,17 @@
 import threading
 
 
+def vetor_valido(vetor, numero_agencias):
+    return (
+        isinstance(vetor, list)
+        and len(vetor) == numero_agencias
+        and all(
+            isinstance(posicao, int) and not isinstance(posicao, bool) and posicao >= 0
+            for posicao in vetor
+        )
+    )
+
+
 class RelogioVetorial:
     def __init__(self, id_agencia, numero_agencias):
         self.id_agencia = id_agencia

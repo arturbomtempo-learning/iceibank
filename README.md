@@ -11,7 +11,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 ![JWT](https://img.shields.io/badge/Auth-JWT-D63AFF?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Pub%2FSub-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
 ![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Relógio_Vetorial-555555?style=for-the-badge)
-![Status](https://img.shields.io/badge/Sprint_2-Concluído-brightgreen?style=for-the-badge)
+![Status](https://img.shields.io/badge/Sprint_3-Em_andamento-yellow?style=for-the-badge)
 ![Repo Size](https://img.shields.io/github/repo-size/arturbomtempo-learning/iceibank?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/arturbomtempo-learning/iceibank?style=for-the-badge)
 
@@ -19,7 +19,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O próximo passo é o Sprint 3, com eleição de líder e o app mobile em Flutter.
+Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully, e ainda faltam o heartbeat com failover automático, o histórico de lideranças, a sincronização offline-first e o app mobile em Flutter.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -73,12 +73,12 @@ Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas
 
 O projeto também expõe, de forma deliberada, as limitações de cada etapa. No Sprint 1, se a agência de destino caísse no meio de uma transferência, o débito já aplicado não era revertido. A mensageria do Sprint 2 resolveu a entrega, porque a mensagem fica retida na fila e é entregue quando a agência volta, e a confirmação de entrega resolveu o crédito que falha no destino, porque a origem recebe o desfecho e devolve o valor. O que ainda falta é **atomicidade**: o estorno é uma compensação posterior, não uma transação única, não há controle de idempotência para mensagens reentregues, e se a publicação no broker falhar depois do débito, o valor fica debitado sem chegar ao destino. Essas lacunas não são escondidas, elas são registradas no log e documentadas, porque resolvê-las de verdade é o tema do Sprint 4, com transações distribuídas.
 
-| Sprint | Conceito de Sistemas Distribuídos         |   Situação   |
-| :----: | ----------------------------------------- | :----------: |
-| **1**  | **Relógio lógico de Lamport**             | ✅ Concluído |
-| **2**  | **Relógio vetorial e mensageria**         | ✅ Concluído |
-|   3    | Consenso (eleição de líder) e app Flutter |   Próximo    |
-|   4    | Transações distribuídas (2PC/Saga)        |  Planejado   |
+| Sprint | Conceito de Sistemas Distribuídos         |    Situação     |
+| :----: | ----------------------------------------- | :-------------: |
+| **1**  | **Relógio lógico de Lamport**             |  ✅ Concluído   |
+| **2**  | **Relógio vetorial e mensageria**         |  ✅ Concluído   |
+|   3    | Consenso (eleição de líder) e app Flutter | 🚧 Em andamento |
+|   4    | Transações distribuídas (2PC/Saga)        |    Planejado    |
 
 ---
 
@@ -100,7 +100,9 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **Confirmação de entrega com estorno automático.** Depois de processar um crédito remoto, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`, e a origem consome essa resposta. Quando o crédito falha, por exemplo porque a conta de destino não existe, a origem devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, aplicando o padrão Saga com transação compensatória. É o que impede o dinheiro de desaparecer quando a outra ponta não consegue concluir. Detalhes em [Funcionalidades Adicionais](#sprint-2-confirmação-de-entrega-com-estorno-automático).
 
-**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Dez tipos de evento são registrados, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`.
+**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Catorze tipos de evento são registrados, das operações bancárias, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`, às etapas da eleição, de `ELEICAO_INICIADA` a `LIDER_ANUNCIADO`.
+
+**Eleição de líder pelo algoritmo de Bully.** Ao subir, cada agência envia uma mensagem de eleição às agências de id maior. Se nenhuma responder, ela se declara líder e anuncia o resultado a todas; se alguma responder, essa assume a eleição. O resultado é sempre a agência de maior id entre as ativas, e toda mensagem carrega o vetor do relógio vetorial, então a eleição também aparece na linha do tempo causal. Por enquanto a líder é só informativa: no Sprint 4 ela passa a coordenar as transações distribuídas.
 
 **Linha do tempo causal.** O script `mesclar_logs.py` lê os logs das três agências, monta uma linha do tempo única por hora de parede e compara os vetores par a par, listando explicitamente os eventos concorrentes e separando-os dos causalmente ordenados.
 
@@ -498,19 +500,22 @@ cd iceibank\agencia
 
 ## 🔌 Endpoints da API
 
-Todas as rotas, exceto o login, exigem o cabeçalho `Authorization: Bearer <token>`.
+Todas as rotas, exceto o login e as do algoritmo de Bully, exigem o cabeçalho `Authorization: Bearer <token>`. As rotas `/bully/*` seguem o roteiro do Sprint 3, que as define sem autenticação.
 
-| Método | Rota                        | Proteção         | Descrição                                         |
-| :----: | --------------------------- | ---------------- | ------------------------------------------------- |
-| `POST` | `/auth/login`               | pública          | Autentica e devolve o token JWT                   |
-| `POST` | `/usuarios`                 | gerente          | Cadastra um novo correntista                      |
-| `POST` | `/contas`                   | gerente          | Abre uma conta na agência responsável pelo número |
-| `GET`  | `/contas/<id>`              | dono ou gerente  | Consulta o saldo de uma conta                     |
-| `POST` | `/contas/<id>/depositar`    | dono ou gerente  | Credita um valor                                  |
-| `POST` | `/contas/<id>/sacar`        | dono ou gerente  | Debita um valor                                   |
-| `POST` | `/transferencias`           | dono ou gerente  | Transfere, resolvendo local ou entre agências     |
-| `GET`  | `/extrato`                  | autenticado      | ⭐ Extrato consolidado das três agências          |
-| `GET`  | `/interno/contas/<usuario>` | token de serviço | Rota interna: contas de um usuário nesta agência  |
+| Método | Rota                        | Proteção         | Descrição                                                 |
+| :----: | --------------------------- | ---------------- | --------------------------------------------------------- |
+| `POST` | `/auth/login`               | pública          | Autentica e devolve o token JWT                           |
+| `POST` | `/usuarios`                 | gerente          | Cadastra um novo correntista                              |
+| `POST` | `/contas`                   | gerente          | Abre uma conta na agência responsável pelo número         |
+| `GET`  | `/contas/<id>`              | dono ou gerente  | Consulta o saldo de uma conta                             |
+| `POST` | `/contas/<id>/depositar`    | dono ou gerente  | Credita um valor                                          |
+| `POST` | `/contas/<id>/sacar`        | dono ou gerente  | Debita um valor                                           |
+| `POST` | `/transferencias`           | dono ou gerente  | Transfere, resolvendo local ou entre agências             |
+| `GET`  | `/extrato`                  | autenticado      | ⭐ Extrato consolidado das três agências                  |
+| `GET`  | `/interno/contas/<usuario>` | token de serviço | Rota interna: contas de um usuário nesta agência          |
+| `POST` | `/bully/eleicao`            | sem autenticação | Recebe uma mensagem de eleição de uma agência de id menor |
+| `POST` | `/bully/coordenador`        | sem autenticação | Recebe o anúncio da nova líder                            |
+| `GET`  | `/bully/lider`              | sem autenticação | Informa qual agência esta agência reconhece como líder    |
 
 O crédito entre agências não passa por uma rota HTTP: ele trafega pelo RabbitMQ, na exchange `topic` `iceibank.eventos`, e cada agência consome a própria fila durável, `fila-agencia-<id>`.
 
@@ -532,6 +537,7 @@ iceibank/
 │   │   ├── routes.py                 # Rotas e a proteção exigida por cada uma
 │   │   ├── controllers/              # Regras de negócio por recurso
 │   │   │   ├── auth_controller.py
+│   │   │   ├── bully_controller.py   # Rotas de eleição e consulta da líder
 │   │   │   ├── contas_controller.py
 │   │   │   ├── transferencias_controller.py
 │   │   │   ├── usuarios_controller.py
@@ -540,6 +546,7 @@ iceibank/
 │   │   │   ├── relogio_vetorial.py   # As três regras do relógio vetorial
 │   │   │   ├── mensageria.py         # Publicação e consumo no RabbitMQ
 │   │   │   ├── registro_eventos.py   # Log de eventos em JSON Lines
+│   │   │   ├── bully_service.py      # Algoritmo de Bully: eleição e anúncio de coordenador
 │   │   │   ├── auth_service.py       # Emissão e validação dos tokens
 │   │   │   └── repositorio_usuarios.py
 │   │   └── middlewares/
