@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import { applyRouteHead } from '@/app/seo/head';
 import { useAuthStore } from '@/shared/stores/auth.store';
 
 import { routes } from './routes';
@@ -32,3 +33,5 @@ router.beforeEach((to) => {
 
     return true;
 });
+
+router.afterEach((to) => applyRouteHead(to));

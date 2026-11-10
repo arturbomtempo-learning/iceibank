@@ -3,6 +3,8 @@
     "extends": "@tsconfig/node24/tsconfig.json",
     "include": [
         "vite.config.*",
+        "vite-plugins/**/*.ts",
+        "src/app/seo/pages.ts",
         "vitest.config.*",
         "cypress.config.*",
         "playwright.config.*",
@@ -13,6 +15,7 @@
         // Bundler mode provides a smoother developer experience.
         "module": "preserve",
         "moduleResolution": "bundler",
+        "allowImportingTsExtensions": true,
 
         // Include Node.js types and avoid accidentally including other `@types/*` packages.
         "types": ["node"],

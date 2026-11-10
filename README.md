@@ -419,6 +419,8 @@ O terminal mostra o endereço da aplicação, normalmente `http://localhost:5173
 
 > Se a porta 5173 estiver ocupada, o Vite escolhe outra automaticamente (5174, por exemplo) e avisa no terminal. O backend aceita qualquer porta local, então a aplicação continua funcionando; basta usar o endereço que ele imprimir.
 
+O `.env` do frontend também tem a `SITE_URL`, o endereço público do site. Ela é usada só no build, para gerar o link canônico, a imagem de compartilhamento em redes sociais, o `robots.txt` e o `sitemap.xml`. Para rodar localmente, o valor do exemplo já serve; ao publicar o frontend, troque pelo domínio real (por exemplo, `https://iceibank.com.br`).
+
 ### 🛑 Como parar
 
 Pressione **Ctrl+C** em cada terminal. Vale lembrar que as contas ficam **em memória**: ao parar as agências, todas as contas são perdidas e precisam ser recriadas na próxima execução. Os usuários cadastrados, por outro lado, ficam salvos em arquivo e sobrevivem ao reinício.
