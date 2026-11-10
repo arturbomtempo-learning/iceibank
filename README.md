@@ -11,7 +11,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 ![JWT](https://img.shields.io/badge/Auth-JWT-D63AFF?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Pub%2FSub-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
 ![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Relógio_Vetorial-555555?style=for-the-badge)
-![Status](https://img.shields.io/badge/Sprint_2-Em_andamento-yellow?style=for-the-badge)
+![Status](https://img.shields.io/badge/Sprint_2-Concluído-brightgreen?style=for-the-badge)
 ![Repo Size](https://img.shields.io/github/repo-size/arturbomtempo-learning/iceibank?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/arturbomtempo-learning/iceibank?style=for-the-badge)
 
@@ -19,7 +19,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprint 1 concluída e Sprint 2 em andamento. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT, frontend web completo e a funcionalidade adicional de extrato consolidado. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. Do Sprint 2 falta ainda a funcionalidade adicional específica da entrega.
+Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O próximo passo é o Sprint 3, com eleição de líder e o app mobile em Flutter.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -33,7 +33,9 @@ São quatro sprints ao longo do semestre: cada um parte do código do anterior e
     - [📝 Sobre o Projeto](#-sobre-o-projeto)
     - [🎬 Vídeo de Apresentação](#-vídeo-de-apresentação)
     - [✨ Funcionalidades Principais](#-funcionalidades-principais)
-    - [⭐ Funcionalidade Adicional: Extrato Consolidado](#-funcionalidade-adicional-extrato-consolidado)
+    - [⭐ Funcionalidades Adicionais](#-funcionalidades-adicionais)
+        - [Sprint 1: extrato consolidado](#sprint-1-extrato-consolidado)
+        - [Sprint 2: confirmação de entrega com estorno automático](#sprint-2-confirmação-de-entrega-com-estorno-automático)
     - [🛠 Tecnologias Utilizadas](#-tecnologias-utilizadas)
     - [🏗 Arquitetura](#-arquitetura)
         - [Backend: as três agências](#backend-as-três-agências)
@@ -69,14 +71,14 @@ Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas
 
 É aí que entram os conceitos centrais do projeto. O Sprint 1 trouxe o **relógio lógico de Lamport**, e o Sprint 2 o substituiu pelo **relógio vetorial**: em vez de um contador único por agência, cada uma passa a manter um contador por agência, o que permite afirmar com certeza se dois eventos são causalmente relacionados ou concorrentes, distinção que o Lamport não conseguia fazer. Todo evento do sistema é registrado em log com seu timestamp vetorial, e um script mescla os logs das três agências em uma linha do tempo única, apontando os pares concorrentes.
 
-O projeto também expõe, de forma deliberada, uma limitação real: se a agência de destino cair no meio de uma transferência, o débito já aplicado **não é revertido**. Com a mensageria do Sprint 2, a mensagem fica retida na fila e é entregue quando a agência volta, mas isso garante a entrega, não a atomicidade: se a conta de destino não existir mais, o crédito falha e o dinheiro continua desaparecido. Essa inconsistência não é escondida, ela é registrada no log e documentada, porque resolvê-la de verdade é o tema do Sprint 4, com transações distribuídas.
+O projeto também expõe, de forma deliberada, as limitações de cada etapa. No Sprint 1, se a agência de destino caísse no meio de uma transferência, o débito já aplicado não era revertido. A mensageria do Sprint 2 resolveu a entrega, porque a mensagem fica retida na fila e é entregue quando a agência volta, e a confirmação de entrega resolveu o crédito que falha no destino, porque a origem recebe o desfecho e devolve o valor. O que ainda falta é **atomicidade**: o estorno é uma compensação posterior, não uma transação única, não há controle de idempotência para mensagens reentregues, e se a publicação no broker falhar depois do débito, o valor fica debitado sem chegar ao destino. Essas lacunas não são escondidas, elas são registradas no log e documentadas, porque resolvê-las de verdade é o tema do Sprint 4, com transações distribuídas.
 
-| Sprint | Conceito de Sistemas Distribuídos  |   Situação   |
-| :----: | ---------------------------------- | :----------: |
-| **1**  | **Relógio lógico de Lamport**      | ✅ Concluído |
-| **2**  | **Relógio vetorial e mensageria**  | 🚧 Em andamento |
-|   3    | Consenso (eleição de líder)        |  Planejado   |
-|   4    | Transações distribuídas (2PC/Saga) |  Planejado   |
+| Sprint | Conceito de Sistemas Distribuídos         |   Situação   |
+| :----: | ----------------------------------------- | :----------: |
+| **1**  | **Relógio lógico de Lamport**             | ✅ Concluído |
+| **2**  | **Relógio vetorial e mensageria**         | ✅ Concluído |
+|   3    | Consenso (eleição de líder) e app Flutter |   Próximo    |
+|   4    | Transações distribuídas (2PC/Saga)        |  Planejado   |
 
 ---
 
@@ -96,7 +98,7 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **Mensageria entre agências.** A transferência entre agências deixou de ser uma chamada HTTP direta e passa por uma exchange `topic` do RabbitMQ chamada `iceibank.eventos`, com uma fila durável por agência e routing key `agencia.<id>.creditar`. A agência de origem publica e segue adiante, sem precisar saber se o destino está no ar, e o consumidor roda em uma thread separada do servidor HTTP.
 
-**Confirmação de entrega com estorno automático.** Depois de processar um crédito remoto, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`, e a origem consome essa resposta. Quando o crédito falha, por exemplo porque a conta de destino não existe, a origem devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, aplicando o padrão Saga com transação compensatória. É o que impede o dinheiro de desaparecer quando a outra ponta não consegue concluir.
+**Confirmação de entrega com estorno automático.** Depois de processar um crédito remoto, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`, e a origem consome essa resposta. Quando o crédito falha, por exemplo porque a conta de destino não existe, a origem devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, aplicando o padrão Saga com transação compensatória. É o que impede o dinheiro de desaparecer quando a outra ponta não consegue concluir. Detalhes em [Funcionalidades Adicionais](#sprint-2-confirmação-de-entrega-com-estorno-automático).
 
 **Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Dez tipos de evento são registrados, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`.
 
@@ -104,25 +106,31 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **API REST em arquitetura MVC.** Rotas, controllers e services separados, com CRUD de contas, depósito, saque e transferências.
 
-**Transferências locais e entre agências.** O frontend não precisa saber a diferença: envia origem, destino e valor, e o backend decide se resolve internamente ou se precisa chamar outra agência. A resposta informa qual dos dois casos ocorreu.
+**Transferências locais e entre agências.** O frontend não precisa saber a diferença: envia origem, destino e valor, e o backend decide se resolve internamente ou se publica a operação para a agência de destino. A resposta informa qual dos dois casos ocorreu.
 
-**Falha conhecida documentada.** Quando a agência de destino está indisponível, o débito já aplicado não é revertido. O sistema registra a inconsistência no log e responde com HTTP 502, deixando o problema visível em vez de mascarado.
+**Resiliência a agências fora do ar.** Se a agência de destino estiver desligada, a transferência não falha: a mensagem fica retida na fila durável e é entregue quando ela volta. Falhas que não podem ser resolvidas, como um estorno para uma conta que já não existe, geram eventos próprios (`CREDITO_REMOTO_FALHOU`, `ESTORNO_FALHOU`), deixando o problema visível em vez de mascarado.
 
 **Autenticação com JWT.** Login com usuário e senha (guardada em hash), token assinado com expiração de uma hora, e todas as rotas de conta protegidas. Token ausente, inválido ou expirado é recusado com HTTP 401.
 
 **Autorização em três camadas.** Além de autenticar, o sistema verifica permissões: papel de gerente para abrir contas e cadastrar correntistas, posse do recurso para movimentar uma conta específica, e um tipo de token separado para as chamadas internas entre agências. Falhas de permissão respondem com HTTP 403, distinguindo "não sei quem você é" de "sei quem você é, mas você não pode".
 
-**Token de serviço para comunicação interna.** As chamadas entre agências não reutilizam o token de sessão da pessoa. A agência de origem gera um token próprio, de curtíssima duração e sem identidade de usuário, seguindo o princípio de menor privilégio.
+**Token de serviço para comunicação interna.** A chamada HTTP entre agências, usada pelo extrato consolidado, não reutiliza o token de sessão da pessoa. A agência que chama gera um token próprio, de curtíssima duração e sem identidade de usuário, seguindo o princípio de menor privilégio.
 
-**Frontend web completo.** Internet banking em Vue com login, visão consolidada de saldos, depósito, saque, transferências, cadastro de correntistas e abertura de contas, com tratamento visível de todos os erros retornados pela API.
+**Frontend web completo.** Internet banking em Vue com login, visão consolidada de saldos, depósito, saque, transferências, cadastro de correntistas e abertura de contas, com tratamento visível de todos os erros retornados pela API. Inclui página inicial pública, tema claro e escuro e uma página de identidade visual (`/identidade-visual`) que documenta o design system: logo, cores, tipografia, mascote, componentes e regras de escrita.
+
+**SEO e compartilhamento.** Cada página tem título, descrição e link canônico próprios, atualizados a cada navegação. As páginas públicas são indexáveis e as autenticadas saem com `noindex`. O build gera o HTML de cada rota já com as tags certas, além de `robots.txt`, `sitemap.xml`, imagem de prévia para redes sociais e ícones do app.
 
 **Roteamento automático de agência.** O frontend descobre sozinho qual agência atende cada conta e envia a requisição para o endereço certo, sem que a pessoa precise escolher. Um controle manual permite fixar uma agência específica para demonstrar o comportamento da partição.
 
 ---
 
-## ⭐ Funcionalidade Adicional: Extrato Consolidado
+## ⭐ Funcionalidades Adicionais
 
-Além do escopo obrigatório, a seção 2.1 do roteiro exige pelo menos uma funcionalidade autoral. A escolhida foi o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado nas três agências e devolve o saldo somado em uma única chamada.
+Além do escopo obrigatório, a seção 2.1 de cada roteiro exige pelo menos uma funcionalidade autoral por sprint.
+
+### Sprint 1: extrato consolidado
+
+A funcionalidade escolhida foi o **extrato consolidado**: um endpoint `GET /extrato` que reúne todas as contas do usuário logado nas três agências e devolve o saldo somado em uma única chamada.
 
 A escolha foi deliberada. Consultar o saldo de uma conta é trivial, porque a agência responsável guarda tudo o que precisa em memória. Somar saldos de contas espalhadas por agências diferentes, não: a partição garante que nenhuma agência sozinha tenha essa informação. O endpoint só consegue responder conversando com as outras duas pela rede, o que faz dele uma funcionalidade que depende diretamente do que esta sprint tem de característico.
 
@@ -148,6 +156,26 @@ Duas decisões de projeto que valem destaque:
 
 É esse endpoint que faz a tela inicial funcionar como um internet banking de verdade: a pessoa entra e já vê os cartões de todas as suas contas, sem digitar número de conta nenhum. A documentação completa está no [`RESPOSTAS.md`](RESPOSTAS.md).
 
+### Sprint 2: confirmação de entrega com estorno automático
+
+Com a mensageria, a agência de origem passou a debitar, publicar e nunca mais saber o que aconteceu do outro lado. Se o crédito falhasse no destino, por exemplo porque a conta não existe, o dinheiro simplesmente sumia e só restava uma linha de log na outra agência. A **confirmação de entrega** fecha esse ciclo.
+
+**Como funciona.** Depois de processar o crédito, com sucesso ou não, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`. A origem consome essa mensagem e decide:
+
+- **Crédito aplicado:** registra `TRANSFERENCIA_CONFIRMADA` e encerra o ciclo.
+- **Crédito recusado:** devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, com o motivo informado pelo destino.
+- **Conta de origem inexistente:** registra `ESTORNO_FALHOU`, deixando a inconsistência explícita em vez de silenciosa.
+
+```
+[agencia-0] TRANSFERENCIA_DEBITO      [5, 3, 0]
+[agencia-1] CREDITO_REMOTO_FALHOU     [6, 4, 0]  motivo: conta nao encontrada
+[agencia-0] TRANSFERENCIA_ESTORNADA   [7, 5, 0]  motivo: conta nao encontrada
+```
+
+É o padrão **Saga com transação compensatória**, apontado no Sprint 1 como alternativa ao 2PC e agora implementado de fato. A soma de dinheiro do sistema é preservada, e o vetor mostra que o estorno é causalmente posterior à falha: o `5` na posição da Agência 1 só pode ter chegado à Agência 0 dentro da mensagem de confirmação.
+
+A infraestrutura não precisou de fila nova: a chave de confirmação é vinculada à mesma `fila-agencia-<id>` que já existia. A limitação conhecida é a falta de idempotência, já que uma confirmação negativa reentregue pelo broker aplicaria o estorno duas vezes. A análise completa está no [`RESPOSTAS.md`](RESPOSTAS.md).
+
 ---
 
 ## 🛠 Tecnologias Utilizadas
@@ -171,11 +199,11 @@ Duas decisões de projeto que valem destaque:
 | ------------ | :----: | -------------------------------------------------------------- |
 | Vue.js       |  3.5   | Framework da interface, com Composition API e `<script setup>` |
 | TypeScript   |  6.0   | Tipagem estática em todo o código do frontend                  |
-| Vite         |  8.1   | Servidor de desenvolvimento e empacotamento                    |
+| Vite         |  8.3   | Servidor de desenvolvimento e empacotamento                    |
 | Vue Router   |  5.3   | Rotas e guards de autenticação e de papel                      |
 | Pinia        |  4.0   | Gerenciamento de estado no padrão Setup Store                  |
 | Axios        |  1.20  | Cliente HTTP, com interceptors de token, erro e carregamento   |
-| Zod          |  4.5   | Validação dos formulários com tipos inferidos do schema        |
+| Zod          |  4.6   | Validação dos formulários com tipos inferidos do schema        |
 | Tailwind CSS |  4.3   | Estilização, sobre um design system com tokens próprios        |
 
 A escolha de **Python com Flask** atende à exigência do roteiro, que permite Java ou Python e proíbe a entrega em Node.js. O **Vue** foi escolhido no frontend, cuja tecnologia era livre.
@@ -192,8 +220,11 @@ O ponto central é que **existe um único código-fonte**, executado três vezes
 Agência 0 (porta 4035)      Agência 1 (porta 4036)      Agência 2 (porta 4037)
 contas 0, 3, 6, 9...        contas 1, 4, 7, 10...       contas 2, 5, 8, 11...
         │                            │                            │
+        ├──────── RabbitMQ: exchange topic iceibank.eventos ──────┤
+        │           (crédito remoto e confirmação de entrega)      │
+        │                                                          │
         └──────────── HTTP + token de serviço ────────────────────┘
-                    (crédito remoto e extrato consolidado)
+                         (extrato consolidado)
 ```
 
 A organização interna segue MVC:
@@ -210,8 +241,10 @@ As contas ficam **em memória**, uma decisão do próprio roteiro: o foco da spr
 O frontend segue arquitetura **baseada em funcionalidades com uma camada compartilhada**:
 
 - **`app/`** concentra a inicialização e o roteador, com os guards que decidem o que cada rota exige.
-- **`modules/`** isola cada funcionalidade (`auth`, `accounts`, `transfers`, `home`), com suas páginas e serviços. Um módulo nunca importa de outro.
+- **`modules/`** isola cada funcionalidade (`landing`, `auth`, `home`, `accounts`, `transfers` e `brand`, a página de identidade visual), com suas páginas, componentes e serviços. Um módulo nunca importa de outro: o que é usado por mais de um vai para `shared/`. A exceção é `schemas`, que reúne os schemas Zod de validação dos formulários.
 - **`shared/`** é a biblioteca interna: componentes reutilizáveis, composables, layout, a instância única do Axios e as stores globais.
+
+Cada componente vive em uma pasta própria, no formato `NomeComponente/index.vue`, e declara o próprio nome com `defineOptions` para continuar identificável no Vue DevTools e nas mensagens de aviso.
 
 Três decisões merecem destaque:
 
@@ -221,11 +254,13 @@ Três decisões merecem destaque:
 
 **A agência é descoberta automaticamente.** Como a regra da partição é conhecida, o frontend calcula qual agência atende cada conta e direciona a requisição sozinho. O controle manual continua disponível para fixar uma agência e demonstrar o comportamento da partição.
 
+**O SEO tem uma única fonte de verdade.** O arquivo `src/app/seo/pages.ts` define caminho, título, descrição e indexação de cada página. O roteador usa esses dados para atualizar as tags a cada navegação, e um plugin do Vite (`vite-plugins/seo.ts`) usa os mesmos dados no build para gerar o HTML de cada rota, o `robots.txt` e o `sitemap.xml`.
+
 ### Sobre a pasta `agencia-express`
 
 O roteiro traz o código de referência em **Node.js/Express** apenas como material didático, para que o aluno entenda a lógica com clareza, e proíbe explicitamente a entrega nessa linguagem.
 
-A pasta [`agencia-express/`](agencia-express/) contém essa implementação de referência, que reproduzi primeiro para validar os conceitos antes de partir para a entrega. **Ela não faz parte da entrega**: serviu como laboratório de estudo e está mantida no repositório apenas como registro do processo.
+A pasta [`agencia-express/`](agencia-express/) contém essa implementação de referência, que reproduzi primeiro para validar os conceitos antes de partir para a entrega. Ela acompanha o roteiro até o Sprint 2, com relógio vetorial e mensageria pelo RabbitMQ, mas não inclui as funcionalidades adicionais, que são autorais. **Ela não faz parte da entrega**: serviu como laboratório de estudo e está mantida no repositório apenas como registro do processo.
 
 A entrega avaliável é a pasta [`agencia/`](agencia/), escrita em Python com Flask, junto do frontend em [`frontend/`](frontend/).
 
@@ -245,7 +280,7 @@ O ICEIBank roda em **4 terminais simultâneos**: um para cada uma das três agê
 ### Pré-requisitos
 
 - **Python 3.10+** (o projeto foi desenvolvido com o 3.14)
-- **Node.js 22+** e npm, para o frontend
+- **Node.js 22.18+ ou 24.12+** e npm, para o frontend
 - **Git**
 
 ### 📦 Passo 1: clonar e preparar o backend
@@ -376,21 +411,9 @@ cd iceibank\agencia
 $env:AGENCIA_ID=2; .\.venv\Scripts\python src\app.py
 ```
 
-Cada terminal deve imprimir a agência e a porta em que está ouvindo, por exemplo `[Agência 0] ouvindo na porta 4035`. Deixe os três abertos: eles precisam ficar rodando ao mesmo tempo para que as transferências entre agências funcionem.
+Cada terminal deve imprimir a agência e a porta em que está ouvindo, por exemplo `[Agência 0] ouvindo na porta 4035`, e logo depois a confirmação de que o consumidor da fila está ativo, `[mensageria] consumindo fila-agencia-0 ...`. Deixe os três abertos: eles precisam ficar rodando ao mesmo tempo para que as transferências entre agências e o extrato consolidado funcionem.
 
 > No Windows, o Firewall do Windows Defender pode pedir permissão de rede na primeira execução de cada agência. Clique em **Permitir acesso**.
-
-Se preferir não abrir três terminais, existe um script auxiliar que sobe as três de uma vez, com a saída de cada uma identificada por cor:
-
-```bash
-# macOS e Linux
-./.venv/bin/python iniciar.py
-```
-
-```powershell
-# Windows (PowerShell)
-.\.venv\Scripts\python iniciar.py
-```
 
 ### 💻 Passo 3: subir o frontend
 
@@ -477,18 +500,24 @@ cd iceibank\agencia
 
 Todas as rotas, exceto o login, exigem o cabeçalho `Authorization: Bearer <token>`.
 
-| Método | Rota                           | Proteção         | Descrição                                         |
-| :----: | ------------------------------ | ---------------- | ------------------------------------------------- |
-| `POST` | `/auth/login`                  | pública          | Autentica e devolve o token JWT                   |
-| `POST` | `/usuarios`                    | gerente          | Cadastra um novo correntista                      |
-| `POST` | `/contas`                      | gerente          | Abre uma conta na agência responsável pelo número |
-| `GET`  | `/contas/<id>`                 | dono ou gerente  | Consulta o saldo de uma conta                     |
-| `POST` | `/contas/<id>/depositar`       | dono ou gerente  | Credita um valor                                  |
-| `POST` | `/contas/<id>/sacar`           | dono ou gerente  | Debita um valor                                   |
-| `POST` | `/transferencias`              | dono ou gerente  | Transfere, resolvendo local ou entre agências     |
-| `GET`  | `/extrato`                     | autenticado      | ⭐ Extrato consolidado das três agências          |
-| `POST` | `/contas/<id>/creditar-remoto` | token de serviço | Rota interna: crédito vindo de outra agência      |
-| `GET`  | `/interno/contas/<usuario>`    | token de serviço | Rota interna: contas de um usuário nesta agência  |
+| Método | Rota                        | Proteção         | Descrição                                         |
+| :----: | --------------------------- | ---------------- | ------------------------------------------------- |
+| `POST` | `/auth/login`               | pública          | Autentica e devolve o token JWT                   |
+| `POST` | `/usuarios`                 | gerente          | Cadastra um novo correntista                      |
+| `POST` | `/contas`                   | gerente          | Abre uma conta na agência responsável pelo número |
+| `GET`  | `/contas/<id>`              | dono ou gerente  | Consulta o saldo de uma conta                     |
+| `POST` | `/contas/<id>/depositar`    | dono ou gerente  | Credita um valor                                  |
+| `POST` | `/contas/<id>/sacar`        | dono ou gerente  | Debita um valor                                   |
+| `POST` | `/transferencias`           | dono ou gerente  | Transfere, resolvendo local ou entre agências     |
+| `GET`  | `/extrato`                  | autenticado      | ⭐ Extrato consolidado das três agências          |
+| `GET`  | `/interno/contas/<usuario>` | token de serviço | Rota interna: contas de um usuário nesta agência  |
+
+O crédito entre agências não passa por uma rota HTTP: ele trafega pelo RabbitMQ, na exchange `topic` `iceibank.eventos`, e cada agência consome a própria fila durável, `fila-agencia-<id>`.
+
+| Routing key                | Publicada por      | Conteúdo                                                    |
+| -------------------------- | ------------------ | ----------------------------------------------------------- |
+| `agencia.<id>.creditar`    | agência de origem  | Crédito a aplicar na conta de destino, com o vetor de envio |
+| `agencia.<id>.confirmacao` | agência de destino | ⭐ Desfecho do crédito, que dispara o estorno quando falha  |
 
 ---
 
@@ -516,21 +545,26 @@ iceibank/
 │   │   └── middlewares/
 │   │       └── auth_middleware.py    # requer_autenticacao, requer_admin, requer_servico
 │   ├── data/                         # Logs de eventos e usuários (não versionados)
-│   ├── mesclar_logs.py               # Linha do tempo unificada das 3 agências
-│   ├── iniciar.py                    # Sobe as 3 agências de uma vez
+│   ├── .env.example                  # JWT_SECRET_KEY e RABBITMQ_URL
+│   ├── mesclar_logs.py               # Linha do tempo causal das 3 agências
 │   └── requirements.txt
 │
 ├── frontend/                         # ✅ Entrega: interface web em Vue
 │   ├── src/
-│   │   ├── app/                      # Inicialização, rotas e guards
-│   │   ├── modules/                  # auth, accounts, transfers, home, schemas
+│   │   ├── app/                      # Inicialização, rotas, guards e SEO
+│   │   ├── modules/                  # landing, auth, home, accounts, transfers, brand, schemas
 │   │   ├── shared/                   # Componentes, stores, serviços e layout
 │   │   └── style.css                 # Design system com tokens de cor
+│   ├── public/                       # Favicon, ícones, imagem de compartilhamento e manifesto
+│   ├── vite-plugins/seo.ts           # Gera o HTML de cada rota, robots.txt e sitemap.xml
+│   ├── .env.example                  # URLs das agências e SITE_URL
 │   └── package.json
 │
 ├── agencia-express/                  # 📖 Referência em Node.js do roteiro (não entregue)
-├── evidencias/sprint1/               # Prints de todos os testes realizados
-├── enunciado/                        # Roteiro da sprint
+├── evidencias/
+│   ├── sprint1/                      # Prints dos testes do Sprint 1
+│   └── sprint2/                      # Prints dos testes do Sprint 2
+├── enunciado/                        # Roteiros das sprints 1, 2 e 3
 ├── RESPOSTAS.md                      # Respostas conceituais e decisões de design
 └── README.md
 ```
@@ -541,23 +575,25 @@ iceibank/
 
 Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/) e [`evidencias/sprint2/`](evidencias/sprint2/), com a data visível no terminal para comprovar a execução.
 
-**Backend e conceitos distribuídos**
+**Sprint 1: backend e conceitos distribuídos**
 
-| Evidência                                                                                 | O que demonstra                                                |
-| ----------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`transferencia-local.png`](evidencias/sprint1/transferencia-local.png)                   | Transferência dentro da mesma agência                          |
-| [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto             |
-| [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png)                           | Agência de destino fora do ar: HTTP 502 e débito não revertido |
-| [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png)                             | Eventos das 3 agências ordenados por relógio de Lamport        |
+Os prints do Sprint 1 registram o comportamento da época, com relógio de Lamport e chamada HTTP direta entre agências. O Sprint 2 substituiu os dois, como mostram as evidências da tabela seguinte.
+
+| Evidência                                                                                 | O que demonstra                                               |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| [`transferencia-local.png`](evidencias/sprint1/transferencia-local.png)                   | Transferência dentro da mesma agência                         |
+| [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto            |
+| [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png)                           | Sprint 1: destino fora do ar, HTTP 502 e débito não revertido |
+| [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png)                             | Eventos das 3 agências ordenados por relógio de Lamport       |
 
 **Sprint 2: mensageria e relógio vetorial**
 
-| Evidência                                                                              | O que demonstra                                                              |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png)      | Transferência entre agências concluída pela fila do RabbitMQ                 |
-| [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                      | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
-| [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)            | Pares de eventos concorrentes identificados pelo relógio vetorial            |
-| [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png)      | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
+| Evidência                                                                         | O que demonstra                                                               |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png) | Transferência entre agências concluída pela fila do RabbitMQ                  |
+| [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                 | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
+| [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)       | Pares de eventos concorrentes identificados pelo relógio vetorial             |
+| [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png) | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
 
 **Autenticação (Parte F)**
 
@@ -584,7 +620,7 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 | [`frontend-erro-entre-agencias.png`](evidencias/sprint1/frontend-erro-entre-agencias.png) | Falha de transferência entre agências na interface       |
 | [`frontend-sessao-expirada.png`](evidencias/sprint1/frontend-sessao-expirada.png)         | Token expirado encerrando a sessão e devolvendo ao login |
 
-**Funcionalidade adicional**
+**Funcionalidade adicional do Sprint 1**
 
 | Evidência                                                                         | O que demonstra                                                                                            |
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -595,6 +631,9 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 ## 📖 Referências
 
 - LAMPORT, Leslie. _Time, Clocks, and the Ordering of Events in a Distributed System._ Communications of the ACM, v. 21, n. 7, 1978.
+- FIDGE, Colin J. _Timestamps in Message-Passing Systems That Preserve the Partial Ordering._ Proceedings of the 11th Australian Computer Science Conference, 1988.
+- MATTERN, Friedemann. _Virtual Time and Global States of Distributed Systems._ Parallel and Distributed Algorithms, North-Holland, 1989.
+- GARCIA-MOLINA, Hector; SALEM, Kenneth. _Sagas._ Proceedings of the ACM SIGMOD International Conference on Management of Data, 1987.
 - COULOURIS, George et al. _Distributed Systems: Concepts and Design._ 5th ed. Addison-Wesley, 2011.
 - TANENBAUM, A. S.; VAN STEEN, M. _Sistemas Distribuídos: Princípios e Paradigmas._ Tradução da 2ª edição. Pearson, 2007.
 - MARTIN, Robert C. _Arquitetura Limpa: o guia do artesão para estrutura e design de software._ Alta Books, 2019.
@@ -602,6 +641,7 @@ Todos os testes foram executados e registrados em [`evidencias/sprint1/`](eviden
 - Flask. Documentação oficial. Disponível em: <https://flask.palletsprojects.com/>
 - Vue.js. Documentação oficial. Disponível em: <https://vuejs.org/>
 - PyJWT. Documentação oficial. Disponível em: <https://pyjwt.readthedocs.io/>
+- RabbitMQ. Documentação oficial. Disponível em: <https://www.rabbitmq.com/docs>
 
 ---
 
@@ -616,7 +656,7 @@ Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-
 - **Engenharia de prompt.** Cada solicitação partiu de um contexto construído por mim: o enunciado da sprint, o padrão de arquitetura que eu queria seguir, as restrições do projeto e o comportamento esperado. Não descrevi problemas de forma vaga esperando uma solução pronta.
 - **Direção das decisões de projeto.** As escolhas estruturais foram minhas, e várias contrariaram a primeira sugestão da ferramenta. Defini o modelo de credenciais e de papéis, o formato do armazenamento do token, a decisão de não repassar o token de sessão entre agências, o desenho da funcionalidade adicional e a identidade visual do frontend. Em mais de um momento revertí alterações que extrapolavam o escopo do roteiro, para manter a fidelidade ao que foi pedido.
 - **Revisão crítica linha a linha.** Nada entrou no repositório sem leitura e entendimento. Quando o comportamento não fez sentido, questionei e corrigi: bugs de interface, mensagens de erro imprecisas e inconsistências entre o que a tela mostrava e o que a API devolvia foram identificados por mim durante os testes.
-- **Validação por evidência.** Todo o comportamento documentado foi executado e comprovado por mim, e está registrado nos prints da pasta [`evidencias/sprint1/`](evidencias/sprint1/).
+- **Validação por evidência.** Todo o comportamento documentado foi executado e comprovado por mim, e está registrado nos prints das pastas [`evidencias/sprint1/`](evidencias/sprint1/) e [`evidencias/sprint2/`](evidencias/sprint2/).
 
 **O que continua sendo meu.** A compreensão do problema, as decisões de arquitetura, a validação de cada funcionalidade, a análise dos resultados observados nos logs e o conteúdo conceitual das respostas do [`RESPOSTAS.md`](RESPOSTAS.md), embasado nas referências bibliográficas listadas acima e no próprio roteiro.
 

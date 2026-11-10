@@ -9,6 +9,10 @@ interface SeoPluginOptions {
     siteUrl: string;
 }
 
+type TemplateValues = Record<string, string>;
+
+const PLACEHOLDER = /<%=\s*([\w.]+)\s*%>/g;
+
 const pages: SitePage[] = Object.values(sitePages);
 
 const homePage: SitePage = sitePages.home;
@@ -25,12 +29,34 @@ function absoluteUrl(siteUrl: string, path: string): string {
     return `${siteUrl}${path}`;
 }
 
+function interpolate(html: string, values: TemplateValues): string {
+    return html.replace(PLACEHOLDER, (placeholder, key: string) => values[key] ?? placeholder);
+}
+
+function siteValues(siteUrl: string): TemplateValues {
+    return { 'site.url': escapeAttribute(siteUrl) };
+}
+
+function pageValues(page: SitePage, siteUrl: string): TemplateValues {
+    return {
+        'page.title': escapeAttribute(formatTitle(page.title)),
+        'page.description': escapeAttribute(page.description),
+        'page.robots': robotsDirective(page.indexable),
+        'page.url': escapeAttribute(absoluteUrl(siteUrl, page.path)),
+    };
+}
+
 function renderPage(html: string, page: SitePage, siteUrl: string): string {
-    return html
-        .replaceAll('__SEO_TITLE__', escapeAttribute(formatTitle(page.title)))
-        .replaceAll('__SEO_DESCRIPTION__', escapeAttribute(page.description))
-        .replaceAll('__SEO_ROBOTS__', robotsDirective(page.indexable))
-        .replaceAll('__SEO_URL__', escapeAttribute(absoluteUrl(siteUrl, page.path)));
+    const rendered = interpolate(html, pageValues(page, siteUrl));
+    const leftover = rendered.match(PLACEHOLDER);
+
+    if (leftover) {
+        throw new Error(
+            `[iceibank:seo] Marcadores sem valor no index.html: ${leftover.join(', ')}`
+        );
+    }
+
+    return rendered;
 }
 
 function pageForUrl(url: string | undefined): SitePage {
@@ -75,7 +101,7 @@ export function seo(options: SeoPluginOptions): Plugin {
         transformIndexHtml: {
             order: 'pre',
             handler(html, context) {
-                const withSiteUrl = html.replaceAll('__SITE_URL__', siteUrl);
+                const withSiteUrl = interpolate(html, siteValues(siteUrl));
                 return isBuild
                     ? withSiteUrl
                     : renderPage(withSiteUrl, pageForUrl(context.originalUrl), siteUrl);

@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import LoginMascot from '@/modules/auth/components/LoginMascot/index.vue';
+import LoginMascot from '@/shared/components/LoginMascot/index.vue';
 import { loginSchema, type LoginDraft, type LoginValues } from '@/modules/schemas/login.schema';
 import AppLogo from '@/shared/components/AppLogo/index.vue';
 import BaseInput from '@/shared/components/BaseInput/index.vue';

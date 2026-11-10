@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import mascotFullBody from '@/assets/mascot/mascot-full-body.webp';
 import mascotHead from '@/assets/mascot/mascot-head.webp';
-import LoginMascot from '@/modules/auth/components/LoginMascot/index.vue';
+import LoginMascot from '@/shared/components/LoginMascot/index.vue';
 import BrandSection from '@/modules/brand/components/BrandSection/index.vue';
 
 defineOptions({ name: 'MascotSection' });
