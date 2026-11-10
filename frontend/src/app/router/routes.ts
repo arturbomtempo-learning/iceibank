@@ -9,6 +9,11 @@ export const routes: RouteRecordRaw[] = [
         component: () => import('@/modules/landing/pages/LandingPage.vue'),
     },
     {
+        path: '/identidade-visual',
+        name: 'brand',
+        component: () => import('@/modules/brand/pages/BrandPage.vue'),
+    },
+    {
         path: '/login',
         name: 'login',
         component: () => import('@/modules/auth/pages/LoginPage.vue'),

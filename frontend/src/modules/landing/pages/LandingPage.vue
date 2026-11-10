@@ -775,6 +775,11 @@ onBeforeUnmount(() => {
                             <li v-for="link in navLinks" :key="link.href">
                                 <a :href="link.href" class="link-nav text-sm">{{ link.label }}</a>
                             </li>
+                            <li>
+                                <RouterLink :to="{ name: 'brand' }" class="link-nav text-sm">
+                                    Identidade visual
+                                </RouterLink>
+                            </li>
                         </ul>
                     </div>
 
