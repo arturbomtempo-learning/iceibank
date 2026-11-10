@@ -264,11 +264,11 @@ Esse é justamente o cenário que o relógio de Lamport não conseguia distingui
 
 Dos 57 pares entre agências diferentes daquele log, 22 saíram como concorrentes e 35 como causalmente ordenados. A distribuição por dupla de agências é o que mais confirma a regra:
 
-| Dupla | Pares | Concorrentes | Causais |
-| :--- | :---: | :---: | :---: |
-| Agência 0 e Agência 1 | 24 | 2 | 22 |
-| Agência 0 e Agência 2 | 24 | 14 | 10 |
-| Agência 1 e Agência 2 | 9 | 6 | 3 |
+| Dupla                 | Pares | Concorrentes | Causais |
+| :-------------------- | :---: | :----------: | :-----: |
+| Agência 0 e Agência 1 |  24   |      2       |   22    |
+| Agência 0 e Agência 2 |  24   |      14      |   10    |
+| Agência 1 e Agência 2 |   9   |      6       |    3    |
 
 As Agências 0 e 1 são as que mais trocaram mensagens, com duas transferências e as respectivas confirmações, e quase tudo entre elas aparece como causal. A Agência 2 entrou tarde na conversa, com uma única transferência recebida, e por isso mantém mais pares concorrentes.
 
@@ -387,3 +387,70 @@ A melhoria que realmente resolve é parar de enumerar todos os pares, e para iss
 Além disso, há três ganhos estruturais que valem em qualquer escala. O processamento pode ser incremental, comparando cada evento novo apenas contra a fronteira atual de cada agência conforme ele chega, em vez de reprocessar o histórico inteiro a cada execução. Pode ser recortado por janela de tempo de parede, já que eventos separados por horas raramente interessam, lembrando que isso é uma heurística e não uma garantia. E pode ser paralelizado sem dificuldade, porque cada par é independente dos demais, o que permite dividir o trabalho entre núcleos ou máquinas.
 
 No tamanho deste projeto a discussão é puramente conceitual: os logs reais têm uma dezena de eventos e o script roda instantaneamente. Ele é uma ferramenta didática para enxergar a causalidade, não um pipeline de observabilidade. É justamente por isso que sistemas de rastreamento reais, como Jaeger e Zipkin, não fazem comparação de todos contra todos: eles registram a relação de pai e filho explicitamente em cada span, no momento em que ela acontece, e reconstroem a árvore causal lendo essas referências, sem nunca precisar comparar pares.
+
+# Sprint 3
+
+## Parte A - Mensagens de eleição e coordenador
+
+### Questão 1
+
+O Bully elege o maior id porque o algoritmo precisa de um critério que **todos os processos calculem sozinhos e cheguem ao mesmo resultado**, sem negociar. Qualquer ordem total sobre os identificadores serve para isso. A escolha do maior é uma convenção do artigo original de Garcia-Molina, de 1982, e é ela que dá nome ao algoritmo: o processo de id mais alto "intimida" os menores, que se calam ao receber a resposta dele.
+
+O que garante a correção não é o sentido da comparação, e sim duas propriedades que valem nos dois sentidos. A primeira é a **unicidade**: os ids são distintos, então existe exatamente um maior e exatamente um menor entre os ativos, e nunca há empate a desfazer. A segunda é a **concordância**: como a regra é determinística e conhecida por todos, qualquer agência que avalie o mesmo conjunto de agências ativas chega à mesma líder.
+
+Se a regra fosse invertida, o resultado seria **diferente, mas ainda correto**. Bastaria espelhar o algoritmo: a mensagem de eleição iria para as agências de id menor, e venceria a de menor id entre as ativas. Neste projeto, com as três no ar, a líder passaria a ser a Agência 0 em vez da Agência 2. Unicidade e concordância continuariam valendo, então a troca muda **quem** lidera, não **se** o sistema converge.
+
+A diferença aparece na dinâmica, e a execução real deixa isso visível. Na subida registrada em `evidencias/sprint3/eleicao-inicial.png`, as agências foram iniciadas em sequência, com cerca de 13 segundos entre uma e outra, na ordem 0, 1 e 2. Com a regra do maior id, a liderança mudou de mão duas vezes durante a subida: a Agência 0 se declarou líder às 16:51:29, a Agência 1 tomou o posto às 16:51:42 e a Agência 2 às 16:51:56. Com a regra invertida e essa mesma ordem de subida, a Agência 0 venceria logo de início e **nunca mais perderia o posto**, porque toda agência que chegasse depois teria id maior e encontraria a 0 respondendo. A regra do maior favorece quem tem prioridade mais alta, mesmo que chegue depois. A do menor favorece estabilidade quando os processos sobem em ordem crescente.
+
+Nas três agências do ICEIBank essa escolha é arbitrária, porque elas rodam o mesmo código e nenhuma é mais capaz que a outra. Em sistemas reais o id costuma carregar significado, como a versão mais recente dos dados ou a máquina mais potente, e aí faz diferença qual extremo vence. Com apenas as agências 0 e 1 no ar, por exemplo, a líder observada foi a 1. Quando a 2 subiu, ela assumiu a liderança na hora, que é exatamente o comportamento de "valentão" previsto pelo nome.
+
+### Questão 2
+
+É **comportamento esperado do algoritmo**, não um bug. Duas execuções reais mostram isso de ângulos diferentes.
+
+A primeira é a subida em sequência, registrada no print da evidência. As **três** agências declararam `TORNOU_LIDER`, cada uma em um momento:
+
+```
+16:51:29.984  agencia-0  ELEICAO_INICIADA  [1, 0, 0]
+16:51:29.992  agencia-0  TORNOU_LIDER      [4, 0, 0]
+16:51:42.440  agencia-1  ELEICAO_INICIADA  [0, 1, 0]
+16:51:42.446  agencia-1  TORNOU_LIDER      [0, 3, 0]
+16:51:42.447  agencia-0  LIDER_ANUNCIADO   [7, 4, 0]  liderId: 1
+16:51:56.416  agencia-2  ELEICAO_INICIADA  [0, 0, 1]
+16:51:56.416  agencia-2  TORNOU_LIDER      [0, 0, 2]
+16:51:56.425  agencia-0  LIDER_ANUNCIADO   [8, 4, 3]  liderId: 2
+16:51:56.434  agencia-1  LIDER_ANUNCIADO   [0, 6, 4]  liderId: 2
+```
+
+Cada declaração estava **certa no momento em que foi feita**. Quando a Agência 0 se declarou líder, as agências 1 e 2 ainda não existiam, e ela era de fato o maior id ativo. O intervalo de apenas 8 milissegundos entre o `ELEICAO_INICIADA` e o `TORNOU_LIDER` confirma isso: as conexões com as agências 1 e 2 foram recusadas na hora, porque nenhum processo ouvia naquelas portas, e o timeout de 1 segundo nem chegou a ser usado. O mesmo vale para a Agência 1 treze segundos depois. Os vetores mostram ainda um detalhe. A Agência 2 se declarou líder com `[0, 0, 2]`, sem ter recebido nenhuma mensagem de ninguém, porque o maior id não precisa perguntar nada a ninguém: ele não tem a quem enviar a eleição e vence direto.
+
+A segunda execução é a subida simultânea, com as três agências iniciadas no mesmo instante. Aqui aparece a "tempestade" descrita no roteiro: a **Agência 2 declarou `TORNOU_LIDER` três vezes**, com os vetores `[0, 0, 2]`, `[0, 2, 6]` e `[4, 2, 11]`, e cada uma das agências 0 e 1 recebeu três anúncios de coordenador. A causa está no passo 4 do algoritmo, implementado em `receber_eleicao`. Toda vez que uma agência recebe uma eleição de alguém menor, ela responde e inicia a própria eleição. A Agência 2 recebeu duas eleições, uma da 1 e outra da 0, e somou a própria eleição de subida. Como não há ninguém acima dela, cada uma dessas três eleições terminou imediatamente em `TORNOU_LIDER` e em um novo anúncio para as outras.
+
+As repetições são inofensivas porque o anúncio de coordenador é **idempotente**. Receber `liderId: 2` pela segunda ou terceira vez só grava o mesmo valor de novo em `_lider_atual`, sem mudar nada. O que o algoritmo garante não é uma única mensagem por eleição, e sim que todas as agências terminem concordando com o maior id ativo. Foi o que aconteceu nas duas execuções: consultadas pela rota `/bully/lider`, as três responderam `liderAtual: 2`.
+
+O preço da tempestade é tráfego, não correção. O Bully é conhecido justamente por trocar muitas mensagens quando vários processos detectam a falta de líder ao mesmo tempo, algo da ordem do quadrado do número de processos no pior caso. Com três agências isso significa alguns POSTs a mais durante a subida, sem efeito prático.
+
+### Questão 3
+
+Hoje, neste projeto, **o risco é real mas limitado**. A vulnerabilidade existe e foi reproduzida, mas duas condições do ambiente atual impedem que ela cause dano de verdade. Ela passa a ser grave no Sprint 4, e por isso vale corrigir antes disso.
+
+A vulnerabilidade foi testada com as três agências rodando e a líder já eleita. Um processo qualquer enviou à Agência 0 um anúncio forjado, `POST /bully/coordenador` com `{"liderId": 0, "vetorEnvio": [0, 0, 0]}`, e a agência aceitou com HTTP 200. O resultado foi uma **divergência entre as agências**:
+
+```
+{"idAgencia":0,"liderAtual":0}
+{"idAgencia":1,"liderAtual":2}
+{"idAgencia":2,"liderAtual":2}
+```
+
+A Agência 0 passou a acreditar que ela mesma era a líder, enquanto as outras duas continuavam reconhecendo a 2. O vetor forjado também foi aceito sem questionamento e entrou no log como `LIDER_ANUNCIADO [7, 2, 13]`. A validação que existe hoje só confere o formato: se `liderId` é o id de uma agência e se o vetor tem três posições não negativas. Ela não tem como saber se a mensagem veio de quem diz ter vindo.
+
+A rota citada na pergunta, `/bully/eleicao`, é a menos perigosa das duas. O mesmo teste enviou à Agência 1 uma eleição forjada, em nome da Agência 0, e o efeito foi apenas uma **eleição extra**: a Agência 1 iniciou a própria eleição, a 2 respondeu, venceu de novo e reanunciou o resultado a todas. A líder continuou sendo a 2. Por coincidência, esse reanúncio até desfez a mentira anterior na Agência 0, que voltou a reportar `liderAtual: 2`. Uma eleição falsa não muda o vencedor, porque o resultado depende de quem está vivo, não de quem pediu a eleição. O dano possível é de disponibilidade: cada requisição forjada gera uma cascata de mensagens entre as agências, então uma enxurrada delas manteria o sistema em eleição permanente. A rota perigosa de fato é `/bully/coordenador`, porque ela permite **escolher** a líder.
+
+Duas condições do ambiente limitam o risco hoje:
+
+1. **As agências só aceitam conexões da própria máquina.** O servidor é criado com `make_server("127.0.0.1", ...)`, e o `lsof` confirmou as três portas ouvindo apenas em `127.0.0.1:4035`, `127.0.0.1:4036` e `127.0.0.1:4037`. Nenhum processo de outra máquina da rede consegue sequer abrir a conexão. Para forjar uma mensagem, o atacante já precisa estar executando código no mesmo computador, e nesse ponto ele teria formas mais diretas de causar dano.
+2. **A líder ainda é só informativa.** Nenhuma operação bancária consulta `_lider_atual` neste sprint. Uma líder forjada altera o que a rota `/bully/lider` responde e o que o app vai exibir, mas não move dinheiro nem bloqueia nenhuma transferência.
+
+As duas condições acabam no Sprint 4. Lá, a líder vai coordenar as transações distribuídas com 2PC, e um anúncio forjado passaria a decidir quem conduz o commit ou o abort de transferências reais. Bastaria o sistema ser exposto na rede, por exemplo ouvindo em `0.0.0.0` para ser acessado por outra máquina, para qualquer um na mesma rede conseguir fazer isso. Há ainda um efeito colateral sobre o relógio. Como o `ao_receber` faz `max` posição a posição, um `vetorEnvio` forjado com valores enormes elevaria permanentemente os contadores da agência que o recebe, e passaria a distorcer a análise causal de todos os eventos seguintes no `mesclar_logs.py`.
+
+A correção não exige nada novo, porque o projeto já tem a peça certa. As chamadas internas do extrato consolidado usam um **token de serviço** de curta duração, assinado com a chave JWT compartilhada e validado pelo `requer_servico`. Aplicar a mesma proteção a `/bully/eleicao` e `/bully/coordenador` resolveria a falsificação. Faltaria ainda uma checagem: o `sub` do token, como `agencia-2`, deve coincidir com o `liderId` anunciado, para que nenhuma agência consiga anunciar outra como líder. A rota `/bully/lider` pode continuar sem autenticação, porque é só leitura e o app mobile precisa consultá-la. Nesta parte a proteção foi mantida de fora de propósito, porque o roteiro define as rotas sem autenticação e a pergunta pede justamente essa análise.
