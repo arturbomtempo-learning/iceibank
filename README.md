@@ -289,7 +289,46 @@ python3 -c "import secrets; print(secrets.token_hex(32))"
 
 Cole o resultado no campo `JWT_SECRET_KEY` do `.env`.
 
-O `.env` guarda também a `RABBITMQ_URL`, a URL AMQP da instância do RabbitMQ usada na mensageria entre as agências. Ela precisa ser a mesma nas três, e **sem ela a agência não inicia**. Em uma instância do CloudAMQP, essa URL aparece no painel no formato `amqps://usuario:senha@host.cloudamqp.com/vhost`.
+**Configurar o RabbitMQ no CloudAMQP.** O `.env` guarda também a `RABBITMQ_URL`, a URL AMQP da instância do RabbitMQ usada na mensageria entre as agências. Ela precisa ser a **mesma nas três agências**, e **sem ela a agência não inicia**: o processo para logo na subida com `RuntimeError: Defina a variável de ambiente RABBITMQ_URL...`.
+
+O projeto usa o **CloudAMQP**, um RabbitMQ gerenciado na nuvem com plano gratuito. Para criar a sua instância:
+
+1. Acesse <https://www.cloudamqp.com/> e crie uma conta gratuita (dá para entrar com Google ou GitHub).
+2. Clique em **Create New Instance**.
+3. Escolha o plano **Little Lemur - Free**, dê um nome à instância (por exemplo, `iceibank`) e selecione uma região próxima.
+4. Abra os detalhes da instância criada e copie o campo **AMQP URL**, que tem este formato:
+
+```text
+amqps://usuario:senha@host.cloudamqp.com/vhost
+```
+
+Essa URL já inclui usuário, senha e vhost, e é tudo o que a aplicação precisa para se conectar. Agora escolha **uma** das duas formas de entregá-la às agências.
+
+**Opção 1, no `.env` (recomendada).** Abra `agencia/.env` e preencha a linha da `RABBITMQ_URL` com a URL copiada:
+
+```env
+RABBITMQ_URL="amqps://usuario:senha@host.cloudamqp.com/vhost"
+```
+
+Como as três agências leem o mesmo `.env`, basta fazer isso uma vez. O arquivo não é versionado, então a senha da instância não vai para o repositório.
+
+**Opção 2, no terminal.** Defina a variável na sessão antes de rodar a agência:
+
+```bash
+# macOS e Linux
+export RABBITMQ_URL="amqps://usuario:senha@host.cloudamqp.com/vhost"
+```
+
+```powershell
+# Windows (PowerShell)
+$env:RABBITMQ_URL="amqps://usuario:senha@host.cloudamqp.com/vhost"
+```
+
+Nesse caso, a variável vale só para aquele terminal: ela precisa ser definida em **cada um dos três terminais** do Passo 2, e de novo sempre que você abrir um terminal novo. Se ela estiver definida no terminal e também no `.env`, o valor do terminal prevalece.
+
+Para ver exchanges, filas e mensagens enquanto depura, use o botão **RabbitMQ Manager** no painel do CloudAMQP.
+
+> Prefere rodar o RabbitMQ localmente? Com Docker, suba `docker run -d --name rabbitmq-iceibank -p 5672:5672 -p 15672:15672 rabbitmq:3-management` e use `RABBITMQ_URL="amqp://guest:guest@localhost:5672/"`. A aplicação funciona igual, só muda o valor da variável.
 
 ### 🏦 Passo 2: subir as três agências
 
@@ -424,6 +463,7 @@ cd iceibank\agencia
 | Sintoma                                                       | Causa provável                                     | Solução                                                                              |
 | ------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | A agência não sobe e reclama de `JWT_SECRET_KEY`              | O arquivo `.env` não foi criado                    | Copie o `.env.example` para `.env` na pasta `agencia`                                |
+| A agência não sobe e reclama de `RABBITMQ_URL`                | A variável não está no `.env` nem no terminal      | Preencha a `RABBITMQ_URL` no `agencia/.env` com a AMQP URL do CloudAMQP              |
 | `Address already in use` ao subir uma agência                 | A porta já está ocupada por uma execução anterior  | Encerre o processo antigo ou reinicie o terminal                                     |
 | Todas as telas mostram "não foi possível falar com a agência" | Alguma agência não está rodando                    | Confirme que os três terminais estão ativos                                          |
 | As contas sumiram depois de reiniciar                         | Comportamento esperado: as contas ficam em memória | Recrie as contas entrando como `admin`                                               |
