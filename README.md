@@ -19,7 +19,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático. Ainda faltam o histórico de lideranças, a sincronização offline-first e o app mobile em Flutter.
+Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. Ainda faltam a sincronização offline-first e o app mobile em Flutter.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -485,6 +485,20 @@ cd iceibank\agencia
 .\.venv\Scripts\python mesclar_logs.py
 ```
 
+Para ver só a parte da eleição de líder, o script `historico_lideranca.py` filtra dos mesmos logs os eventos do algoritmo de Bully e termina com a linha do tempo de líderes, mostrando a partir de que momento cada agência assumiu a liderança:
+
+```bash
+# macOS e Linux
+cd iceibank/agencia
+./.venv/bin/python historico_lideranca.py
+```
+
+```powershell
+# Windows (PowerShell)
+cd iceibank\agencia
+.\.venv\Scripts\python historico_lideranca.py
+```
+
 ### 🧯 Problemas comuns
 
 | Sintoma                                                       | Causa provável                                     | Solução                                                                              |
@@ -554,6 +568,7 @@ iceibank/
 │   ├── data/                         # Logs de eventos e usuários (não versionados)
 │   ├── .env.example                  # JWT_SECRET_KEY e RABBITMQ_URL
 │   ├── mesclar_logs.py               # Linha do tempo causal das 3 agências
+│   ├── historico_lideranca.py        # Histórico de eleições e de líderes das 3 agências
 │   └── requirements.txt
 │
 ├── frontend/                         # ✅ Entrega: interface web em Vue
