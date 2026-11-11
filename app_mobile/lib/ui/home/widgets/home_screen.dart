@@ -90,7 +90,7 @@ class _WelcomeCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: context.resolve(AppColors.ink),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(AppRadius.card),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +99,7 @@ class _WelcomeCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               session.role.label,
@@ -109,12 +109,14 @@ class _WelcomeCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.lg),
           Text(
             'Olá, ${session.username}',
-            style: AppTypography.largeTitle.copyWith(color: AppColors.white),
+            style: AppTypography.title1.copyWith(color: AppColors.white),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Sessão ativa até ${_formatTime(session.expiresAt)}.',
-            style: AppTypography.callout.copyWith(color: context.resolve(AppColors.inkMuted)),
+            style: AppTypography.subheadline.copyWith(
+              color: context.resolve(AppColors.inkSecondary),
+            ),
           ),
         ],
       ),

@@ -27,7 +27,7 @@ class AppLogo extends StatelessWidget {
     }
 
     final isOnInk = variant == AppLogoVariant.onInk;
-    final textStyle = AppTypography.display(markSize * 0.62)
+    final textStyle = AppTypography.brand(markSize * 0.62)
         .copyWith(color: isOnInk ? AppColors.white : context.resolve(AppColors.text));
 
     return Semantics(
@@ -73,7 +73,7 @@ class _LogoMarkPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [AppColors.brand400, AppColors.brand600, AppColors.brand800],
+        colors: [AppColors.brandLight, AppColors.brand, AppColors.brandDark],
         stops: [0, 0.55, 1],
       ).createShader(square);
     canvas.drawRRect(RRect.fromRectAndRadius(square, const Radius.circular(12)), background);

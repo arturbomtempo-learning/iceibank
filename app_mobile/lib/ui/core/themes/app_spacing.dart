@@ -5,14 +5,18 @@ abstract final class AppSpacing {
   static const double lg = 16;
   static const double xl = 24;
   static const double xxl = 32;
+  static const double xxxl = 48;
   static const double screen = 20;
 }
 
 abstract final class AppRadius {
-  static const double xs = 8;
-  static const double base = 12;
-  static const double md = 14;
-  static const double card = 18;
-  static const double lg = 20;
-  static const double xl = 24;
+  static const double sm = 10;
+  static const double control = 14;
+  static const double card = 20;
+  static const double pill = 999;
+}
+
+abstract final class AppSizes {
+  static const double control = 52;
+  static const double minTapTarget = 44;
 }

@@ -24,9 +24,6 @@ dev_dependencies:
 flutter:
     uses-material-design: false
 
-    assets:
-        - assets/images/
-
     fonts:
         - family: PlusJakartaSans
           fonts:
