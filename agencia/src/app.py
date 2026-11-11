@@ -72,6 +72,7 @@ if __name__ == "__main__":
     print(f"[Agência {id_agencia}] ouvindo na porta {porta}", flush=True)
 
     app.config["BULLY"].iniciar_eleicao_em_segundo_plano()
+    app.config["BULLY"].iniciar_heartbeat()
 
     try:
         servidor.serve_forever()

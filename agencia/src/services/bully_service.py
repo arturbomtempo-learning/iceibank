@@ -1,10 +1,12 @@
 import threading
+import time
 
 import requests
 
 import config
 
 TIMEOUT_SEGUNDOS = 1
+INTERVALO_HEARTBEAT_SEGUNDOS = 3
 
 
 class ServicoBully:
@@ -89,3 +91,46 @@ class ServicoBully:
 
     def obter_lider_atual(self):
         return self._lider_atual
+
+    def verificar_lider(self):
+        lider = self._lider_atual
+
+        if lider is None:
+            self.iniciar_eleicao()
+            return
+        if lider == self.id_agencia:
+            return
+
+        agencia = config.agencia_por_id(lider)
+
+        try:
+            resposta = requests.get(f"{agencia['url']}/bully/lider", timeout=TIMEOUT_SEGUNDOS)
+            resposta.raise_for_status()
+        except requests.RequestException:
+            vetor = self.relogio.evento_local()
+            self.registro.registrar(
+                "LIDER_NAO_RESPONDEU", vetor, {"liderAtual": lider, "agencia": self.id_agencia}
+            )
+
+            with self._lock:
+                if self._lider_atual == lider:
+                    self._lider_atual = None
+
+            self.iniciar_eleicao()
+
+    def _executar_heartbeat(self, intervalo_segundos):
+        while True:
+            time.sleep(intervalo_segundos)
+
+            try:
+                self.verificar_lider()
+            except Exception as erro:
+                print(f"[bully] falha no heartbeat: {erro!r}", flush=True)
+
+    def iniciar_heartbeat(self, intervalo_segundos=INTERVALO_HEARTBEAT_SEGUNDOS):
+        threading.Thread(
+            target=self._executar_heartbeat,
+            args=(intervalo_segundos,),
+            name=f"heartbeat-agencia-{self.id_agencia}",
+            daemon=True,
+        ).start()
