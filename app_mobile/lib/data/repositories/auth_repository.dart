@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:iceibank/config/agency_endpoints.dart';
 import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/data/services/api_exception.dart';
 import 'package:iceibank/data/services/session_storage.dart';
@@ -29,32 +28,27 @@ class AuthRepository extends ChangeNotifier {
   }
 
   Future<Result<Session>> signIn({required String username, required String password}) async {
-    ApiException? lastNetworkFailure;
-
-    for (final agencyId in AgencyEndpoints.ids) {
-      try {
-        final data = await _apiClient.post(
+    try {
+      final data = await _apiClient.withFailover(
+        (agencyId) => _apiClient.post(
           agencyId,
           '/auth/login',
           body: {'usuario': username, 'senha': password},
           authenticated: false,
-        );
+        ),
+      );
 
-        final session = _sessionFromLogin(data);
-        if (session == null) {
-          return const Result.failure(ApiException.unexpected());
-        }
-
-        await _sessionStorage.write(session);
-        _setSession(session);
-        return Result.ok(session);
-      } on ApiException catch (error) {
-        if (!error.isNetworkFailure) return Result.failure(error);
-        lastNetworkFailure = error;
+      final session = _sessionFromLogin(data);
+      if (session == null) {
+        return const Result.failure(ApiException.unexpected());
       }
-    }
 
-    return Result.failure(lastNetworkFailure ?? const ApiException.unreachable());
+      await _sessionStorage.write(session);
+      _setSession(session);
+      return Result.ok(session);
+    } on ApiException catch (error) {
+      return Result.failure(error);
+    }
   }
 
   Future<void> signOut() async {

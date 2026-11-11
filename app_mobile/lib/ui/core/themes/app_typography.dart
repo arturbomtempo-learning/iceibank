@@ -14,6 +14,16 @@ abstract final class AppTypography {
     );
   }
 
+  static TextStyle amount(double size) {
+    return brand(size).copyWith(fontFeatures: const [FontFeature.tabularFigures()]);
+  }
+
+  static const TextStyle eyebrow = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.4,
+  );
+
   static final TextStyle largeTitle = brand(34);
   static final TextStyle title1 = brand(28, weight: FontWeight.w700);
   static final TextStyle title2 = brand(22, weight: FontWeight.w700);

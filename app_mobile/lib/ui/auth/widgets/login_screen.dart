@@ -8,6 +8,7 @@ import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/core/widgets/app_button.dart';
 import 'package:iceibank/ui/core/widgets/app_logo.dart';
 import 'package:iceibank/ui/core/widgets/app_notice.dart';
+import 'package:iceibank/ui/core/widgets/app_status_bar.dart';
 import 'package:iceibank/ui/core/widgets/app_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -52,10 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = CupertinoTheme.brightnessOf(context) == Brightness.dark;
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+    return AppStatusBar(
       child: CupertinoPageScaffold(
         backgroundColor: context.resolve(AppColors.surface),
         child: SafeArea(

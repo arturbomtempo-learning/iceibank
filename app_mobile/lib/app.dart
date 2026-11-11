@@ -1,17 +1,19 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/config/dependencies.dart';
 import 'package:iceibank/ui/auth/widgets/login_screen.dart';
 import 'package:iceibank/ui/core/themes/app_theme.dart';
 import 'package:iceibank/ui/home/widgets/home_screen.dart';
 
 class IceiBankApp extends StatelessWidget {
-  const IceiBankApp({super.key, required this.authRepository});
+  const IceiBankApp({super.key, required this.dependencies});
 
-  final AuthRepository authRepository;
+  final AppDependencies dependencies;
 
   @override
   Widget build(BuildContext context) {
+    final authRepository = dependencies.authRepository;
+
     return CupertinoApp(
       title: 'ICEIBank',
       theme: AppTheme.data,
@@ -24,7 +26,11 @@ class IceiBankApp extends StatelessWidget {
         builder: (context, _) => AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
           child: authRepository.isAuthenticated
-              ? HomeScreen(key: const ValueKey('home'), authRepository: authRepository)
+              ? HomeScreen(
+                  key: const ValueKey('home'),
+                  authRepository: authRepository,
+                  accountRepository: dependencies.accountRepository,
+                )
               : LoginScreen(key: const ValueKey('login'), authRepository: authRepository),
         ),
       ),

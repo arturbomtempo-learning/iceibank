@@ -20,6 +20,21 @@ class ApiClient {
   final http.Client _httpClient;
   final Duration timeout;
 
+  Future<T> withFailover<T>(Future<T> Function(int agencyId) request) async {
+    ApiException? lastNetworkFailure;
+
+    for (final agencyId in AgencyEndpoints.ids) {
+      try {
+        return await request(agencyId);
+      } on ApiException catch (error) {
+        if (!error.isNetworkFailure) rethrow;
+        lastNetworkFailure = error;
+      }
+    }
+
+    throw lastNetworkFailure ?? const ApiException.unreachable();
+  }
+
   Future<JsonMap> get(int agencyId, String path) {
     return _send('GET', agencyId, path, authenticated: true);
   }

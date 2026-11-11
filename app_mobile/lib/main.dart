@@ -7,5 +7,5 @@ Future<void> main() async {
 
   final dependencies = await AppDependencies.create();
 
-  runApp(IceiBankApp(authRepository: dependencies.authRepository));
+  runApp(IceiBankApp(dependencies: dependencies));
 }

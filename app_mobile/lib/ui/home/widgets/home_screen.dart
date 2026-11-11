@@ -1,19 +1,54 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
-import 'package:iceibank/domain/models/session.dart';
+import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/core/widgets/app_notice.dart';
+import 'package:iceibank/ui/core/widgets/app_status_bar.dart';
+import 'package:iceibank/ui/core/widgets/fade_slide_in.dart';
+import 'package:iceibank/ui/home/view_models/home_view_model.dart';
+import 'package:iceibank/ui/home/widgets/account_card_carousel.dart';
+import 'package:iceibank/ui/home/widgets/agency_distribution.dart';
+import 'package:iceibank/ui/home/widgets/balance_overview.dart';
+import 'package:iceibank/ui/home/widgets/bank_accounts_list.dart';
+import 'package:iceibank/ui/home/widgets/home_header.dart';
+import 'package:iceibank/ui/home/widgets/home_states.dart';
+import 'package:iceibank/ui/home/widgets/manager_overview.dart';
+import 'package:iceibank/ui/home/widgets/quick_actions.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.authRepository});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key, required this.authRepository, required this.accountRepository});
 
   final AuthRepository authRepository;
+  final AccountRepository accountRepository;
 
-  Future<void> _confirmSignOut(BuildContext context) async {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final HomeViewModel _viewModel = HomeViewModel(
+    authRepository: widget.authRepository,
+    accountRepository: widget.accountRepository,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_viewModel.load());
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmSignOut() async {
     final shouldSignOut = await showCupertinoModalPopup<bool>(
       context: context,
       builder: (context) => CupertinoActionSheet(
@@ -32,94 +67,262 @@ class HomeScreen extends StatelessWidget {
       ),
     );
 
-    if (shouldSignOut ?? false) {
-      unawaited(authRepository.signOut());
+    if (shouldSignOut ?? false) unawaited(_viewModel.signOut());
+  }
+
+  void _showComingSoon(String operation) {
+    unawaited(
+      showCupertinoDialog<void>(
+        context: context,
+        builder: (context) => CupertinoAlertDialog(
+          title: Text(operation),
+          content: const Text('Essa operação chega na próxima etapa do app.'),
+          actions: [
+            CupertinoDialogAction(
+              isDefaultAction: true,
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<QuickAction> get _actions {
+    QuickAction action(String label, IconData icon) {
+      return QuickAction(label: label, icon: icon, onPressed: () => _showComingSoon(label));
     }
+
+    return [
+      if (_viewModel.isManager) ...[
+        action('Novo correntista', CupertinoIcons.person_badge_plus),
+        action('Abrir conta', CupertinoIcons.plus_rectangle_on_rectangle),
+      ],
+      action('Depositar', CupertinoIcons.arrow_down_to_line),
+      action('Sacar', CupertinoIcons.arrow_up_to_line),
+      action('Transferir', CupertinoIcons.arrow_right_arrow_left),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final session = authRepository.session;
-
-    return CupertinoPageScaffold(
-      child: CustomScrollView(
-        slivers: [
-          CupertinoSliverNavigationBar(
-            largeTitle: const Text('Início'),
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => _confirmSignOut(context),
-              child: const Text('Sair'),
+    return AppStatusBar(
+      child: CupertinoPageScaffold(
+        backgroundColor: context.resolve(AppColors.background),
+        child: SafeArea(
+          bottom: false,
+          child: ListenableBuilder(
+            listenable: _viewModel,
+            builder: (context, _) => CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              slivers: [
+                CupertinoSliverRefreshControl(onRefresh: _viewModel.load),
+                SliverPadding(
+                  padding: EdgeInsets.only(
+                    top: AppSpacing.md,
+                    bottom: MediaQuery.paddingOf(context).bottom + AppSpacing.xxl,
+                  ),
+                  sliver: SliverList.list(children: _sections()),
+                ),
+              ],
             ),
           ),
-          if (session != null)
-            SliverPadding(
-              padding: const EdgeInsets.all(AppSpacing.screen),
-              sliver: SliverList.list(
-                children: [
-                  _WelcomeCard(session: session),
-                  const SizedBox(height: AppSpacing.lg),
-                  const AppNotice(
-                    message:
-                        'Saldo, depósitos, saques, transferências e o painel de liderança '
-                        'chegam nas próximas etapas.',
-                  ),
-                ],
-              ),
-            ),
-        ],
+        ),
       ),
+    );
+  }
+
+  List<Widget> _sections() {
+    final viewModel = _viewModel;
+    final sections = <Widget>[
+      _padded(
+        HomeHeader(
+          initials: viewModel.initials,
+          greetingName: viewModel.greetingName,
+          subtitle: viewModel.isManager ? 'Painel do gerente' : 'Bem-vindo ao seu ICEIBank',
+          onSignOut: _confirmSignOut,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xl),
+    ];
+
+    if (!viewModel.hasLoaded) {
+      final error = viewModel.errorMessage;
+      sections.add(
+        _padded(
+          error == null
+              ? const HomeSkeleton()
+              : HomeMessage(
+                  icon: CupertinoIcons.wifi_exclamationmark,
+                  title: 'Não foi possível carregar suas contas',
+                  message: error,
+                  actionLabel: 'Tentar novamente',
+                  onAction: viewModel.load,
+                ),
+        ),
+      );
+      return sections;
+    }
+
+    final body = viewModel.isManager ? _managerSections() : _customerSections();
+    for (var index = 0; index < body.length; index++) {
+      sections.add(
+        FadeSlideIn(
+          delay: Duration(milliseconds: 70 * index),
+          child: body[index],
+        ),
+      );
+    }
+    return sections;
+  }
+
+  List<Widget> _customerSections() {
+    final viewModel = _viewModel;
+    final accounts = viewModel.accounts;
+
+    return [
+      _padded(
+        BalanceOverview(
+          label: accounts.length > 1 ? 'Saldo total' : 'Saldo disponível',
+          amount: viewModel.totalBalance,
+          caption: _customerCaption(accounts),
+          isVisible: viewModel.isBalanceVisible,
+          onToggleVisibility: viewModel.toggleBalanceVisibility,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      if (accounts.isEmpty)
+        _padded(
+          const HomeMessage(
+            icon: CupertinoIcons.creditcard,
+            title: 'Nenhuma conta no seu nome',
+            message: 'Procure o gerente para abrir a sua conta.',
+          ),
+        )
+      else
+        AccountCardCarousel(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
+      ..._sharedSections(),
+    ];
+  }
+
+  List<Widget> _managerSections() {
+    final viewModel = _viewModel;
+    final accounts = viewModel.accounts;
+
+    return [
+      _padded(
+        ManagerOverview(
+          totalBalance: viewModel.totalBalance,
+          accountCount: accounts.length,
+          holderCount: viewModel.holderCount,
+          availableAgencyCount: viewModel.availableAgencyCount,
+          isBalanceVisible: viewModel.isBalanceVisible,
+          onToggleVisibility: viewModel.toggleBalanceVisibility,
+        ),
+      ),
+      ..._sharedSections(),
+      const SizedBox(height: AppSpacing.xxl),
+      _padded(
+        AgencyDistribution(
+          summaries: viewModel.agencySummaries,
+          isBalanceVisible: viewModel.isBalanceVisible,
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xxl),
+      _padded(_SectionTitle(title: 'Contas do banco', trailing: '${accounts.length}')),
+      const SizedBox(height: AppSpacing.md),
+      _padded(
+        accounts.isEmpty
+            ? HomeMessage(
+                icon: CupertinoIcons.person_badge_plus,
+                title: 'Nenhuma conta aberta ainda',
+                message: 'Cadastre um correntista e abra a primeira conta do banco.',
+                actionLabel: 'Cadastrar correntista',
+                onAction: () => _showComingSoon('Novo correntista'),
+              )
+            : BankAccountsList(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
+      ),
+    ];
+  }
+
+  List<Widget> _sharedSections() {
+    final viewModel = _viewModel;
+    final unavailable = viewModel.unavailableAgencies;
+    final refreshError = viewModel.errorMessage;
+
+    return [
+      if (unavailable.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.xl),
+        _padded(
+          AppNotice(
+            tone: AppNoticeTone.danger,
+            message:
+                'Não foi possível falar com a ${unavailable.map((id) => 'Agência $id').join(', ')}. '
+                'As contas de lá não entram nesta soma até a agência voltar.',
+          ),
+        ),
+      ],
+      if (refreshError != null) ...[
+        const SizedBox(height: AppSpacing.xl),
+        _padded(AppNotice(tone: AppNoticeTone.danger, message: refreshError)),
+      ],
+      const SizedBox(height: AppSpacing.xxl),
+      _padded(const _SectionTitle(title: 'O que você quer fazer')),
+      const SizedBox(height: AppSpacing.lg),
+      _padded(QuickActions(actions: _actions)),
+    ];
+  }
+
+  String _customerCaption(List<Account> accounts) {
+    if (accounts.isEmpty) return 'Nenhuma conta no seu nome';
+    if (accounts.length == 1) {
+      return 'Conta ${accounts.first.id} · Agência ${accounts.first.agencyId}';
+    }
+    return 'Somando suas ${accounts.length} contas';
+  }
+
+  Widget _padded(Widget child) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+      child: child,
     );
   }
 }
 
-class _WelcomeCard extends StatelessWidget {
-  const _WelcomeCard({required this.session});
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title, this.trailing});
 
-  final Session session;
-
-  String _formatTime(DateTime value) {
-    final hours = value.hour.toString().padLeft(2, '0');
-    final minutes = value.minute.toString().padLeft(2, '0');
-    return '$hours:$minutes';
-  }
+  final String title;
+  final String? trailing;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      decoration: BoxDecoration(
-        color: context.resolve(AppColors.ink),
-        borderRadius: BorderRadius.circular(AppRadius.card),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final count = trailing;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: AppTypography.headline.copyWith(color: context.resolve(AppColors.text)),
+          ),
+        ),
+        if (count != null)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.accent.withValues(alpha: 0.14),
+              color: context.resolve(AppColors.fill),
               borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
-              session.role.label,
-              style: AppTypography.caption.copyWith(color: AppColors.accent),
+              count,
+              style: AppTypography.caption.copyWith(
+                color: context.resolve(AppColors.textSecondary),
+              ),
             ),
           ),
-          const SizedBox(height: AppSpacing.lg),
-          Text(
-            'Olá, ${session.username}',
-            style: AppTypography.title1.copyWith(color: AppColors.white),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Sessão ativa até ${_formatTime(session.expiresAt)}.',
-            style: AppTypography.subheadline.copyWith(
-              color: context.resolve(AppColors.inkSecondary),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
