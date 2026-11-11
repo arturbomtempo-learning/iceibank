@@ -580,7 +580,7 @@ iceibank/
 
 ## 🖼️ Evidências
 
-Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/) e [`evidencias/sprint2/`](evidencias/sprint2/), com a data visível no terminal para comprovar a execução.
+Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/), [`evidencias/sprint2/`](evidencias/sprint2/) e [`evidencias/sprint3/`](evidencias/sprint3/), com a data visível no terminal para comprovar a execução.
 
 **Sprint 1: backend e conceitos distribuídos**
 
@@ -601,6 +601,16 @@ Os prints do Sprint 1 registram o comportamento da época, com relógio de Lampo
 | [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                 | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
 | [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)       | Pares de eventos concorrentes identificados pelo relógio vetorial             |
 | [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png) | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
+
+**Sprint 3: eleição de líder pelo algoritmo de Bully**
+
+| Evidência                                                         | O que demonstra                                                                      |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| [`eleicao-inicial.png`](evidencias/sprint3/eleicao-inicial.png)   | As 3 agências sobem e convergem para a mesma líder, a Agência 2                      |
+| [`failover.png`](evidencias/sprint3/failover.png)                 | A líder é derrubada, o heartbeat detecta a queda e as 2 restantes elegem a Agência 1 |
+| [`failover-retorno.png`](evidencias/sprint3/failover-retorno.png) | ➕ Evidência extra: a Agência 2 volta ao ar e retoma a liderança                     |
+
+O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte B também manda subir de novo a agência derrubada e observar o que acontece. Esse retorno ganhou um print próprio porque mostra o outro lado do failover, que o primeiro print não cobre: a recuperação também é automática. Ao voltar, a Agência 2 inicia a própria eleição, não encontra ninguém de id maior, se declara líder e anuncia o resultado. As agências 0 e 1 aceitam o anúncio e passam a reconhecê-la, mesmo com a Agência 1 liderando normalmente até ali. É exatamente o comportamento de "valentão" que dá nome ao algoritmo, e o mesmo print mostra o seu custo: uma troca de liderança que ninguém pediu, tema da Pergunta 2 da Parte B. Os vetores também deixam uma marca da reinicialização. A Agência 2 volta com o relógio zerado, em `[0, 0, 1]`, porque o vetor fica em memória, e só volta a incorporar o que as outras agências já sabiam quando recebe delas uma mensagem que carrega vetor, como uma eleição ou um crédito remoto. As respostas ao anúncio de coordenador e as consultas do heartbeat não levam vetor.
 
 **Autenticação (Parte F)**
 
