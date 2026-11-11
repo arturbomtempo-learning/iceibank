@@ -454,3 +454,55 @@ Duas condições do ambiente limitam o risco hoje:
 As duas condições acabam no Sprint 4. Lá, a líder vai coordenar as transações distribuídas com 2PC, e um anúncio forjado passaria a decidir quem conduz o commit ou o abort de transferências reais. Bastaria o sistema ser exposto na rede, por exemplo ouvindo em `0.0.0.0` para ser acessado por outra máquina, para qualquer um na mesma rede conseguir fazer isso. Há ainda um efeito colateral sobre o relógio. Como o `ao_receber` faz `max` posição a posição, um `vetorEnvio` forjado com valores enormes elevaria permanentemente os contadores da agência que o recebe, e passaria a distorcer a análise causal de todos os eventos seguintes no `mesclar_logs.py`.
 
 A correção não exige nada novo, porque o projeto já tem a peça certa. As chamadas internas do extrato consolidado usam um **token de serviço** de curta duração, assinado com a chave JWT compartilhada e validado pelo `requer_servico`. Aplicar a mesma proteção a `/bully/eleicao` e `/bully/coordenador` resolveria a falsificação. Faltaria ainda uma checagem: o `sub` do token, como `agencia-2`, deve coincidir com o `liderId` anunciado, para que nenhuma agência consiga anunciar outra como líder. A rota `/bully/lider` pode continuar sem autenticação, porque é só leitura e o app mobile precisa consultá-la. Nesta parte a proteção foi mantida de fora de propósito, porque o roteiro define as rotas sem autenticação e a pergunta pede justamente essa análise.
+
+## Parte B - Heartbeat e failover automático
+
+### Questão 1
+
+O intervalo é uma troca entre **tempo de detecção** e **custo**. Para medir, as três agências foram executadas variando só o valor passado a `iniciar_heartbeat`, e a líder, a Agência 2, foi derrubada em cada execução:
+
+|     Intervalo      | Heartbeats recebidos pela líder | Detecção da queda | Nova líder acordada |
+| :----------------: | :-----------------------------: | :---------------: | :-----------------: |
+|       100 ms       |         18 por segundo          |      0,02 s       |       0,03 s        |
+| 3 s (o do projeto) |         0,6 por segundo         |      1,33 s       |       1,38 s        |
+|        60 s        |    1 a cada 30 s (calculado)    |      51,36 s      |       51,41 s       |
+
+Com **100 ms**, a detecção é quase instantânea, mas a líder recebe 30 vezes mais consultas, porque o tráfego cresce como `(n - 1) / intervalo`. Com 100 agências seriam quase mil requisições por segundo só de heartbeat. Pior que o tráfego são os **falsos positivos**: uma única verificação sem resposta já dispara uma eleição, então quanto mais verificações, mais chance de uma resposta lenta virar uma troca de líder desnecessária.
+
+Com **60 segundos**, o custo some, mas as agências passaram **51 segundos** acreditando em uma líder que já tinha caído. No Sprint 4, seria quase um minuto de transferências paradas esperando uma coordenadora que não existe.
+
+Os 1,33 s com o intervalo de 3 segundos têm uma explicação: a agência derrubada recusa a conexão na hora, sem esperar o timeout, então a detecção depende apenas de quanto faltava para a próxima verificação, entre zero e cerca de 3 segundos. Sistemas reais separam frequência de decisão: o etcd envia heartbeats a cada 100 ms, mas só considera a líder perdida depois de 1 segundo sem nenhum deles. Para este projeto, 3 segundos é um valor razoável.
+
+### Questão 2
+
+Na maioria dos sistemas **não é desejável**. A evidência `failover-retorno.png` mostra a troca acontecendo sem motivo: a Agência 1 liderava normalmente desde 21:14:50 e, às 21:16:02, perdeu o posto só porque a Agência 2 voltou e tem id maior.
+
+Isso causa três problemas práticos:
+
+1. **Troca no meio de uma operação.** No Sprint 4, se a Agência 1 tiver enviado o `prepare` de um 2PC e ainda não o `commit`, a transação fica órfã: os participantes já votaram e ficam bloqueados esperando uma decisão que a nova líder nem sabe que existe. Em um banco, é dinheiro travado sem saber se a transferência aconteceu.
+2. **A nova líder é a que menos sabe.** Ela voltou com o vetor `[0, 0, 1]` e a memória vazia, e mesmo assim assume o comando no lugar de quem acompanhou tudo.
+3. **Instabilidade.** Uma agência que reinicia com frequência tiraria a liderança a cada volta, gerando duas trocas por ciclo.
+
+A retomada só faz sentido quando o id representa prioridade real e a troca é planejada. A correção mais simples aqui seria a agência consultar `/bully/lider` ao subir e só convocar eleição se não houver líder respondendo. O Raft vai além: um nó desatualizado não consegue votos para vencer.
+
+### Questão 3
+
+O sistema entra em **instabilidade permanente**. Isso foi reproduzido mantendo a Agência 2 viva, mas atrasando em 1,5 segundo as respostas dela às rotas `/bully/*`:
+
+```
+  1,0 s  agencia-1  TORNOU_LIDER
+  1,5 s  agencia-2  TORNOU_LIDER
+  5,0 s  agencia-1  TORNOU_LIDER
+  5,5 s  agencia-2  TORNOU_LIDER
+  ...
+ 30,2 s  agencia-1  TORNOU_LIDER
+ 30,7 s  agencia-2  TORNOU_LIDER
+```
+
+Foram **19 declarações de liderança em 30 segundos**, e em **nenhuma das 12 consultas** a `/bully/lider` as três agências concordaram. O ciclo acontece porque o mesmo timeout decide duas coisas:
+
+1. O heartbeat das agências 0 e 1 espera a resposta da 2 por 1 segundo, desiste e registra `LIDER_NAO_RESPONDEU`.
+2. Na eleição, a resposta da 2 também passa de 1 segundo, então a Agência 1 conclui que ninguém maior está vivo e se declara líder.
+3. Mas a Agência 2 recebeu a eleição, porque estava lenta, não morta. Ela inicia a própria eleição, se declara líder meio segundo depois e todos voltam a reconhecê-la, até o próximo heartbeat repetir tudo.
+
+O problema de fundo é que **um timeout não distingue uma agência morta de uma lenta**. O resultado são duas agências se declarando líder em sequência, o que no Sprint 4 significaria duas coordenadoras dando ordens conflitantes. Dá para reduzir o risco tratando timeout como suspeita e não como prova, já que a conexão recusada da Questão 1 sim prova a queda; exigindo várias falhas seguidas antes de convocar eleição; e usando mandatos numerados, como os termos do Raft, para que ordens de uma líder antiga sejam recusadas.
