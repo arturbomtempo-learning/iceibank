@@ -506,3 +506,25 @@ Foram **19 declarações de liderança em 30 segundos**, e em **nenhuma das 12 c
 3. Mas a Agência 2 recebeu a eleição, porque estava lenta, não morta. Ela inicia a própria eleição, se declara líder meio segundo depois e todos voltam a reconhecê-la, até o próximo heartbeat repetir tudo.
 
 O problema de fundo é que **um timeout não distingue uma agência morta de uma lenta**. O resultado são duas agências se declarando líder em sequência, o que no Sprint 4 significaria duas coordenadoras dando ordens conflitantes. Dá para reduzir o risco tratando timeout como suspeita e não como prova, já que a conexão recusada da Questão 1 sim prova a queda; exigindo várias falhas seguidas antes de convocar eleição; e usando mandatos numerados, como os termos do Raft, para que ordens de uma líder antiga sejam recusadas.
+
+## Parte C - Observando a eleição
+
+### Questão 1
+
+Na execução registrada em `evidencias/sprint3/historico-lideranca.png`, a liderança **mudou de mãos duas vezes** antes de estabilizar. A linha do tempo de líderes começa assim:
+
+```
+A partir de 00:44:46.327: Agência 0 é a líder
+A partir de 00:44:56.629: Agência 1 é a líder
+A partir de 00:45:05.993: Agência 2 é a líder
+```
+
+As agências foram iniciadas com cerca de 10 segundos entre uma e outra, então cada uma se declarou líder ao subir e foi superada pela seguinte: 0 para 1 e 1 para 2. A quarta linha da saída, às 00:45:22, já é o failover da Parte B.
+
+Vale separar **declarações** de **trocas**. Na subida simultânea testada na Parte A, a Agência 2 registrou `TORNOU_LIDER` três vezes, mas a liderança nunca mudou de mãos: foi sempre ela. Ou seja, a tempestade pode gerar trocas reais, quando as agências sobem em momentos diferentes, ou apenas reafirmações repetidas da mesma líder, quando sobem juntas.
+
+Em nenhum dos dois casos o resultado final muda, mas **há custo real**:
+
+- **Rede.** Na subida simultânea, as agências trocaram 9 requisições de eleição e de anúncio, quando o mínimo para chegar à mesma líder seria 5: as três mensagens de eleição para agências maiores e um único anúncio para as outras duas. Os 4 POSTs a mais foram anúncios repetidos da Agência 2, ou seja, 80% de tráfego extra. No pior caso, o Bully troca uma quantidade de mensagens proporcional ao quadrado do número de processos.
+- **Tempo.** Durante a subida em sequência, o sistema passou cerca de **20 segundos** sem uma líder definitiva, das 00:44:46 às 00:45:05, e cada agência que voltava ao ar provocava mais uma troca. Aqui cada etapa foi rápida porque as agências ausentes recusam a conexão na hora. Se alguma estivesse travada em vez de desligada, cada tentativa esperaria o timeout de 1 segundo, uma após a outra.
+- **Efeitos colaterais.** Cada troca gera eventos, incrementa os relógios vetoriais e reescreve a líder em todas as agências. Hoje isso é só informação, mas no Sprint 4 cada troca no meio de uma transação 2PC poderia deixar operações órfãs, como discutido na Questão 2 da Parte B.
