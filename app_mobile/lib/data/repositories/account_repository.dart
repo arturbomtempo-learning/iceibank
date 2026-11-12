@@ -56,4 +56,32 @@ class AccountRepository {
       );
     }
   }
+
+  Future<Result<String>> transfer({
+    required Account source,
+    required int targetAccountId,
+    required double amount,
+  }) async {
+    final agencyId = AgencyEndpoints.agencyFor(source.id);
+
+    try {
+      final data = await _apiClient.post(
+        agencyId,
+        '/transferencias',
+        body: {'idOrigem': source.id, 'idDestino': targetAccountId, 'valor': amount},
+      );
+
+      final message = data['mensagem'];
+      return Result.ok(message is String ? message : 'Transferência concluída.');
+    } on ApiException catch (error) {
+      if (!error.isNetworkFailure) return Result.failure(error);
+
+      return Result.failure(
+        ApiException(
+          'A Agência $agencyId, que guarda a conta de origem, não respondeu. '
+          'Nada foi debitado. Tente de novo em instantes.',
+        ),
+      );
+    }
+  }
 }

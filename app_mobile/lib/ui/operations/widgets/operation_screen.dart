@@ -5,7 +5,6 @@ import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
-import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/core/widgets/app_button.dart';
 import 'package:iceibank/ui/core/widgets/app_message.dart';
 import 'package:iceibank/ui/core/widgets/app_notice.dart';
@@ -14,7 +13,9 @@ import 'package:iceibank/ui/operations/view_models/operation_view_model.dart';
 import 'package:iceibank/ui/operations/widgets/account_selector.dart';
 import 'package:iceibank/ui/operations/widgets/amount_display.dart';
 import 'package:iceibank/ui/operations/widgets/amount_keypad.dart';
+import 'package:iceibank/ui/operations/widgets/balance_preview.dart';
 import 'package:iceibank/ui/operations/widgets/operation_success.dart';
+import 'package:iceibank/ui/operations/widgets/quick_amounts.dart';
 import 'package:iceibank/utils/currency.dart';
 
 class OperationScreen extends StatefulWidget {
@@ -151,15 +152,15 @@ class _OperationScreenState extends State<OperationScreen> {
                   shakeSignal: _shakeSignal,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                _BalancePreview(
+                BalancePreview(
                   balance: account.balance,
                   resultingBalance: _viewModel.resultingBalance ?? account.balance,
                   hasAmount: amount > 0,
                   isOverdrawn: _viewModel.isOverdrawn,
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                _QuickAmounts(
-                  type: widget.type,
+                QuickAmounts(
+                  includeAll: widget.type == OperationType.withdraw,
                   balance: account.balance,
                   enabled: !_viewModel.isSubmitting,
                   onSelected: _onQuickAmount,
@@ -188,102 +189,6 @@ class _OperationScreenState extends State<OperationScreen> {
           const SizedBox(height: AppSpacing.md),
         ],
       ),
-    );
-  }
-}
-
-class _BalancePreview extends StatelessWidget {
-  const _BalancePreview({
-    required this.balance,
-    required this.resultingBalance,
-    required this.hasAmount,
-    required this.isOverdrawn,
-  });
-
-  final double balance;
-  final double resultingBalance;
-  final bool hasAmount;
-  final bool isOverdrawn;
-
-  @override
-  Widget build(BuildContext context) {
-    final secondary = context.resolve(AppColors.textSecondary);
-    final style = AppTypography.subheadline.copyWith(color: secondary);
-
-    if (isOverdrawn) {
-      return Text(
-        'Saldo insuficiente. Disponível: ${formatCurrency(balance)}',
-        textAlign: TextAlign.center,
-        style: style.copyWith(color: context.resolve(AppColors.danger)),
-      );
-    }
-
-    if (!hasAmount) {
-      return Text('Saldo atual ${formatCurrency(balance)}', style: style);
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(formatCurrency(balance), style: style),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          child: Icon(CupertinoIcons.arrow_right, size: 14, color: secondary),
-        ),
-        Text(
-          formatCurrency(resultingBalance),
-          style: style.copyWith(
-            color: context.resolve(AppColors.text),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _QuickAmounts extends StatelessWidget {
-  const _QuickAmounts({
-    required this.type,
-    required this.balance,
-    required this.enabled,
-    required this.onSelected,
-  });
-
-  final OperationType type;
-  final double balance;
-  final bool enabled;
-  final ValueChanged<double> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final options = <(String, double)>[
-      ('R\$ 50', 50),
-      ('R\$ 100', 100),
-      ('R\$ 200', 200),
-      if (type == OperationType.withdraw && balance > 0) ('Tudo', balance),
-    ];
-
-    return Wrap(
-      spacing: AppSpacing.sm,
-      alignment: WrapAlignment.center,
-      children: [
-        for (final (label, value) in options)
-          CupertinoButton(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            minimumSize: const Size(0, 34),
-            color: context.resolve(AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.pill),
-            onPressed: enabled ? () => onSelected(value) : null,
-            child: Text(
-              label,
-              style: AppTypography.footnote.copyWith(
-                color: context.resolve(AppColors.primary),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-      ],
     );
   }
 }

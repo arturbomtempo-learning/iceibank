@@ -22,6 +22,7 @@ import 'package:iceibank/ui/home/widgets/home_states.dart';
 import 'package:iceibank/ui/home/widgets/manager_overview.dart';
 import 'package:iceibank/ui/home/widgets/quick_actions.dart';
 import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
+import 'package:iceibank/ui/transfers/widgets/transfer_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.authRepository, required this.accountRepository});
@@ -105,6 +106,18 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) unawaited(_viewModel.load());
   }
 
+  Future<void> _openTransfer() async {
+    await Navigator.of(context).push(
+      CupertinoPageRoute<void>(
+        builder: (context) => TransferScreen(
+          accounts: _viewModel.accounts,
+          accountRepository: widget.accountRepository,
+        ),
+      ),
+    );
+    if (mounted) unawaited(_viewModel.load());
+  }
+
   List<QuickAction> get _actions {
     QuickAction action(String label, IconData icon) {
       return QuickAction(label: label, icon: icon, onPressed: () => _showComingSoon(label));
@@ -125,7 +138,11 @@ class _HomeScreenState extends State<HomeScreen> {
         icon: CupertinoIcons.arrow_up_to_line,
         onPressed: () => _openOperation(OperationType.withdraw),
       ),
-      action('Transferir', CupertinoIcons.arrow_right_arrow_left),
+      QuickAction(
+        label: 'Transferir',
+        icon: CupertinoIcons.arrow_right_arrow_left,
+        onPressed: _openTransfer,
+      ),
     ];
   }
 
