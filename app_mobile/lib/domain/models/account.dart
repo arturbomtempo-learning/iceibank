@@ -13,6 +13,16 @@ class Account {
   final double balance;
   final int agencyId;
 
+  Account copyWith({double? balance}) {
+    return Account(
+      id: id,
+      holderName: holderName,
+      owner: owner,
+      balance: balance ?? this.balance,
+      agencyId: agencyId,
+    );
+  }
+
   static Account? fromJson(Object? json) {
     if (json is! Map<String, Object?>) return null;
 

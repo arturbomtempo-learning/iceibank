@@ -8,6 +8,8 @@ abstract final class AgencyEndpoints {
 
   static List<int> get ids => List.unmodifiable(List<int>.generate(count, (index) => index));
 
+  static int agencyFor(int accountId) => accountId % count;
+
   static String get host {
     if (_hostOverride.isNotEmpty) return _hostOverride;
     return Platform.isAndroid ? '10.0.2.2' : '127.0.0.1';

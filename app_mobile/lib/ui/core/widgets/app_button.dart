@@ -18,6 +18,8 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final foreground = context.resolve(AppColors.onPrimary);
+    final primary = context.resolve(AppColors.primary);
+    final isDisabled = onPressed == null && !isLoading;
 
     return Semantics(
       button: true,
@@ -29,8 +31,8 @@ class AppButton extends StatelessWidget {
           height: AppSizes.control,
           child: CupertinoButton(
             onPressed: isLoading ? null : onPressed,
-            color: context.resolve(AppColors.primary),
-            disabledColor: context.resolve(AppColors.primary),
+            color: primary,
+            disabledColor: isDisabled ? primary.withValues(alpha: 0.35) : primary,
             borderRadius: BorderRadius.circular(AppRadius.control),
             padding: EdgeInsets.zero,
             child: isLoading

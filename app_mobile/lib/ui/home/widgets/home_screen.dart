@@ -4,9 +4,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
+import 'package:iceibank/domain/models/operation_type.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
+import 'package:iceibank/ui/core/widgets/app_message.dart';
 import 'package:iceibank/ui/core/widgets/app_notice.dart';
 import 'package:iceibank/ui/core/widgets/app_status_bar.dart';
 import 'package:iceibank/ui/core/widgets/fade_slide_in.dart';
@@ -19,6 +21,7 @@ import 'package:iceibank/ui/home/widgets/home_header.dart';
 import 'package:iceibank/ui/home/widgets/home_states.dart';
 import 'package:iceibank/ui/home/widgets/manager_overview.dart';
 import 'package:iceibank/ui/home/widgets/quick_actions.dart';
+import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.authRepository, required this.accountRepository});
@@ -89,6 +92,19 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _openOperation(OperationType type) async {
+    await Navigator.of(context).push(
+      CupertinoPageRoute<void>(
+        builder: (context) => OperationScreen(
+          type: type,
+          accounts: _viewModel.accounts,
+          accountRepository: widget.accountRepository,
+        ),
+      ),
+    );
+    if (mounted) unawaited(_viewModel.load());
+  }
+
   List<QuickAction> get _actions {
     QuickAction action(String label, IconData icon) {
       return QuickAction(label: label, icon: icon, onPressed: () => _showComingSoon(label));
@@ -99,8 +115,16 @@ class _HomeScreenState extends State<HomeScreen> {
         action('Novo correntista', CupertinoIcons.person_badge_plus),
         action('Abrir conta', CupertinoIcons.plus_rectangle_on_rectangle),
       ],
-      action('Depositar', CupertinoIcons.arrow_down_to_line),
-      action('Sacar', CupertinoIcons.arrow_up_to_line),
+      QuickAction(
+        label: OperationType.deposit.title,
+        icon: CupertinoIcons.arrow_down_to_line,
+        onPressed: () => _openOperation(OperationType.deposit),
+      ),
+      QuickAction(
+        label: OperationType.withdraw.title,
+        icon: CupertinoIcons.arrow_up_to_line,
+        onPressed: () => _openOperation(OperationType.withdraw),
+      ),
       action('Transferir', CupertinoIcons.arrow_right_arrow_left),
     ];
   }
@@ -153,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _padded(
           error == null
               ? const HomeSkeleton()
-              : HomeMessage(
+              : AppMessage(
                   icon: CupertinoIcons.wifi_exclamationmark,
                   title: 'Não foi possível carregar suas contas',
                   message: error,
@@ -194,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SizedBox(height: AppSpacing.xl),
       if (accounts.isEmpty)
         _padded(
-          const HomeMessage(
+          const AppMessage(
             icon: CupertinoIcons.creditcard,
             title: 'Nenhuma conta no seu nome',
             message: 'Procure o gerente para abrir a sua conta.',
@@ -234,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> {
       const SizedBox(height: AppSpacing.md),
       _padded(
         accounts.isEmpty
-            ? HomeMessage(
+            ? AppMessage(
                 icon: CupertinoIcons.person_badge_plus,
                 title: 'Nenhuma conta aberta ainda',
                 message: 'Cadastre um correntista e abra a primeira conta do banco.',
