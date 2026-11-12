@@ -2,14 +2,20 @@ import 'dart:async';
 
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/data/services/session_storage.dart';
 
 class AppDependencies {
-  const AppDependencies({required this.authRepository, required this.accountRepository});
+  const AppDependencies({
+    required this.authRepository,
+    required this.accountRepository,
+    required this.userRepository,
+  });
 
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
+  final UserRepository userRepository;
 
   static Future<AppDependencies> create() async {
     final sessionStorage = SessionStorage();
@@ -28,6 +34,7 @@ class AppDependencies {
     return AppDependencies(
       authRepository: authRepository,
       accountRepository: AccountRepository(apiClient: apiClient),
+      userRepository: UserRepository(apiClient: apiClient),
     );
   }
 }

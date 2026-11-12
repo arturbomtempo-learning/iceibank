@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
@@ -16,6 +17,9 @@ class AppTextField extends StatefulWidget {
     this.keyboardType,
     this.textInputAction,
     this.autofillHints,
+    this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
+    this.hintText,
     this.onChanged,
     this.onSubmitted,
   });
@@ -30,6 +34,9 @@ class AppTextField extends StatefulWidget {
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final Iterable<String>? autofillHints;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
+  final String? hintText;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
 
@@ -78,6 +85,7 @@ class _AppTextFieldState extends State<AppTextField> {
   @override
   Widget build(BuildContext context) {
     final errorText = widget.errorText;
+    final hintText = widget.hintText;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -107,6 +115,8 @@ class _AppTextFieldState extends State<AppTextField> {
             keyboardType: widget.keyboardType,
             textInputAction: widget.textInputAction,
             autofillHints: widget.autofillHints,
+            inputFormatters: widget.inputFormatters,
+            textCapitalization: widget.textCapitalization,
             autocorrect: false,
             enableSuggestions: false,
             onChanged: widget.onChanged,
@@ -131,6 +141,12 @@ class _AppTextFieldState extends State<AppTextField> {
           Text(
             errorText,
             style: AppTypography.footnote.copyWith(color: context.resolve(AppColors.danger)),
+          ),
+        ] else if (hintText != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            hintText,
+            style: AppTypography.footnote.copyWith(color: context.resolve(AppColors.textTertiary)),
           ),
         ],
       ],

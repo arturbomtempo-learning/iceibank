@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
@@ -21,14 +22,22 @@ import 'package:iceibank/ui/home/widgets/home_header.dart';
 import 'package:iceibank/ui/home/widgets/home_states.dart';
 import 'package:iceibank/ui/home/widgets/manager_overview.dart';
 import 'package:iceibank/ui/home/widgets/quick_actions.dart';
+import 'package:iceibank/ui/management/widgets/new_account_sheet.dart';
+import 'package:iceibank/ui/management/widgets/new_customer_sheet.dart';
 import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
 import 'package:iceibank/ui/transfers/widgets/transfer_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.authRepository, required this.accountRepository});
+  const HomeScreen({
+    super.key,
+    required this.authRepository,
+    required this.accountRepository,
+    required this.userRepository,
+  });
 
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
+  final UserRepository userRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -74,23 +83,20 @@ class _HomeScreenState extends State<HomeScreen> {
     if (shouldSignOut ?? false) unawaited(_viewModel.signOut());
   }
 
-  void _showComingSoon(String operation) {
-    unawaited(
-      showCupertinoDialog<void>(
-        context: context,
-        builder: (context) => CupertinoAlertDialog(
-          title: Text(operation),
-          content: const Text('Essa operação chega na próxima etapa do app.'),
-          actions: [
-            CupertinoDialogAction(
-              isDefaultAction: true,
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      ),
+  Future<void> _openNewCustomer() async {
+    final createdUsername = await showNewCustomerSheet(context, repository: widget.userRepository);
+    if (createdUsername != null && mounted) {
+      await _openNewAccount(initialOwner: createdUsername);
+    }
+  }
+
+  Future<void> _openNewAccount({String initialOwner = ''}) async {
+    final created = await showNewAccountSheet(
+      context,
+      repository: widget.accountRepository,
+      initialOwner: initialOwner,
     );
+    if ((created ?? false) && mounted) unawaited(_viewModel.load());
   }
 
   Future<void> _openOperation(OperationType type) async {
@@ -119,14 +125,18 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   List<QuickAction> get _actions {
-    QuickAction action(String label, IconData icon) {
-      return QuickAction(label: label, icon: icon, onPressed: () => _showComingSoon(label));
-    }
-
     return [
       if (_viewModel.isManager) ...[
-        action('Novo correntista', CupertinoIcons.person_badge_plus),
-        action('Abrir conta', CupertinoIcons.plus_rectangle_on_rectangle),
+        QuickAction(
+          label: 'Novo correntista',
+          icon: CupertinoIcons.person_badge_plus,
+          onPressed: _openNewCustomer,
+        ),
+        QuickAction(
+          label: 'Abrir conta',
+          icon: CupertinoIcons.plus_rectangle_on_rectangle,
+          onPressed: _openNewAccount,
+        ),
       ],
       QuickAction(
         label: OperationType.deposit.title,
@@ -280,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 title: 'Nenhuma conta aberta ainda',
                 message: 'Cadastre um correntista e abra a primeira conta do banco.',
                 actionLabel: 'Cadastrar correntista',
-                onAction: () => _showComingSoon('Novo correntista'),
+                onAction: _openNewCustomer,
               )
             : BankAccountsList(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
       ),

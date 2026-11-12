@@ -84,4 +84,41 @@ class AccountRepository {
       );
     }
   }
+
+  Future<Result<Account>> createAccount({
+    required int accountId,
+    required String holderName,
+    required String owner,
+    required double initialBalance,
+  }) async {
+    final agencyId = AgencyEndpoints.agencyFor(accountId);
+
+    try {
+      final data = await _apiClient.post(
+        agencyId,
+        '/contas',
+        body: {
+          'id': accountId,
+          'nomeAluno': holderName,
+          'dono': owner,
+          'saldoInicial': initialBalance,
+        },
+      );
+
+      final account = Account.fromJson({...data, 'agencia': agencyId});
+      if (account == null) {
+        return const Result.failure(ApiException.unexpected());
+      }
+      return Result.ok(account);
+    } on ApiException catch (error) {
+      if (!error.isNetworkFailure) return Result.failure(error);
+
+      return Result.failure(
+        ApiException(
+          'A Agência $agencyId, que vai guardar a conta $accountId, não respondeu. '
+          'Tente de novo em instantes.',
+        ),
+      );
+    }
+  }
 }
