@@ -19,7 +19,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. Ainda faltam a sincronização offline-first e o app mobile em Flutter.
+Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. As agências também já aceitam a sincronização offline-first, detectando conflitos pelo vetor, e o app mobile em Flutter já tem o fluxo bancário e o painel de liderança. Falta o modo offline-first no app.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -100,11 +100,13 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **Confirmação de entrega com estorno automático.** Depois de processar um crédito remoto, a agência de destino publica o desfecho em `agencia.<origem>.confirmacao`, e a origem consome essa resposta. Quando o crédito falha, por exemplo porque a conta de destino não existe, a origem devolve o valor à conta de origem e registra `TRANSFERENCIA_ESTORNADA`, aplicando o padrão Saga com transação compensatória. É o que impede o dinheiro de desaparecer quando a outra ponta não consegue concluir. Detalhes em [Funcionalidades Adicionais](#sprint-2-confirmação-de-entrega-com-estorno-automático).
 
-**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Quinze tipos de evento são registrados, das operações bancárias, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`, às etapas da eleição, de `ELEICAO_INICIADA` a `LIDER_NAO_RESPONDEU`.
+**Registro de eventos auditável.** Toda operação gera uma linha em `data/eventos-agencia-N.jsonl` com o tipo do evento, o timestamp vetorial, a hora de parede e os detalhes. Dezesseis tipos de evento são registrados, das operações bancárias, de `CRIAR_CONTA` a `TRANSFERENCIA_ESTORNADA`, às etapas da eleição, de `ELEICAO_INICIADA` a `LIDER_NAO_RESPONDEU`, além de `SINCRONIZACAO_OFFLINE`.
 
 **Eleição de líder pelo algoritmo de Bully.** Ao subir, cada agência envia uma mensagem de eleição às agências de id maior. Se nenhuma responder, ela se declara líder e anuncia o resultado a todas; se alguma responder, essa assume a eleição. O resultado é sempre a agência de maior id entre as ativas, e toda mensagem carrega o vetor do relógio vetorial, então a eleição também aparece na linha do tempo causal. A cada 3 segundos, cada agência faz um heartbeat: consulta a líder que conhece e, se ela não responder em 1 segundo, registra `LIDER_NAO_RESPONDEU`, esquece a líder antiga e inicia uma nova eleição. Assim a queda da líder é resolvida sem intervenção manual, e uma agência que volta ao ar com id maior retoma a liderança. Por enquanto a líder é só informativa: no Sprint 4 ela passa a coordenar as transações distribuídas.
 
 **Linha do tempo causal.** O script `mesclar_logs.py` lê os logs das três agências, monta uma linha do tempo única por hora de parede e compara os vetores par a par, listando explicitamente os eventos concorrentes e separando-os dos causalmente ordenados.
+
+**Sincronização offline-first com detecção de conflito.** A consulta de saldo devolve também o vetor atual da agência, que o app guarda junto da conta. Uma operação feita offline volta depois por `POST /contas/<id>/sincronizar`, levando esse vetor como `vetorConhecido`. A agência compara os dois vetores com a mesma lógica do `mesclar_logs.py`: se forem iguais, nada mudou desde a última leitura e o depósito ou saque é aplicado, registrando `SINCRONIZACAO_OFFLINE`. Se o vetor da agência avançou, ela não aplica a operação às cegas e responde `409` com o estado atual da conta e o vetor novo, para o app decidir o que fazer.
 
 **API REST em arquitetura MVC.** Rotas, controllers e services separados, com CRUD de contas, depósito, saque e transferências.
 
@@ -521,9 +523,10 @@ Todas as rotas, exceto o login e as do algoritmo de Bully, exigem o cabeçalho `
 | `POST` | `/auth/login`               | pública          | Autentica e devolve o token JWT                           |
 | `POST` | `/usuarios`                 | gerente          | Cadastra um novo correntista                              |
 | `POST` | `/contas`                   | gerente          | Abre uma conta na agência responsável pelo número         |
-| `GET`  | `/contas/<id>`              | dono ou gerente  | Consulta o saldo de uma conta                             |
+| `GET`  | `/contas/<id>`              | dono ou gerente  | Consulta o saldo de uma conta, com o vetor atual          |
 | `POST` | `/contas/<id>/depositar`    | dono ou gerente  | Credita um valor                                          |
 | `POST` | `/contas/<id>/sacar`        | dono ou gerente  | Debita um valor                                           |
+| `POST` | `/contas/<id>/sincronizar`  | dono ou gerente  | Aplica uma operação feita offline, se o vetor não mudou   |
 | `POST` | `/transferencias`           | dono ou gerente  | Transfere, resolvendo local ou entre agências             |
 | `GET`  | `/extrato`                  | autenticado      | ⭐ Extrato consolidado das três agências                  |
 | `GET`  | `/interno/contas/<usuario>` | token de serviço | Rota interna: contas de um usuário nesta agência          |
@@ -558,6 +561,7 @@ iceibank/
 │   │   │   └── extrato_controller.py # ⭐ Funcionalidade adicional
 │   │   ├── services/
 │   │   │   ├── relogio_vetorial.py   # As três regras do relógio vetorial
+│   │   │   ├── comparar_vetores.py   # Relação causal entre dois vetores
 │   │   │   ├── mensageria.py         # Publicação e consumo no RabbitMQ
 │   │   │   ├── registro_eventos.py   # Log de eventos em JSON Lines
 │   │   │   ├── bully_service.py      # Algoritmo de Bully: eleição, coordenador e heartbeat

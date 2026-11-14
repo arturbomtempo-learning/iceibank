@@ -2,6 +2,8 @@ from flask import current_app, jsonify, request
 
 import config
 from services import auth_service, repositorio_usuarios
+from services.comparar_vetores import comparar_vetores
+from services.relogio_vetorial import vetor_valido
 
 
 def _estado():
@@ -59,7 +61,7 @@ def criar_conta():
 
 
 def consultar_saldo(id_conta):
-    contas, _, _, _ = _estado()
+    contas, relogio, _, _ = _estado()
 
     conta = contas.get(id_conta)
     if conta is None:
@@ -67,7 +69,7 @@ def consultar_saldo(id_conta):
     if not auth_service.pode_operar_conta(request.token_payload, conta):
         return _sem_permissao()
 
-    return jsonify(conta)
+    return jsonify({**conta, "vetorAtual": relogio.obter_vetor_atual()})
 
 
 def depositar(id_conta):
@@ -110,5 +112,57 @@ def sacar(id_conta):
     vetor = relogio.evento_local()
     conta["saldo"] -= valor
     registro.registrar("SAQUE", vetor, {"id": id_conta, "valor": valor, "novoSaldo": conta["saldo"]})
+
+    return jsonify(conta)
+
+
+def sincronizar_operacao_pendente(id_conta):
+    corpo = request.get_json(silent=True) or {}
+    tipo = corpo.get("tipo")
+    valor = corpo.get("valor")
+    vetor_conhecido = corpo.get("vetorConhecido")
+
+    contas, relogio, registro, _ = _estado()
+
+    conta = contas.get(id_conta)
+    if conta is None:
+        return jsonify({"erro": "Conta não encontrada nesta agência."}), 404
+    if not auth_service.pode_operar_conta(request.token_payload, conta):
+        return _sem_permissao()
+    if not vetor_valido(vetor_conhecido, config.NUMERO_AGENCIAS):
+        return jsonify({"erro": "O campo 'vetorConhecido' deve ser um vetor válido."}), 400
+    if not _numero_valido(valor) or valor <= 0:
+        return jsonify({"erro": "O campo 'valor' deve ser um número positivo."}), 400
+
+    vetor_atual = relogio.obter_vetor_atual()
+    relacao = comparar_vetores(vetor_conhecido, vetor_atual)
+
+    if relacao != "IGUAIS":
+        return (
+            jsonify(
+                {
+                    "erro": "Conflito detectado: o estado da conta mudou desde a última sincronização do app.",
+                    "vetorConhecido": vetor_conhecido,
+                    "vetorAtual": vetor_atual,
+                    "contaAtual": conta,
+                }
+            ),
+            409,
+        )
+
+    if tipo == "DEPOSITO":
+        vetor = relogio.evento_local()
+        conta["saldo"] += valor
+    elif tipo == "SAQUE":
+        if conta["saldo"] < valor:
+            return jsonify({"erro": "Saldo insuficiente."}), 400
+        vetor = relogio.evento_local()
+        conta["saldo"] -= valor
+    else:
+        return jsonify({"erro": "Tipo de operação pendente não suportado."}), 400
+
+    registro.registrar(
+        "SINCRONIZACAO_OFFLINE", vetor, {"id": id_conta, "tipo": tipo, "valor": valor}
+    )
 
     return jsonify(conta)

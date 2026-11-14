@@ -28,6 +28,10 @@ class RelogioVetorial:
             self.vetor[self.id_agencia] += 1
             return list(self.vetor)
 
+    def obter_vetor_atual(self):
+        with self._lock:
+            return list(self.vetor)
+
     def ao_receber(self, vetor_recebido):
         with self._lock:
             for i in range(len(self.vetor)):

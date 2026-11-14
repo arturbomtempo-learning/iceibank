@@ -19,14 +19,6 @@ function criarConta(req, res) {
     res.status(201).json(contas.get(id));
 }
 
-function consultarSaldo(req, res) {
-    const { contas } = req.app.locals;
-    const id = parseInt(req.params.id, 10);
-    const conta = contas.get(id);
-    if (!conta) return res.status(404).json({ erro: 'Conta não encontrada nesta agência.' });
-    res.json(conta);
-}
-
 function depositar(req, res) {
     const { contas, relogio, registro } = req.app.locals;
     const id = parseInt(req.params.id, 10);

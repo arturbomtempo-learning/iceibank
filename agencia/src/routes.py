@@ -37,6 +37,11 @@ rotas.add_url_rule(
     view_func=requer_autenticacao(contas_controller.sacar),
     methods=["POST"],
 )
+rotas.add_url_rule(
+    "/contas/<int:id_conta>/sincronizar",
+    view_func=requer_autenticacao(contas_controller.sincronizar_operacao_pendente),
+    methods=["POST"],
+)
 
 rotas.add_url_rule(
     "/transferencias",

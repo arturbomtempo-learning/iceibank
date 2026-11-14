@@ -1,0 +1,18 @@
+def comparar_vetores(v1, v2):
+    v1_menor_ou_igual = True
+    v2_menor_ou_igual = True
+
+    for posicao in range(len(v1)):
+        if v1[posicao] > v2[posicao]:
+            v1_menor_ou_igual = False
+        if v2[posicao] > v1[posicao]:
+            v2_menor_ou_igual = False
+
+    if v1_menor_ou_igual and v2_menor_ou_igual:
+        return "IGUAIS"
+    if v1_menor_ou_igual:
+        return "ANTES"
+    if v2_menor_ou_igual:
+        return "DEPOIS"
+
+    return "CONCORRENTES"
