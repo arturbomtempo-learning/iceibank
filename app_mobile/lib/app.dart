@@ -32,6 +32,7 @@ class IceiBankApp extends StatelessWidget {
                   accountRepository: dependencies.accountRepository,
                   userRepository: dependencies.userRepository,
                   agencyRepository: dependencies.agencyRepository,
+                  leadershipRepository: dependencies.leadershipRepository,
                 )
               : LoginScreen(key: const ValueKey('login'), authRepository: authRepository),
         ),

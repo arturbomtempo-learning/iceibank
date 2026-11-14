@@ -47,8 +47,8 @@ class ApiClient {
     throw lastNetworkFailure ?? const ApiException.unreachable();
   }
 
-  Future<JsonMap> get(int agencyId, String path) {
-    return _send('GET', agencyId, path, authenticated: true);
+  Future<JsonMap> get(int agencyId, String path, {bool authenticated = true, Duration? timeout}) {
+    return _send('GET', agencyId, path, authenticated: authenticated, timeout: timeout);
   }
 
   Future<JsonMap> post(int agencyId, String path, {JsonMap? body, bool authenticated = true}) {
@@ -61,6 +61,7 @@ class ApiClient {
     String path, {
     required bool authenticated,
     JsonMap? body,
+    Duration? timeout,
   }) async {
     final request = http.Request(method, AgencyEndpoints.uriFor(agencyId, path))
       ..headers['Accept'] = 'application/json';
@@ -77,7 +78,10 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await _httpClient.send(request).then(http.Response.fromStream).timeout(timeout);
+      response = await _httpClient
+          .send(request)
+          .then(http.Response.fromStream)
+          .timeout(timeout ?? this.timeout);
     } on TimeoutException {
       throw const ApiException.timeout();
     } on http.ClientException {

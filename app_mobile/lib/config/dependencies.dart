@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/data/repositories/leadership_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/data/services/session_storage.dart';
@@ -13,12 +14,14 @@ class AppDependencies {
     required this.accountRepository,
     required this.userRepository,
     required this.agencyRepository,
+    required this.leadershipRepository,
   });
 
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
   final UserRepository userRepository;
   final AgencyRepository agencyRepository;
+  final LeadershipRepository leadershipRepository;
 
   static Future<AppDependencies> create() async {
     final sessionStorage = SessionStorage();
@@ -43,6 +46,7 @@ class AppDependencies {
       accountRepository: AccountRepository(apiClient: apiClient),
       userRepository: UserRepository(apiClient: apiClient),
       agencyRepository: agencyRepository,
+      leadershipRepository: LeadershipRepository(apiClient: apiClient),
     );
   }
 }

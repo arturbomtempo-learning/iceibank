@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/data/repositories/leadership_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
@@ -24,6 +25,8 @@ import 'package:iceibank/ui/home/widgets/home_header.dart';
 import 'package:iceibank/ui/home/widgets/home_states.dart';
 import 'package:iceibank/ui/home/widgets/manager_overview.dart';
 import 'package:iceibank/ui/home/widgets/quick_actions.dart';
+import 'package:iceibank/ui/leadership/view_models/leadership_view_model.dart';
+import 'package:iceibank/ui/leadership/widgets/leadership_panel.dart';
 import 'package:iceibank/ui/management/widgets/new_account_sheet.dart';
 import 'package:iceibank/ui/management/widgets/new_customer_sheet.dart';
 import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
@@ -36,12 +39,14 @@ class HomeScreen extends StatefulWidget {
     required this.accountRepository,
     required this.userRepository,
     required this.agencyRepository,
+    required this.leadershipRepository,
   });
 
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
   final UserRepository userRepository;
   final AgencyRepository agencyRepository;
+  final LeadershipRepository leadershipRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -53,15 +58,26 @@ class _HomeScreenState extends State<HomeScreen> {
     accountRepository: widget.accountRepository,
     agencyRepository: widget.agencyRepository,
   );
+  late final LeadershipViewModel _leadershipViewModel = LeadershipViewModel(
+    leadershipRepository: widget.leadershipRepository,
+  );
+  late final AppLifecycleListener _lifecycleListener;
 
   @override
   void initState() {
     super.initState();
     unawaited(_viewModel.load());
+    _leadershipViewModel.start();
+    _lifecycleListener = AppLifecycleListener(
+      onShow: _leadershipViewModel.start,
+      onHide: _leadershipViewModel.stop,
+    );
   }
 
   @override
   void dispose() {
+    _lifecycleListener.dispose();
+    _leadershipViewModel.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -329,6 +345,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _padded(const _SectionTitle(title: 'O que você quer fazer')),
       const SizedBox(height: AppSpacing.lg),
       _padded(QuickActions(actions: _actions)),
+      const SizedBox(height: AppSpacing.xxl),
+      _padded(const _SectionTitle(title: 'Liderança das agências')),
+      const SizedBox(height: AppSpacing.md),
+      _padded(LeadershipPanel(viewModel: _leadershipViewModel)),
     ];
   }
 
