@@ -575,3 +575,50 @@ O que precisou ser **pensado de outra forma**:
 3. **Ciclo de vida.** Uma aba do navegador quase não tem esse problema. No celular, o app é pausado e retomado o tempo todo, e o painel precisa parar e voltar junto, como discutido na Questão 1.
 4. **Rede instável.** O celular troca de rede e perde sinal. Por isso o app tem timeouts curtos, tenta outra agência e mostra estados explícitos ("Sem sinal", "Eleição em andamento") em vez de travar.
 5. **Interação.** As rotas e o menu lateral do web viraram as ações rápidas da home, telas empilhadas e folhas que sobem de baixo. Os valores são digitados no teclado numérico, centavo a centavo. Entram também vibração em confirmações, gestos (puxar para atualizar, arrastar para fechar), tema seguindo o sistema e animações que respeitam o "reduzir movimento" do iPhone.
+
+## Parte E - Sincronização offline-first no backend
+
+### Questão 1
+
+Porque o saldo diz **quanto** a conta tem, mas não diz **o que aconteceu** desde a última leitura do app. O vetor funciona como a versão do estado da agência: se ele não é igual ao que o app guardou, a decisão que a pessoa tomou offline foi baseada em um retrato que já não vale mais.
+
+Em `conflito-sincronizacao.png`, o app guardou `[9, 4, 3]` ao consultar a conta 300. Um depósito direto levou a agência para `[10, 4, 3]`, e a sincronização com o vetor antigo foi recusada com 409. Aqui o saldo também mudou, de 100 para 150, então as duas comparações pegariam o conflito. A diferença aparece nos casos em que o saldo engana:
+
+1. **Mudanças que se anulam.** Se, enquanto o app estava offline, alguém depositasse 50 e sacasse 50, o saldo voltaria ao mesmo valor e a comparação de saldo diria "nada mudou". O vetor teria avançado duas posições e acusaria o conflito. Num banco, isso importa: um saque de 50 que a pessoa não reconhece é exatamente o tipo de coisa que ela precisa ver antes de confirmar outra operação.
+2. **Operações duplicadas.** Se a pessoa fizesse o mesmo saque pelo web enquanto o app estava offline, o app não teria como saber, olhando só o saldo, se o seu saque pendente já foi feito por outro caminho ou se é uma operação nova. O vetor mostra que houve um evento que o app não conhece.
+3. **Causalidade entre agências.** Um crédito de transferência vindo da Agência 1 chega com o vetor dela e avança a posição 1 do vetor da Agência 0. A comparação diz não só que algo mudou, mas que a agência viu eventos que o app não viu, a mesma relação "aconteceu antes" do `mesclar_logs.py`, agora usada em tempo real.
+
+Em resumo, comparar saldo detecta **efeitos**. Comparar vetores detecta **eventos**, inclusive os que não deixam rastro no saldo.
+
+### Questão 2
+
+A simplificação existe porque o relógio vetorial é **da agência**, não da conta. Há um único vetor por processo, e a posição da agência avança a cada evento local, seja ele qual for: criar conta, depositar, sacar, receber crédito ou participar de uma eleição. Olhando o vetor, a agência sabe que **algo** aconteceu desde a leitura do app, mas não sabe **em qual conta**. Diante dessa dúvida, o mais seguro é recusar.
+
+A evidência extra `conflito-outra-conta.png` mostra o custo. O app guardou `[11, 4, 3]` para a conta 300, e a criação da conta 303 levou a agência para `[12, 4, 3]`. A sincronização da conta 300 foi recusada, embora ela continuasse com os mesmos 120 que o app conhecia. É um **falso positivo**, e ele cresce com o movimento da agência. Num banco real, com milhares de operações por segundo, praticamente toda sincronização offline seria recusada.
+
+Para detectar por conta, cada conta precisa da sua própria versão:
+
+1. **Vetor por conta.** Além do vetor global, cada conta guarda o vetor do último evento que a alterou: depósito, saque, débito ou crédito de transferência, estorno. A consulta de saldo devolve esse vetor, e a sincronização compara com ele. A operação da conta 303 não tocaria o vetor da conta 300, e a sincronização passaria.
+2. **Ou um contador de versão por conta**, o controle de concorrência otimista usado em bancos de dados e no `ETag`/`If-Match` do HTTP. Como as alterações de uma conta acontecem todas na agência que a guarda, um número inteiro que sobe a cada mudança já basta para detectar o conflito.
+
+O vetor global continua necessário para o que ele faz bem: ordenar causalmente os eventos das três agências nos logs. Indo além, nem toda mudança concorrente precisaria ser conflito: um depósito pendente pode ser aplicado sobre qualquer saldo sem risco, porque depósitos somam. O risco real está nos saques, que dependem do saldo para não deixar a conta negativa.
+
+### Questão 3
+
+O app deve **perguntar à pessoa usuária**, mostrando o estado real da conta. Ele não descarta sozinho e não tenta de novo sozinho. Essa é a estratégia que vou implementar na Parte F.
+
+As alternativas falham assim:
+
+1. **Descartar em silêncio** faria sumir uma operação que a pessoa viu como feita, inclusive com o saldo provisório atualizado na tela. Num banco, ela poderia achar que pagou algo que não pagou.
+2. **Tentar de novo automaticamente**, reenviando com o `vetorAtual` devolvido no 409, é exatamente aplicar às cegas, o que o 409 existe para impedir. O app estaria usando o vetor novo sem que ninguém olhasse o que mudou. Se o conflito foi causado pelo mesmo saque feito pelo web, a retentativa automática **sacaria duas vezes**. Se outro saque reduziu o saldo, a retentativa pode ser recusada por saldo insuficiente, ou consumir um dinheiro que a pessoa já tinha destinado a outra coisa.
+3. **Perguntar** é o único caminho em que alguém decide com a informação certa. A resposta 409 já traz tudo o que é preciso: `contaAtual` com o saldo real e o `vetorAtual` para uma nova tentativa.
+
+Na Parte F, o comportamento planejado é:
+
+1. Substituir o saldo provisório pelo saldo real de `contaAtual`.
+2. Marcar a operação na fila como **em conflito**, sem apagá-la.
+3. Mostrar à pessoa a operação pendente ao lado do estado atual da conta, com duas opções:
+   - **"Aplicar mesmo assim"**: reenvia com o `vetorAtual` do 409, agora como uma decisão consciente;
+   - **"Descartar"**: remove a operação da fila.
+
+O custo é um toque a mais. Em um app bancário, uma confirmação extra é muito mais barata do que mover dinheiro sem a pessoa saber.
