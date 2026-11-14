@@ -106,6 +106,7 @@ class _LoginForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final formError = viewModel.formError;
+    final sessionNotice = viewModel.sessionNotice;
 
     return AutofillGroup(
       child: Column(
@@ -125,6 +126,10 @@ class _LoginForm extends StatelessWidget {
               color: context.resolve(AppColors.textSecondary),
             ),
           ),
+          if (sessionNotice != null) ...[
+            const SizedBox(height: AppSpacing.xl),
+            AppNotice(message: sessionNotice),
+          ],
           const SizedBox(height: AppSpacing.xxl),
           AppTextField(
             label: 'Usuário',

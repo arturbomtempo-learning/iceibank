@@ -16,8 +16,11 @@ class AuthRepository extends ChangeNotifier {
 
   Session? _session;
   Timer? _expirationTimer;
+  bool _wasSessionExpired = false;
 
   Session? get session => _session;
+
+  bool get wasSessionExpired => _wasSessionExpired;
 
   String? get token => _session?.token;
 
@@ -44,6 +47,7 @@ class AuthRepository extends ChangeNotifier {
       }
 
       await _sessionStorage.write(session);
+      _wasSessionExpired = false;
       _setSession(session);
       return Result.ok(session);
     } on ApiException catch (error) {
@@ -51,9 +55,14 @@ class AuthRepository extends ChangeNotifier {
     }
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut() => _endSession(expired: false);
+
+  Future<void> expireSession() => _endSession(expired: true);
+
+  Future<void> _endSession({required bool expired}) async {
     if (_session == null) return;
 
+    _wasSessionExpired = expired;
     _setSession(null);
     await _sessionStorage.clear();
   }
@@ -83,7 +92,7 @@ class AuthRepository extends ChangeNotifier {
     _session = session;
 
     if (session != null) {
-      _expirationTimer = Timer(session.expiresAt.difference(DateTime.now()), signOut);
+      _expirationTimer = Timer(session.expiresAt.difference(DateTime.now()), expireSession);
     }
 
     notifyListeners();

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
+import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/data/services/session_storage.dart';
@@ -61,6 +62,7 @@ void main() {
     final viewModel = HomeViewModel(
       authRepository: authRepository,
       accountRepository: AccountRepository(apiClient: apiClient),
+      agencyRepository: AgencyRepository(),
     );
     await viewModel.load();
     return viewModel;

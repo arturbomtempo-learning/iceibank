@@ -4,7 +4,11 @@ import 'package:iceibank/data/services/api_exception.dart';
 import 'package:iceibank/utils/result.dart';
 
 class LoginViewModel extends ChangeNotifier {
-  LoginViewModel({required this._authRepository});
+  LoginViewModel({required this._authRepository}) {
+    if (_authRepository.wasSessionExpired) {
+      _sessionNotice = 'Sua sessão expirou por segurança. Entre de novo para continuar.';
+    }
+  }
 
   final AuthRepository _authRepository;
 
@@ -12,11 +16,13 @@ class LoginViewModel extends ChangeNotifier {
   String? _usernameError;
   String? _passwordError;
   String? _formError;
+  String? _sessionNotice;
 
   bool get isSubmitting => _isSubmitting;
   String? get usernameError => _usernameError;
   String? get passwordError => _passwordError;
   String? get formError => _formError;
+  String? get sessionNotice => _sessionNotice;
 
   Future<void> submit({required String username, required String password}) async {
     if (_isSubmitting) return;
@@ -25,6 +31,7 @@ class LoginViewModel extends ChangeNotifier {
     _usernameError = trimmedUsername.isEmpty ? 'Informe o usuário.' : null;
     _passwordError = password.isEmpty ? 'Informe a senha.' : null;
     _formError = null;
+    _sessionNotice = null;
 
     if (_usernameError != null || _passwordError != null) {
       notifyListeners();

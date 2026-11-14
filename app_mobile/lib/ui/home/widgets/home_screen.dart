@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
+import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
@@ -16,6 +17,7 @@ import 'package:iceibank/ui/core/widgets/fade_slide_in.dart';
 import 'package:iceibank/ui/home/view_models/home_view_model.dart';
 import 'package:iceibank/ui/home/widgets/account_card_carousel.dart';
 import 'package:iceibank/ui/home/widgets/agency_distribution.dart';
+import 'package:iceibank/ui/home/widgets/agency_routing_tile.dart';
 import 'package:iceibank/ui/home/widgets/balance_overview.dart';
 import 'package:iceibank/ui/home/widgets/bank_accounts_list.dart';
 import 'package:iceibank/ui/home/widgets/home_header.dart';
@@ -33,11 +35,13 @@ class HomeScreen extends StatefulWidget {
     required this.authRepository,
     required this.accountRepository,
     required this.userRepository,
+    required this.agencyRepository,
   });
 
   final AuthRepository authRepository;
   final AccountRepository accountRepository;
   final UserRepository userRepository;
+  final AgencyRepository agencyRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -47,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final HomeViewModel _viewModel = HomeViewModel(
     authRepository: widget.authRepository,
     accountRepository: widget.accountRepository,
+    agencyRepository: widget.agencyRepository,
   );
 
   @override
@@ -254,6 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
       else
         AccountCardCarousel(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
       ..._sharedSections(),
+      ..._agencyAccessSection(),
     ];
   }
 
@@ -294,6 +300,7 @@ class _HomeScreenState extends State<HomeScreen> {
               )
             : BankAccountsList(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
       ),
+      ..._agencyAccessSection(),
     ];
   }
 
@@ -322,6 +329,20 @@ class _HomeScreenState extends State<HomeScreen> {
       _padded(const _SectionTitle(title: 'O que você quer fazer')),
       const SizedBox(height: AppSpacing.lg),
       _padded(QuickActions(actions: _actions)),
+    ];
+  }
+
+  List<Widget> _agencyAccessSection() {
+    return [
+      const SizedBox(height: AppSpacing.xxl),
+      _padded(const _SectionTitle(title: 'Acesso às agências')),
+      const SizedBox(height: AppSpacing.md),
+      _padded(
+        AgencyRoutingTile(
+          pinnedAgencyId: _viewModel.pinnedAgencyId,
+          onSelected: _viewModel.selectAgency,
+        ),
+      ),
     ];
   }
 

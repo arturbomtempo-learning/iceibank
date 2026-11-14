@@ -11,19 +11,31 @@ class ApiClient {
   ApiClient({
     required this._readToken,
     required this._onUnauthorized,
+    this._pinnedAgency,
     http.Client? httpClient,
     this.timeout = const Duration(seconds: 10),
   }) : _httpClient = httpClient ?? http.Client();
 
   final String? Function() _readToken;
   final void Function() _onUnauthorized;
+  final int? Function()? _pinnedAgency;
   final http.Client _httpClient;
   final Duration timeout;
 
+  int? get pinnedAgencyId => _pinnedAgency?.call();
+
+  bool get isAgencyPinned => pinnedAgencyId != null;
+
+  int agencyForAccount(int accountId) {
+    return pinnedAgencyId ?? AgencyEndpoints.agencyFor(accountId);
+  }
+
   Future<T> withFailover<T>(Future<T> Function(int agencyId) request) async {
+    final pinned = pinnedAgencyId;
+    final candidates = pinned == null ? AgencyEndpoints.ids : [pinned];
     ApiException? lastNetworkFailure;
 
-    for (final agencyId in AgencyEndpoints.ids) {
+    for (final agencyId in candidates) {
       try {
         return await request(agencyId);
       } on ApiException catch (error) {

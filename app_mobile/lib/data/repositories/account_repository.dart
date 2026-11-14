@@ -32,7 +32,7 @@ class AccountRepository {
     required Account account,
     required double amount,
   }) async {
-    final agencyId = AgencyEndpoints.agencyFor(account.id);
+    final agencyId = _apiClient.agencyForAccount(account.id);
 
     try {
       final data = await _apiClient.post(
@@ -51,7 +51,8 @@ class AccountRepository {
 
       return Result.failure(
         ApiException(
-          'A Agência $agencyId, que guarda esta conta, não respondeu. Tente de novo em instantes.',
+          '${_describeAgency(agencyId, 'que guarda esta conta')} não respondeu. '
+          'Tente de novo em instantes.',
         ),
       );
     }
@@ -62,7 +63,7 @@ class AccountRepository {
     required int targetAccountId,
     required double amount,
   }) async {
-    final agencyId = AgencyEndpoints.agencyFor(source.id);
+    final agencyId = _apiClient.agencyForAccount(source.id);
 
     try {
       final data = await _apiClient.post(
@@ -78,7 +79,7 @@ class AccountRepository {
 
       return Result.failure(
         ApiException(
-          'A Agência $agencyId, que guarda a conta de origem, não respondeu. '
+          '${_describeAgency(agencyId, 'que guarda a conta de origem')} não respondeu. '
           'Nada foi debitado. Tente de novo em instantes.',
         ),
       );
@@ -91,7 +92,7 @@ class AccountRepository {
     required String owner,
     required double initialBalance,
   }) async {
-    final agencyId = AgencyEndpoints.agencyFor(accountId);
+    final agencyId = _apiClient.agencyForAccount(accountId);
 
     try {
       final data = await _apiClient.post(
@@ -105,7 +106,7 @@ class AccountRepository {
         },
       );
 
-      final account = Account.fromJson({...data, 'agencia': agencyId});
+      final account = Account.fromJson({...data, 'agencia': AgencyEndpoints.agencyFor(accountId)});
       if (account == null) {
         return const Result.failure(ApiException.unexpected());
       }
@@ -115,10 +116,15 @@ class AccountRepository {
 
       return Result.failure(
         ApiException(
-          'A Agência $agencyId, que vai guardar a conta $accountId, não respondeu. '
+          '${_describeAgency(agencyId, 'que vai guardar a conta $accountId')} não respondeu. '
           'Tente de novo em instantes.',
         ),
       );
     }
+  }
+
+  String _describeAgency(int agencyId, String role) {
+    if (_apiClient.isAgencyPinned) return 'A Agência $agencyId, fixada como destino das chamadas,';
+    return 'A Agência $agencyId, $role,';
   }
 }

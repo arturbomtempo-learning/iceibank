@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:iceibank/config/agency_endpoints.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
+import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/services/api_exception.dart';
 import 'package:iceibank/domain/models/account.dart';
@@ -22,10 +23,15 @@ class AgencySummary {
 }
 
 class HomeViewModel extends ChangeNotifier {
-  HomeViewModel({required this._authRepository, required this._accountRepository});
+  HomeViewModel({
+    required this._authRepository,
+    required this._accountRepository,
+    required this._agencyRepository,
+  });
 
   final AuthRepository _authRepository;
   final AccountRepository _accountRepository;
+  final AgencyRepository _agencyRepository;
 
   Statement? _statement;
   bool _isLoading = false;
@@ -44,6 +50,8 @@ class HomeViewModel extends ChangeNotifier {
   double get totalBalance => _statement?.totalBalance ?? 0;
   int get holderCount => _statement?.holderCount ?? 0;
   List<int> get unavailableAgencies => _statement?.unavailableAgencies ?? const [];
+
+  int? get pinnedAgencyId => _agencyRepository.pinnedAgencyId;
 
   int get availableAgencyCount => AgencyEndpoints.count - unavailableAgencies.length;
 
@@ -95,6 +103,14 @@ class HomeViewModel extends ChangeNotifier {
             : const ApiException.unexpected().message;
     }
     notifyListeners();
+  }
+
+  Future<void> selectAgency(int? agencyId) async {
+    if (agencyId == pinnedAgencyId) return;
+
+    await _agencyRepository.select(agencyId);
+    notifyListeners();
+    await load();
   }
 
   void toggleBalanceVisibility() {

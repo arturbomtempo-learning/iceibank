@@ -26,7 +26,7 @@ void main() {
 
     final apiClient = ApiClient(
       readToken: () => repository.token,
-      onUnauthorized: () => repository.signOut(),
+      onUnauthorized: () => repository.expireSession(),
       httpClient: MockClient((request) {
         requestedPorts.add(request.url.port);
         return handler(request);
@@ -126,7 +126,7 @@ void main() {
 
     final apiClient = ApiClient(
       readToken: () => repository.token,
-      onUnauthorized: () => repository.signOut(),
+      onUnauthorized: () => repository.expireSession(),
       httpClient: MockClient((_) async => jsonResponse({'erro': 'Token expirado.'}, 401)),
     );
 
@@ -134,5 +134,23 @@ void main() {
     await pumpEventQueue();
 
     expect(repository.isAuthenticated, isFalse);
+    expect(repository.wasSessionExpired, isTrue);
+  });
+
+  test('não marca a sessão como expirada quando a pessoa sai por conta própria', () async {
+    final repository = buildRepository(
+      (_) async => jsonResponse({
+        'token': 'jwt',
+        'usuario': 'ana',
+        'papel': 'cliente',
+        'expiraEmSegundos': 3600,
+      }, 200),
+    );
+
+    await repository.signIn(username: 'ana', password: 'segredo');
+    await repository.signOut();
+
+    expect(repository.isAuthenticated, isFalse);
+    expect(repository.wasSessionExpired, isFalse);
   });
 }
