@@ -1,30 +1,41 @@
 import 'package:flutter/foundation.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
+import 'package:iceibank/data/repositories/sync_repository.dart';
 import 'package:iceibank/data/services/api_exception.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
 import 'package:iceibank/utils/result.dart';
 
 class OperationReceipt {
-  const OperationReceipt({required this.account, required this.amount, required this.newBalance});
+  const OperationReceipt({
+    required this.account,
+    required this.amount,
+    required this.newBalance,
+    this.isPending = false,
+  });
 
   final Account account;
   final double amount;
   final double newBalance;
+  final bool isPending;
 }
 
 class OperationViewModel extends ChangeNotifier {
   OperationViewModel({
     required this.type,
+    required this.username,
     required List<Account> accounts,
     required this._accountRepository,
+    required this._syncRepository,
   }) : _accounts = List.of(accounts),
        _selectedAccount = accounts.isEmpty ? null : accounts.first;
 
   static const int maxDigits = 9;
 
   final OperationType type;
+  final String username;
   final AccountRepository _accountRepository;
+  final SyncRepository _syncRepository;
   final List<Account> _accounts;
 
   Account? _selectedAccount;
@@ -89,24 +100,59 @@ class OperationViewModel extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    if (_syncRepository.hasWaitingFor(account.agencyId)) {
+      await _syncRepository.synchronize();
+    }
+
     final result = await _accountRepository.applyOperation(
+      username: username,
       type: type,
       account: account,
       amount: amount,
     );
 
-    _isSubmitting = false;
     switch (result) {
       case Ok(:final value):
-        _receipt = OperationReceipt(account: account, amount: amount, newBalance: value);
-        _replaceAccount(account, value);
+        final balance = value.balance + _syncRepository.pendingEffectFor(account.id);
+        _complete(value.copyWith(balance: balance), isPending: false);
+      case Failure(:final error) when error is ApiException && error.isNetworkFailure:
+        await _enqueue(account);
       case Failure(:final error):
-        _errorMessage = error is ApiException
-            ? error.message
-            : const ApiException.unexpected().message;
+        _fail(error);
     }
+
+    _isSubmitting = false;
     notifyListeners();
     return _receipt != null;
+  }
+
+  Future<void> _enqueue(Account account) async {
+    final queued = await _syncRepository.enqueue(
+      account: account,
+      type: type,
+      amountInCents: _amountInCents,
+    );
+
+    switch (queued) {
+      case Ok():
+        _complete(account.copyWith(balance: type.apply(account.balance, amount)), isPending: true);
+      case Failure(:final error):
+        _fail(error);
+    }
+  }
+
+  void _complete(Account updated, {required bool isPending}) {
+    _receipt = OperationReceipt(
+      account: updated,
+      amount: amount,
+      newBalance: updated.balance,
+      isPending: isPending,
+    );
+    _replaceAccount(updated);
+  }
+
+  void _fail(Object error) {
+    _errorMessage = error is ApiException ? error.message : const ApiException.unexpected().message;
   }
 
   void startAnother() {
@@ -115,9 +161,8 @@ class OperationViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _replaceAccount(Account account, double newBalance) {
-    final updated = account.copyWith(balance: newBalance);
-    final index = _accounts.indexWhere((candidate) => candidate.id == account.id);
+  void _replaceAccount(Account updated) {
+    final index = _accounts.indexWhere((candidate) => candidate.id == updated.id);
     if (index >= 0) _accounts[index] = updated;
     _selectedAccount = updated;
   }

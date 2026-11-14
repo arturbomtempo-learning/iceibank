@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
+import 'package:iceibank/data/repositories/sync_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
@@ -22,13 +23,17 @@ class OperationScreen extends StatefulWidget {
   const OperationScreen({
     super.key,
     required this.type,
+    required this.username,
     required this.accounts,
     required this.accountRepository,
+    required this.syncRepository,
   });
 
   final OperationType type;
+  final String username;
   final List<Account> accounts;
   final AccountRepository accountRepository;
+  final SyncRepository syncRepository;
 
   @override
   State<OperationScreen> createState() => _OperationScreenState();
@@ -37,8 +42,10 @@ class OperationScreen extends StatefulWidget {
 class _OperationScreenState extends State<OperationScreen> {
   late final OperationViewModel _viewModel = OperationViewModel(
     type: widget.type,
+    username: widget.username,
     accounts: widget.accounts,
     accountRepository: widget.accountRepository,
+    syncRepository: widget.syncRepository,
   );
 
   int _shakeSignal = 0;
@@ -70,7 +77,9 @@ class _OperationScreenState extends State<OperationScreen> {
     final succeeded = await _viewModel.submit();
 
     if (succeeded) {
-      await HapticFeedback.mediumImpact();
+      await (_viewModel.receipt?.isPending ?? false
+          ? HapticFeedback.lightImpact()
+          : HapticFeedback.mediumImpact());
     } else if (_viewModel.errorMessage != null) {
       _rejectInput();
     }

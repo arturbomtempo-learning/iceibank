@@ -3,6 +3,7 @@ import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/home/widgets/balance_amount.dart';
+import 'package:iceibank/ui/sync/widgets/pending_badge.dart';
 
 class BalanceOverview extends StatelessWidget {
   const BalanceOverview({
@@ -12,6 +13,7 @@ class BalanceOverview extends StatelessWidget {
     required this.caption,
     required this.isVisible,
     required this.onToggleVisibility,
+    this.isProvisional = false,
   });
 
   final String label;
@@ -19,6 +21,7 @@ class BalanceOverview extends StatelessWidget {
   final String caption;
   final bool isVisible;
   final VoidCallback onToggleVisibility;
+  final bool isProvisional;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +48,22 @@ class BalanceOverview extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(caption, style: AppTypography.subheadline.copyWith(color: secondary)),
+        if (isProvisional) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              PendingBadge(color: context.resolve(AppColors.primary)),
+              const SizedBox(width: 6),
+              Text(
+                'Saldo provisório, com operações a sincronizar',
+                style: AppTypography.footnote.copyWith(
+                  color: context.resolve(AppColors.primary),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

@@ -8,6 +8,8 @@ import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/ui/transfers/view_models/transfer_view_model.dart';
 
+import '../../support/in_memory_offline_store.dart';
+
 void main() {
   const accounts = [
     Account(id: 6, holderName: 'Artur Bomtempo', owner: 'bomtempo', balance: 500, agencyId: 0),
@@ -28,7 +30,10 @@ void main() {
     );
     return TransferViewModel(
       accounts: accounts,
-      accountRepository: AccountRepository(apiClient: apiClient),
+      accountRepository: AccountRepository(
+        apiClient: apiClient,
+        offlineStore: InMemoryOfflineStore(),
+      ),
     );
   }
 

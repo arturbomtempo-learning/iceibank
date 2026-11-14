@@ -8,6 +8,8 @@ import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/ui/management/view_models/new_account_view_model.dart';
 import 'package:iceibank/utils/currency_input_formatter.dart';
 
+import '../../support/in_memory_offline_store.dart';
+
 void main() {
   late List<http.Request> requests;
 
@@ -22,7 +24,10 @@ void main() {
       }),
     );
     return NewAccountViewModel(
-      accountRepository: AccountRepository(apiClient: apiClient),
+      accountRepository: AccountRepository(
+        apiClient: apiClient,
+        offlineStore: InMemoryOfflineStore(),
+      ),
       initialOwner: initialOwner,
     );
   }

@@ -5,6 +5,8 @@ class Account {
     required this.owner,
     required this.balance,
     required this.agencyId,
+    this.vector,
+    this.cachedAt,
   });
 
   final int id;
@@ -12,14 +14,20 @@ class Account {
   final String owner;
   final double balance;
   final int agencyId;
+  final List<int>? vector;
+  final DateTime? cachedAt;
 
-  Account copyWith({double? balance}) {
+  bool get isStale => cachedAt != null;
+
+  Account copyWith({double? balance, List<int>? vector, bool fresh = false}) {
     return Account(
       id: id,
       holderName: holderName,
       owner: owner,
       balance: balance ?? this.balance,
       agencyId: agencyId,
+      vector: vector ?? this.vector,
+      cachedAt: fresh ? null : cachedAt,
     );
   }
 
@@ -42,8 +50,16 @@ class Account {
         owner: owner,
         balance: balance.toDouble(),
         agencyId: agencyId,
+        vector: parseVector(json['vetorAtual']),
       );
     }
     return null;
+  }
+
+  static List<int>? parseVector(Object? json) {
+    if (json is! List<Object?> || json.isEmpty) return null;
+    final positions = json.whereType<int>().toList();
+    if (positions.length != json.length) return null;
+    return List.unmodifiable(positions);
   }
 }

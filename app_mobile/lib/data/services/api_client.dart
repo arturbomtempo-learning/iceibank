@@ -100,7 +100,7 @@ class ApiClient {
 
     final message = data['erro'];
     if (message is String) {
-      throw ApiException(message, statusCode: response.statusCode);
+      throw ApiException(message, statusCode: response.statusCode, body: data);
     }
     throw ApiException.unexpected(statusCode: response.statusCode);
   }

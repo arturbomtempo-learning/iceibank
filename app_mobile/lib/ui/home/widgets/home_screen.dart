@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/repositories/leadership_repository.dart';
+import 'package:iceibank/data/repositories/sync_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
+import 'package:iceibank/domain/models/pending_operation.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
@@ -30,7 +33,10 @@ import 'package:iceibank/ui/leadership/widgets/leadership_panel.dart';
 import 'package:iceibank/ui/management/widgets/new_account_sheet.dart';
 import 'package:iceibank/ui/management/widgets/new_customer_sheet.dart';
 import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
+import 'package:iceibank/ui/sync/widgets/pending_decision_sheet.dart';
+import 'package:iceibank/ui/sync/widgets/pending_operations_section.dart';
 import 'package:iceibank/ui/transfers/widgets/transfer_screen.dart';
+import 'package:iceibank/utils/time.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
@@ -40,6 +46,7 @@ class HomeScreen extends StatefulWidget {
     required this.userRepository,
     required this.agencyRepository,
     required this.leadershipRepository,
+    required this.syncRepository,
   });
 
   final AuthRepository authRepository;
@@ -47,6 +54,7 @@ class HomeScreen extends StatefulWidget {
   final UserRepository userRepository;
   final AgencyRepository agencyRepository;
   final LeadershipRepository leadershipRepository;
+  final SyncRepository syncRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -57,36 +65,83 @@ class _HomeScreenState extends State<HomeScreen> {
     authRepository: widget.authRepository,
     accountRepository: widget.accountRepository,
     agencyRepository: widget.agencyRepository,
+    syncRepository: widget.syncRepository,
   );
   late final LeadershipViewModel _leadershipViewModel = LeadershipViewModel(
     leadershipRepository: widget.leadershipRepository,
   );
   late final AppLifecycleListener _lifecycleListener;
+  SyncReport? _announcedReport;
 
   @override
   void initState() {
     super.initState();
-    unawaited(_viewModel.load());
+    _announcedReport = _viewModel.lastSyncReport;
+    _viewModel.addListener(_announceConflicts);
+    unawaited(_viewModel.start());
     _leadershipViewModel.start();
     _lifecycleListener = AppLifecycleListener(
-      onShow: _leadershipViewModel.start,
-      onHide: _leadershipViewModel.stop,
+      onShow: () {
+        _leadershipViewModel.start();
+        _viewModel.resumeSync();
+      },
+      onHide: () {
+        _leadershipViewModel.stop();
+        _viewModel.pauseSync();
+      },
     );
   }
 
   @override
   void dispose() {
+    _viewModel.removeListener(_announceConflicts);
     _lifecycleListener.dispose();
     _leadershipViewModel.dispose();
     _viewModel.dispose();
     super.dispose();
   }
 
+  void _announceConflicts() {
+    final report = _viewModel.lastSyncReport;
+    if (report == null || identical(report, _announcedReport)) return;
+    _announcedReport = report;
+
+    if (report.conflictCount + report.rejectedCount > 0) {
+      unawaited(HapticFeedback.heavyImpact());
+    } else if (report.appliedCount > 0) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+  }
+
+  Future<void> _decide(PendingOperation operation) async {
+    final decision = await showPendingDecisionSheet(context, operation: operation);
+    switch (decision) {
+      case PendingDecision.retry:
+        unawaited(HapticFeedback.selectionClick());
+        await _viewModel.retryOperation(operation);
+      case PendingDecision.discard:
+        unawaited(HapticFeedback.selectionClick());
+        await _viewModel.discardOperation(operation);
+      case null:
+        return;
+    }
+  }
+
   Future<void> _confirmSignOut() async {
+    final waiting = _viewModel.waitingCount;
     final shouldSignOut = await showCupertinoModalPopup<bool>(
       context: context,
       builder: (context) => CupertinoActionSheet(
         title: const Text('Deseja sair da sua conta?'),
+        message: waiting == 0
+            ? null
+            : Text(
+                waiting == 1
+                    ? 'Você tem uma operação pendente. Ela continua guardada e é enviada '
+                          'quando você entrar de novo.'
+                    : 'Você tem $waiting operações pendentes. Elas continuam guardadas e são '
+                          'enviadas quando você entrar de novo.',
+              ),
         actions: [
           CupertinoActionSheetAction(
             isDestructiveAction: true,
@@ -125,8 +180,10 @@ class _HomeScreenState extends State<HomeScreen> {
       CupertinoPageRoute<void>(
         builder: (context) => OperationScreen(
           type: type,
+          username: _viewModel.username,
           accounts: _viewModel.accounts,
           accountRepository: widget.accountRepository,
+          syncRepository: widget.syncRepository,
         ),
       ),
     );
@@ -261,6 +318,7 @@ class _HomeScreenState extends State<HomeScreen> {
           caption: _customerCaption(accounts),
           isVisible: viewModel.isBalanceVisible,
           onToggleVisibility: viewModel.toggleBalanceVisibility,
+          isProvisional: viewModel.waitingCount > 0,
         ),
       ),
       const SizedBox(height: AppSpacing.xl),
@@ -314,7 +372,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 actionLabel: 'Cadastrar correntista',
                 onAction: _openNewCustomer,
               )
-            : BankAccountsList(accounts: accounts, isBalanceVisible: viewModel.isBalanceVisible),
+            : BankAccountsList(
+                accounts: accounts,
+                isBalanceVisible: viewModel.isBalanceVisible,
+                pendingAccountIds: viewModel.accountsWithPending,
+              ),
       ),
       ..._agencyAccessSection(),
     ];
@@ -322,24 +384,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _sharedSections() {
     final viewModel = _viewModel;
-    final unavailable = viewModel.unavailableAgencies;
     final refreshError = viewModel.errorMessage;
+    final availabilityNotice = _availabilityNotice();
+    final operations = viewModel.pendingOperations;
 
     return [
-      if (unavailable.isNotEmpty) ...[
+      if (availabilityNotice != null) ...[
         const SizedBox(height: AppSpacing.xl),
-        _padded(
-          AppNotice(
-            tone: AppNoticeTone.danger,
-            message:
-                'Não foi possível falar com a ${unavailable.map((id) => 'Agência $id').join(', ')}. '
-                'As contas de lá não entram nesta soma até a agência voltar.',
-          ),
-        ),
+        _padded(AppNotice(tone: AppNoticeTone.danger, message: availabilityNotice)),
       ],
       if (refreshError != null) ...[
         const SizedBox(height: AppSpacing.xl),
         _padded(AppNotice(tone: AppNoticeTone.danger, message: refreshError)),
+      ],
+      if (operations.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.xxl),
+        _padded(_SectionTitle(title: 'Operações pendentes', trailing: '${operations.length}')),
+        const SizedBox(height: AppSpacing.md),
+        _padded(
+          PendingOperationsSection(
+            operations: operations,
+            isSyncing: viewModel.isSyncing,
+            onDecide: _decide,
+          ),
+        ),
       ],
       const SizedBox(height: AppSpacing.xxl),
       _padded(const _SectionTitle(title: 'O que você quer fazer')),
@@ -364,6 +432,30 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     ];
+  }
+
+  String? _availabilityNotice() {
+    final viewModel = _viewModel;
+    final unavailable = viewModel.unavailableAgencies;
+    if (unavailable.isEmpty) return null;
+
+    final lastSeen = switch (viewModel.cachedAt) {
+      final cachedAt? => formatLastSeen(cachedAt),
+      null => null,
+    };
+
+    if (viewModel.isOffline) {
+      return 'Sem conexão com as agências. Você está vendo o último saldo conhecido'
+          '${lastSeen == null ? '' : ', $lastSeen'}.';
+    }
+
+    final names = unavailable.map((id) => 'Agência $id').join(', ');
+    if (!viewModel.hasStaleAccounts) {
+      return 'Não foi possível falar com a $names. '
+          'As contas de lá não entram nesta soma até a agência voltar.';
+    }
+    return 'Não foi possível falar com a $names. As contas de lá aparecem com o último '
+        'saldo conhecido${lastSeen == null ? '' : ', $lastSeen'}.';
   }
 
   String _customerCaption(List<Account> accounts) {

@@ -8,6 +8,7 @@ import 'package:iceibank/ui/core/widgets/app_button.dart';
 import 'package:iceibank/ui/core/widgets/fade_slide_in.dart';
 import 'package:iceibank/ui/core/widgets/receipt_card.dart';
 import 'package:iceibank/ui/operations/view_models/operation_view_model.dart';
+import 'package:iceibank/ui/sync/widgets/pending_badge.dart';
 import 'package:iceibank/utils/currency.dart';
 
 class OperationSuccess extends StatelessWidget {
@@ -27,30 +28,49 @@ class OperationSuccess extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDeposit = type == OperationType.deposit;
+    final isPending = receipt.isPending;
     final signedAmount = '${isDeposit ? '+' : '−'} ${formatCurrency(receipt.amount)}';
+    final agencyId = receipt.account.agencyId;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
       child: Column(
         children: [
           const Spacer(),
-          const AnimatedCheck(),
+          if (isPending) const PendingSeal() else const AnimatedCheck(),
           const SizedBox(height: AppSpacing.xl),
           FadeSlideIn(
             delay: const Duration(milliseconds: 350),
             child: Column(
               children: [
                 Text(
-                  type.successTitle,
+                  isPending ? type.pendingTitle : type.successTitle,
                   style: AppTypography.title1.copyWith(color: context.resolve(AppColors.text)),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   signedAmount,
                   style: AppTypography.amount(30).copyWith(
-                    color: context.resolve(isDeposit ? AppColors.primary : AppColors.text),
+                    color: context.resolve(
+                      isPending
+                          ? AppColors.textSecondary
+                          : isDeposit
+                          ? AppColors.primary
+                          : AppColors.text,
+                    ),
                   ),
                 ),
+                if (isPending) ...[
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'A Agência $agencyId está sem conexão. A operação fica guardada no '
+                    'aparelho e é enviada sozinha assim que a agência voltar.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.subheadline.copyWith(
+                      color: context.resolve(AppColors.textSecondary),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -60,10 +80,12 @@ class OperationSuccess extends StatelessWidget {
             child: ReceiptCard(
               rows: [
                 ReceiptRow(label: 'Conta', value: '${receipt.account.id}'),
-                ReceiptRow(label: 'Agência', value: '${receipt.account.agencyId}'),
+                ReceiptRow(label: 'Agência', value: '$agencyId'),
                 ReceiptRow(label: 'Titular', value: receipt.account.holderName),
+                if (isPending)
+                  const ReceiptRow(label: 'Situação', value: 'Pendente de sincronização'),
                 ReceiptRow(
-                  label: 'Novo saldo',
+                  label: isPending ? 'Saldo provisório' : 'Novo saldo',
                   value: formatCurrency(receipt.newBalance),
                   isEmphasized: true,
                   isLast: true,

@@ -4,13 +4,20 @@ import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/home/widgets/account_sheet.dart';
+import 'package:iceibank/ui/sync/widgets/pending_badge.dart';
 import 'package:iceibank/utils/currency.dart';
 
 class BankAccountsList extends StatelessWidget {
-  const BankAccountsList({super.key, required this.accounts, required this.isBalanceVisible});
+  const BankAccountsList({
+    super.key,
+    required this.accounts,
+    required this.isBalanceVisible,
+    this.pendingAccountIds = const {},
+  });
 
   final List<Account> accounts;
   final bool isBalanceVisible;
+  final Set<int> pendingAccountIds;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +28,11 @@ class BankAccountsList extends StatelessWidget {
         child: Column(
           children: [
             for (final account in accounts) ...[
-              _AccountTile(account: account, isBalanceVisible: isBalanceVisible),
+              _AccountTile(
+                account: account,
+                isBalanceVisible: isBalanceVisible,
+                hasPending: pendingAccountIds.contains(account.id),
+              ),
               if (account != accounts.last)
                 Padding(
                   padding: const EdgeInsets.only(left: 68),
@@ -36,10 +47,15 @@ class BankAccountsList extends StatelessWidget {
 }
 
 class _AccountTile extends StatelessWidget {
-  const _AccountTile({required this.account, required this.isBalanceVisible});
+  const _AccountTile({
+    required this.account,
+    required this.isBalanceVisible,
+    required this.hasPending,
+  });
 
   final Account account;
   final bool isBalanceVisible;
+  final bool hasPending;
 
   String get _initials {
     final words = account.holderName.split(RegExp(r'\s+'));
@@ -77,9 +93,18 @@ class _AccountTile extends StatelessWidget {
         'Conta ${account.id} · Agência ${account.agencyId}',
         style: AppTypography.footnote.copyWith(color: context.resolve(AppColors.textSecondary)),
       ),
-      additionalInfo: Text(
-        isBalanceVisible ? formatCurrency(account.balance) : 'R\$ ••••',
-        style: AppTypography.amount(15).copyWith(color: context.resolve(AppColors.text)),
+      additionalInfo: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (hasPending) ...[
+            PendingBadge(size: 13, color: context.resolve(AppColors.primary)),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            isBalanceVisible ? formatCurrency(account.balance) : 'R\$ ••••',
+            style: AppTypography.amount(15).copyWith(color: context.resolve(AppColors.text)),
+          ),
+        ],
       ),
       trailing: const CupertinoListTileChevron(),
       onTap: () => showAccountSheet(context, account: account, isBalanceVisible: isBalanceVisible),

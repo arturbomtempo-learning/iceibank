@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:iceibank/config/agency_endpoints.dart';
 import 'package:iceibank/data/repositories/account_repository.dart';
 import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
+import 'package:iceibank/data/repositories/sync_repository.dart';
 import 'package:iceibank/data/services/api_exception.dart';
 import 'package:iceibank/domain/models/account.dart';
+import 'package:iceibank/domain/models/pending_operation.dart';
 import 'package:iceibank/domain/models/statement.dart';
 import 'package:iceibank/utils/result.dart';
 
@@ -27,16 +31,22 @@ class HomeViewModel extends ChangeNotifier {
     required this._authRepository,
     required this._accountRepository,
     required this._agencyRepository,
-  });
+    required this._syncRepository,
+  }) {
+    _syncRepository.addListener(_onSyncChanged);
+  }
 
   final AuthRepository _authRepository;
   final AccountRepository _accountRepository;
   final AgencyRepository _agencyRepository;
+  final SyncRepository _syncRepository;
 
   Statement? _statement;
   bool _isLoading = false;
+  bool _isReloadQueued = false;
   bool _isBalanceVisible = false;
   String? _errorMessage;
+  SyncReport? _handledReport;
 
   bool get isLoading => _isLoading;
   bool get isBalanceVisible => _isBalanceVisible;
@@ -46,13 +56,39 @@ class HomeViewModel extends ChangeNotifier {
   bool get isManager => _authRepository.session?.isManager ?? false;
   String get username => _authRepository.session?.username ?? '';
 
-  List<Account> get accounts => _statement?.accounts ?? const [];
-  double get totalBalance => _statement?.totalBalance ?? 0;
-  int get holderCount => _statement?.holderCount ?? 0;
+  bool get isOffline => _statement?.isOffline ?? false;
+  DateTime? get cachedAt => _statement?.cachedAt;
+  bool get hasStaleAccounts => _statement?.hasStaleAccounts ?? false;
   List<int> get unavailableAgencies => _statement?.unavailableAgencies ?? const [];
 
-  int? get pinnedAgencyId => _agencyRepository.pinnedAgencyId;
+  List<PendingOperation> get pendingOperations => _syncRepository.operations;
+  int get waitingCount => pendingOperations.where((operation) => operation.isWaiting).length;
+  bool get isSyncing => _syncRepository.isSyncing;
+  SyncReport? get lastSyncReport => _syncRepository.lastReport;
 
+  Set<int> get accountsWithPending => {
+    for (final operation in pendingOperations)
+      if (operation.isWaiting) operation.accountId,
+  };
+
+  List<Account> get accounts {
+    final base = _statement?.accounts ?? const <Account>[];
+    final pending = accountsWithPending;
+    if (pending.isEmpty) return base;
+
+    return [
+      for (final account in base)
+        pending.contains(account.id)
+            ? account.copyWith(
+                balance: account.balance + _syncRepository.pendingEffectFor(account.id),
+              )
+            : account,
+    ];
+  }
+
+  double get totalBalance => accounts.fold(0, (sum, account) => sum + account.balance);
+  int get holderCount => accounts.map((account) => account.owner).toSet().length;
+  int? get pinnedAgencyId => _agencyRepository.pinnedAgencyId;
   int get availableAgencyCount => AgencyEndpoints.count - unavailableAgencies.length;
 
   String get greetingName {
@@ -71,12 +107,13 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   List<AgencySummary> get agencySummaries {
+    final current = accounts;
     return [
       for (final agencyId in AgencyEndpoints.ids)
         AgencySummary(
           agencyId: agencyId,
-          accountCount: accounts.where((account) => account.agencyId == agencyId).length,
-          balance: accounts
+          accountCount: current.where((account) => account.agencyId == agencyId).length,
+          balance: current
               .where((account) => account.agencyId == agencyId)
               .fold(0, (sum, account) => sum + account.balance),
           isAvailable: !unavailableAgencies.contains(agencyId),
@@ -84,13 +121,27 @@ class HomeViewModel extends ChangeNotifier {
     ];
   }
 
+  Future<void> start() async {
+    if (username.isEmpty) return;
+    await _syncRepository.attach(username);
+    _syncRepository.start();
+    await load();
+  }
+
+  void resumeSync() => _syncRepository.start();
+
+  void pauseSync() => _syncRepository.stop();
+
   Future<void> load() async {
-    if (_isLoading) return;
+    if (_isLoading) {
+      _isReloadQueued = true;
+      return;
+    }
 
     _isLoading = true;
     notifyListeners();
 
-    final result = await _accountRepository.fetchStatement();
+    final result = await _accountRepository.fetchStatement(username: username);
 
     _isLoading = false;
     switch (result) {
@@ -103,6 +154,11 @@ class HomeViewModel extends ChangeNotifier {
             : const ApiException.unexpected().message;
     }
     notifyListeners();
+
+    if (_isReloadQueued) {
+      _isReloadQueued = false;
+      await load();
+    }
   }
 
   Future<void> selectAgency(int? agencyId) async {
@@ -113,10 +169,39 @@ class HomeViewModel extends ChangeNotifier {
     await load();
   }
 
+  Future<void> retryOperation(PendingOperation operation) {
+    return _syncRepository.retryWithLatestState(operation);
+  }
+
+  Future<void> discardOperation(PendingOperation operation) {
+    return _syncRepository.discard(operation);
+  }
+
   void toggleBalanceVisibility() {
     _isBalanceVisible = !_isBalanceVisible;
     notifyListeners();
   }
 
-  Future<void> signOut() => _authRepository.signOut();
+  Future<void> signOut() async {
+    _syncRepository.stop();
+    await _accountRepository.clearCache(username);
+    await _authRepository.signOut();
+  }
+
+  void _onSyncChanged() {
+    final report = _syncRepository.lastReport;
+    if (report != null && !identical(report, _handledReport)) {
+      _handledReport = report;
+      if (report.changedBalances) unawaited(load());
+    }
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _syncRepository
+      ..removeListener(_onSyncChanged)
+      ..stop();
+    super.dispose();
+  }
 }
