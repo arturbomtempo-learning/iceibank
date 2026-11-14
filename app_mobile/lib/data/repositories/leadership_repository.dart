@@ -11,14 +11,10 @@ class LeadershipRepository {
 
   final ApiClient _apiClient;
 
-  Future<Result<LeaderStatus>> fetchLeader({int? preferredAgencyId}) async {
-    final order = [
-      ?preferredAgencyId,
-      ...AgencyEndpoints.ids.where((agencyId) => agencyId != preferredAgencyId),
-    ];
+  Future<Result<LeaderStatus>> fetchLeader() async {
     final unreachable = <int>[];
 
-    for (final agencyId in order) {
+    for (final agencyId in AgencyEndpoints.ids) {
       try {
         final data = await _apiClient.get(
           agencyId,

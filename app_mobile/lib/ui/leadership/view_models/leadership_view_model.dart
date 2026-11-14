@@ -60,9 +60,7 @@ class LeadershipViewModel extends ChangeNotifier {
     _timer?.cancel();
     _isChecking = true;
 
-    final result = await _leadershipRepository.fetchLeader(
-      preferredAgencyId: _status?.sourceAgencyId,
-    );
+    final result = await _leadershipRepository.fetchLeader();
 
     _isChecking = false;
     if (_isDisposed) return;

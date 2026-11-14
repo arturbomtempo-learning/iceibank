@@ -50,23 +50,19 @@ void main() {
     expect(status.unreachableAgencies, isEmpty);
   });
 
-  test('tenta as outras agências quando a consultada está fora do ar', () async {
-    final result = await buildRepository(offlinePorts: {4037, 4035})
-        .fetchLeader(preferredAgencyId: 2);
+  test('tenta a próxima agência quando a consultada está fora do ar', () async {
+    final result = await buildRepository(offlinePorts: {4035, 4036}).fetchLeader();
 
-    expect(requestedPorts, [4037, 4035, 4036]);
+    expect(requestedPorts, [4035, 4036, 4037]);
     final status = (result as Ok<LeaderStatus>).value;
-    expect(status.sourceAgencyId, 1);
-    expect(status.unreachableAgencies, [2, 0]);
+    expect(status.sourceAgencyId, 2);
+    expect(status.unreachableAgencies, [0, 1]);
   });
 
   test('ignora a agência fixada e continua tentando as outras', () async {
-    final result = await buildRepository(
-      offlinePorts: {4036},
-      pinnedAgency: 1,
-    ).fetchLeader(preferredAgencyId: 1);
+    final result = await buildRepository(offlinePorts: {4035}, pinnedAgency: 2).fetchLeader();
 
-    expect(requestedPorts, [4036, 4035]);
+    expect(requestedPorts, [4035, 4036]);
     expect(result, isA<Ok<LeaderStatus>>());
   });
 
