@@ -396,7 +396,7 @@ class _AgencyNode extends StatelessWidget {
     };
 
     return SizedBox(
-      width: 76,
+      width: 92,
       child: Column(
         children: [
           AnimatedContainer(
@@ -441,7 +441,13 @@ class _AgencyNode extends StatelessWidget {
               color: labelColor,
               fontWeight: isLeader ? FontWeight.w700 : FontWeight.w500,
             ),
-            child: Text(label, strutStyle: const StrutStyle(forceStrutHeight: true)),
+            child: Text(
+              label,
+              maxLines: 1,
+              softWrap: false,
+              textAlign: TextAlign.center,
+              strutStyle: const StrutStyle(forceStrutHeight: true),
+            ),
           ),
         ],
       ),

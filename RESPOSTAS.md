@@ -528,3 +528,50 @@ Em nenhum dos dois casos o resultado final muda, mas **há custo real**:
 - **Rede.** Na subida simultânea, as agências trocaram 9 requisições de eleição e de anúncio, quando o mínimo para chegar à mesma líder seria 5: as três mensagens de eleição para agências maiores e um único anúncio para as outras duas. Os 4 POSTs a mais foram anúncios repetidos da Agência 2, ou seja, 80% de tráfego extra. No pior caso, o Bully troca uma quantidade de mensagens proporcional ao quadrado do número de processos.
 - **Tempo.** Durante a subida em sequência, o sistema passou cerca de **20 segundos** sem uma líder definitiva, das 00:44:46 às 00:45:05, e cada agência que voltava ao ar provocava mais uma troca. Aqui cada etapa foi rápida porque as agências ausentes recusam a conexão na hora. Se alguma estivesse travada em vez de desligada, cada tentativa esperaria o timeout de 1 segundo, uma após a outra.
 - **Efeitos colaterais.** Cada troca gera eventos, incrementa os relógios vetoriais e reescreve a líder em todas as agências. Hoje isso é só informação, mas no Sprint 4 cada troca no meio de uma transação 2PC poderia deixar operações órfãs, como discutido na Questão 2 da Parte B.
+
+## Parte D - App Flutter com painel de liderança
+
+### Questão 1
+
+O app consulta `/bully/lider` **a cada 3 segundos**, o mesmo intervalo do heartbeat das agências. Consultar mais rápido não adianta: a troca só existe depois que o heartbeat detecta a queda e a eleição termina, então o app passaria a maior parte do tempo recebendo a mesma resposta.
+
+O resultado medido confirma a escolha. Em `app-failover.png`, os logs registram a Agência 1 assumindo às 00:01:24,17 e o painel mostra a nova líder às 00:01:26, **2 segundos depois**, sem nenhum toque na tela. No retorno, em `app-failover-retorno.png`, a Agência 2 se declarou às 00:03:34,8 e o app mostrou às 00:03:36. No pior caso, somando heartbeat, timeout, eleição e a próxima consulta, a pessoa vê a troca em cerca de 7 segundos.
+
+Do lado do celular, o custo foi controlado em quatro pontos:
+
+1. **Uma consulta por vez.** A próxima só é agendada quando a anterior termina, então uma agência lenta não acumula requisições.
+2. **Timeout curto.** Cada agência tem 2 segundos para responder antes de o app tentar a próxima.
+3. **Pausa em segundo plano.** Com o app minimizado ou a tela bloqueada, as consultas param, e voltam na hora em que o app reabre.
+4. **Resposta pequena.** São cerca de 20 consultas por minuto, com uns 30 bytes de JSON cada, menos de 0,5 MB por hora contando os cabeçalhos.
+
+No celular, o que mais gasta bateria não é o volume de dados, e sim acordar o rádio repetidas vezes. Por isso pausar em segundo plano pesa mais do que aumentar o intervalo. Num app real, o ideal seria o servidor avisar a troca, por WebSocket ou push, em vez de o app perguntar.
+
+### Questão 2
+
+O app **consulta sempre na mesma ordem**: começa pela Agência 0 e só passa para a 1 ou a 2 se a anterior não responder. Assim, enquanto a Agência 0 estiver no ar, todas as respostas vêm dela, e o painel nunca alterna entre duas versões da liderança.
+
+Se uma agência ainda não souber da nova eleição, o pior que acontece é o painel mostrar a líder antiga por alguns segundos a mais. Isso **se resolve sozinho**: o heartbeat de 3 segundos faz a agência consultada descobrir a queda e reconhecer a nova líder, e a próxima consulta do app já traz a resposta certa. No `app-failover.png`, o painel continuou mostrando a Agência 2 até que a Agência 0, a consultada, descobriu a troca. A mudança apareceu 2 segundos depois da eleição, sem nenhuma oscilação no meio.
+
+Para o painel, então, **não é um problema real**: é atraso, não informação errada que fica. Seria problemático se o app fizesse algo com essa resposta, como mandar uma transferência para a "líder" do Sprint 4. Nesse caso, uma ordem enviada para a líder antiga falharia ou seria recusada. A defesa adequada seria a dos mandatos numerados citados na Parte B: a resposta traria o número do mandato, e o app descartaria qualquer resposta com mandato menor do que o último que já viu.
+
+O painel também trata os casos em que não há uma resposta clara:
+
+- **Eleição em andamento:** quando a agência responde sem líder (`liderAtual: null`), o painel mostra esse estado em vez de manter a líder antiga.
+- **Nenhuma agência no ar:** em `app-sem-agencias.png`, o painel mostra a **última líder conhecida** e avisa que nenhuma das 3 respondeu. Ele não inventa uma líder atual.
+
+### Questão 3
+
+O que foi **reaproveitado** são os conceitos, não o código:
+
+- **Mesmo contrato com a API:** login com JWT no cabeçalho `Authorization`, as mesmas rotas e a mesma leitura do campo `erro` para mostrar a mensagem da agência.
+- **Mesmas regras de negócio:** a conta mora na agência `id % 3`, o app tenta outra agência quando uma cai, um 401 encerra a sessão, e as validações de formulário são as mesmas dos esquemas do web.
+- **Mesma divisão em camadas:** os services e stores do web viraram repositórios e view models, e as páginas viraram telas. Os tokens do design system (cores, raios, espaçamentos) também foram replicados.
+- **Mesma preferência de agência de destino**, salva até com a mesma chave usada no web.
+
+O que precisou ser **pensado de outra forma**:
+
+1. **Guardar o token.** O web usa `localStorage`. No celular, o token vai para o Keychain do iOS e o Keystore do Android. Como o Keychain sobrevive à desinstalação do app, ele é limpo na primeira abertura depois de reinstalar.
+2. **Endereço da API.** No navegador basta `localhost`. O emulador Android precisa de `10.0.2.2`, e as duas plataformas bloqueiam HTTP sem criptografia por padrão. Foi preciso liberar só a rede local, nas configurações do iOS e do Android.
+3. **Ciclo de vida.** Uma aba do navegador quase não tem esse problema. No celular, o app é pausado e retomado o tempo todo, e o painel precisa parar e voltar junto, como discutido na Questão 1.
+4. **Rede instável.** O celular troca de rede e perde sinal. Por isso o app tem timeouts curtos, tenta outra agência e mostra estados explícitos ("Sem sinal", "Eleição em andamento") em vez de travar.
+5. **Interação.** As rotas e o menu lateral do web viraram as ações rápidas da home, telas empilhadas e folhas que sobem de baixo. Os valores são digitados no teclado numérico, centavo a centavo. Entram também vibração em confirmações, gestos (puxar para atualizar, arrastar para fechar), tema seguindo o sistema e animações que respeitam o "reduzir movimento" do iPhone.
