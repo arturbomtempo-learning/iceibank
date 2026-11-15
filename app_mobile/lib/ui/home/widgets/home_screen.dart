@@ -7,6 +7,7 @@ import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/repositories/leadership_repository.dart';
 import 'package:iceibank/data/repositories/sync_repository.dart';
+import 'package:iceibank/data/repositories/theme_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/domain/models/account.dart';
 import 'package:iceibank/domain/models/operation_type.dart';
@@ -33,6 +34,7 @@ import 'package:iceibank/ui/leadership/widgets/leadership_panel.dart';
 import 'package:iceibank/ui/management/widgets/new_account_sheet.dart';
 import 'package:iceibank/ui/management/widgets/new_customer_sheet.dart';
 import 'package:iceibank/ui/operations/widgets/operation_screen.dart';
+import 'package:iceibank/ui/settings/widgets/settings_sheet.dart';
 import 'package:iceibank/ui/sync/widgets/pending_decision_sheet.dart';
 import 'package:iceibank/ui/sync/widgets/pending_operations_section.dart';
 import 'package:iceibank/ui/transfers/widgets/transfer_screen.dart';
@@ -47,6 +49,7 @@ class HomeScreen extends StatefulWidget {
     required this.agencyRepository,
     required this.leadershipRepository,
     required this.syncRepository,
+    required this.themeRepository,
   });
 
   final AuthRepository authRepository;
@@ -55,6 +58,7 @@ class HomeScreen extends StatefulWidget {
   final AgencyRepository agencyRepository;
   final LeadershipRepository leadershipRepository;
   final SyncRepository syncRepository;
+  final ThemeRepository themeRepository;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -125,6 +129,21 @@ class _HomeScreenState extends State<HomeScreen> {
       case null:
         return;
     }
+  }
+
+  Future<void> _openSettings() async {
+    final viewModel = _viewModel;
+    final wantsToSignOut = await showSettingsSheet(
+      context,
+      themeRepository: widget.themeRepository,
+      profile: SettingsProfile(
+        initials: viewModel.initials,
+        name: viewModel.displayName,
+        username: viewModel.username,
+        roleLabel: viewModel.roleLabel,
+      ),
+    );
+    if ((wantsToSignOut ?? false) && mounted) await _confirmSignOut();
   }
 
   Future<void> _confirmSignOut() async {
@@ -270,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
           initials: viewModel.initials,
           greetingName: viewModel.greetingName,
           subtitle: viewModel.isManager ? 'Painel do gerente' : 'Bem-vindo ao seu ICEIBank',
-          onSignOut: _confirmSignOut,
+          onOpenSettings: _openSettings,
         ),
       ),
       const SizedBox(height: AppSpacing.xl),

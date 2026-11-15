@@ -5,6 +5,7 @@ import 'package:iceibank/data/repositories/agency_repository.dart';
 import 'package:iceibank/data/repositories/auth_repository.dart';
 import 'package:iceibank/data/repositories/leadership_repository.dart';
 import 'package:iceibank/data/repositories/sync_repository.dart';
+import 'package:iceibank/data/repositories/theme_repository.dart';
 import 'package:iceibank/data/repositories/user_repository.dart';
 import 'package:iceibank/data/services/api_client.dart';
 import 'package:iceibank/data/services/session_storage.dart';
@@ -18,6 +19,7 @@ class AppDependencies {
     required this.agencyRepository,
     required this.leadershipRepository,
     required this.syncRepository,
+    required this.themeRepository,
   });
 
   final AuthRepository authRepository;
@@ -26,13 +28,15 @@ class AppDependencies {
   final AgencyRepository agencyRepository;
   final LeadershipRepository leadershipRepository;
   final SyncRepository syncRepository;
+  final ThemeRepository themeRepository;
 
   static Future<AppDependencies> create() async {
     final sessionStorage = SessionStorage();
     await sessionStorage.clearIfFreshInstall();
 
     final agencyRepository = AgencyRepository();
-    await agencyRepository.restore();
+    final themeRepository = ThemeRepository();
+    await Future.wait([agencyRepository.restore(), themeRepository.restore()]);
 
     late final AuthRepository authRepository;
 
@@ -54,6 +58,7 @@ class AppDependencies {
       agencyRepository: agencyRepository,
       leadershipRepository: LeadershipRepository(apiClient: apiClient),
       syncRepository: SyncRepository(apiClient: apiClient, offlineStore: offlineStore),
+      themeRepository: themeRepository,
     );
   }
 }

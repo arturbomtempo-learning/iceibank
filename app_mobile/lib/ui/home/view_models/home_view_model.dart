@@ -99,6 +99,13 @@ class HomeViewModel extends ChangeNotifier {
     return '${firstName[0].toUpperCase()}${firstName.substring(1)}';
   }
 
+  String get displayName {
+    final ownAccount = accounts.where((account) => account.owner == username).firstOrNull;
+    return ownAccount?.holderName ?? username;
+  }
+
+  String get roleLabel => isManager ? 'Gerente' : 'Correntista';
+
   String get initials {
     final ownAccount = accounts.where((account) => account.owner == username).firstOrNull;
     final words = (ownAccount?.holderName ?? username).trim().split(RegExp(r'\s+'));

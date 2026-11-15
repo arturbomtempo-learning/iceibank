@@ -9,32 +9,41 @@ class HomeHeader extends StatelessWidget {
     required this.initials,
     required this.greetingName,
     required this.subtitle,
-    required this.onSignOut,
+    required this.onOpenSettings,
   });
 
   final String initials;
   final String greetingName;
   final String subtitle;
-  final VoidCallback onSignOut;
+  final VoidCallback onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: AppSizes.minTapTarget,
-          height: AppSizes.minTapTarget,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: context.resolve(AppColors.primarySoft),
-          ),
-          child: Text(
-            initials,
-            style: AppTypography.brand(
-              15,
-              weight: FontWeight.w700,
-            ).copyWith(color: context.resolve(AppColors.onPrimarySoft)),
+        Semantics(
+          button: true,
+          label: 'Abrir perfil e ajustes',
+          child: ExcludeSemantics(
+            child: GestureDetector(
+              onTap: onOpenSettings,
+              child: Container(
+                width: AppSizes.minTapTarget,
+                height: AppSizes.minTapTarget,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: context.resolve(AppColors.primarySoft),
+                ),
+                child: Text(
+                  initials,
+                  style: AppTypography.brand(
+                    15,
+                    weight: FontWeight.w700,
+                  ).copyWith(color: context.resolve(AppColors.onPrimarySoft)),
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(width: AppSpacing.md),
@@ -60,14 +69,14 @@ class HomeHeader extends StatelessWidget {
         ),
         Semantics(
           button: true,
-          label: 'Sair da conta',
+          label: 'Ajustes',
           child: ExcludeSemantics(
             child: CupertinoButton(
               padding: EdgeInsets.zero,
               minimumSize: const Size.square(AppSizes.minTapTarget),
-              onPressed: onSignOut,
+              onPressed: onOpenSettings,
               child: Icon(
-                CupertinoIcons.square_arrow_right,
+                CupertinoIcons.gear_alt,
                 size: 22,
                 color: context.resolve(AppColors.textSecondary),
               ),

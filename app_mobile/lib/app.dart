@@ -13,15 +13,20 @@ class IceiBankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authRepository = dependencies.authRepository;
+    final themeRepository = dependencies.themeRepository;
 
-    return CupertinoApp(
-      title: 'ICEIBank',
-      theme: AppTheme.data,
-      debugShowCheckedModeBanner: false,
-      locale: const Locale('pt', 'BR'),
-      supportedLocales: const [Locale('pt', 'BR')],
-      localizationsDelegates: GlobalCupertinoLocalizations.delegates,
-      home: ListenableBuilder(
+    return ListenableBuilder(
+      listenable: themeRepository,
+      builder: (context, home) => CupertinoApp(
+        title: 'ICEIBank',
+        theme: AppTheme.withBrightness(themeRepository.preference.brightness),
+        debugShowCheckedModeBanner: false,
+        locale: const Locale('pt', 'BR'),
+        supportedLocales: const [Locale('pt', 'BR')],
+        localizationsDelegates: GlobalCupertinoLocalizations.delegates,
+        home: home,
+      ),
+      child: ListenableBuilder(
         listenable: authRepository,
         builder: (context, _) => AnimatedSwitcher(
           duration: const Duration(milliseconds: 280),
@@ -34,6 +39,7 @@ class IceiBankApp extends StatelessWidget {
                   agencyRepository: dependencies.agencyRepository,
                   leadershipRepository: dependencies.leadershipRepository,
                   syncRepository: dependencies.syncRepository,
+                  themeRepository: themeRepository,
                 )
               : LoginScreen(key: const ValueKey('login'), authRepository: authRepository),
         ),
