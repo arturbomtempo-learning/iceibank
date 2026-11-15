@@ -19,7 +19,7 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1 e a confirmação de entrega com estorno automático no Sprint 2. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. As agências também já aceitam a sincronização offline-first, detectando conflitos pelo vetor, e o app mobile em Flutter já tem o fluxo bancário e o painel de liderança. Falta o modo offline-first no app.
+Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1, a confirmação de entrega com estorno automático no Sprint 2 e o indicador de agências ativas no app do Sprint 3. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. As agências também já aceitam a sincronização offline-first, detectando conflitos pelo vetor, e o app mobile em Flutter já tem o fluxo bancário, o painel de liderança com o indicador de agências ativas e o modo offline-first.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -179,6 +179,19 @@ Com a mensageria, a agência de origem passou a debitar, publicar e nunca mais s
 É o padrão **Saga com transação compensatória**, apontado no Sprint 1 como alternativa ao 2PC e agora implementado de fato. A soma de dinheiro do sistema é preservada, e o vetor mostra que o estorno é causalmente posterior à falha: o `5` na posição da Agência 1 só pode ter chegado à Agência 0 dentro da mensagem de confirmação.
 
 A infraestrutura não precisou de fila nova: a chave de confirmação é vinculada à mesma `fila-agencia-<id>` que já existia. A limitação conhecida é a falta de idempotência, já que uma confirmação negativa reentregue pelo broker aplicaria o estorno duas vezes. A análise completa está no [`RESPOSTAS.md`](RESPOSTAS.md).
+
+### Sprint 3: indicador de agências ativas
+
+O painel de liderança do app mostrava a líder segundo uma única agência. O **indicador de agências ativas** consulta as 3 em paralelo a cada ciclo e mostra, para cada uma, se está no ar, o tempo de resposta e qual líder ela reconhece.
+
+**Como funciona.** A líder em destaque continua vindo da primeira agência que responde, na ordem fixa 0 → 1 → 2. Uma faixa abaixo das agências classifica o estado da rede:
+
+- **Consenso:** todas as agências no ar reconhecem a mesma líder.
+- **Líder que não responde:** as agências ainda apontam para uma líder que caiu, na janela antes do próximo heartbeat.
+- **Divergência:** agências no ar apontam para líderes diferentes, e a que discorda fica destacada.
+- **Eleição em andamento:** as agências respondem, mas ainda sem líder.
+
+Cada agência que responde emite um pulso no próprio nó, e as ligações entre agências ativas ficam verdes. É a forma de ver o consenso do Bully acontecendo, inclusive o momento em que ele ainda não existe. A análise completa está no [`RESPOSTAS.md`](RESPOSTAS.md).
 
 ---
 

@@ -390,6 +390,26 @@ No tamanho deste projeto a discussão é puramente conceitual: os logs reais tê
 
 # Sprint 3
 
+## Funcionalidade adicional - Indicador de agências ativas
+
+A funcionalidade adicional implementada, exigida pela seção 2.1, é o **indicador de agências ativas**: o painel de liderança do app passa a mostrar, para cada uma das 3 agências, se ela está no ar, quanto tempo levou para responder e qual líder ela reconhece.
+
+A escolha recaiu sobre ela, entre as sugestões do roteiro, porque torna visível o que este sprint tem de mais difícil de enxergar: o consenso. O painel da Parte D mostra a líder segundo uma única agência, e a Questão 2 daquela parte discute, só em texto, o que acontece quando as agências ainda não concordam. Com o indicador, esse momento aparece na tela. As outras sugestões ficavam menos interessantes: o histórico de líderes repetiria o aviso de troca que o painel já tem, a eleição sob demanda quase não muda nada quando as 3 agências estão no ar, porque a de maior id vence de novo, e o timeout configurável não teria nada para mostrar fora do terminal.
+
+A cada ciclo de 3 segundos, o app consulta `GET /bully/lider` nas 3 agências **em paralelo**, medindo o tempo de resposta de cada uma. A líder em destaque continua vindo da primeira agência que responde, na ordem fixa 0 → 1 → 2, então o comportamento defendido na Parte D não muda. O que muda é que o app passa a enxergar a rede inteira, e classifica o que vê em quatro situações, mostradas numa faixa logo abaixo das agências:
+
+1. **Consenso:** "3 de 3 agências no ar. Todas reconhecem a Agência 2." A líder ganha o selo verde.
+2. **Líder que não responde:** as agências no ar ainda apontam para uma líder que já caiu. É a janela entre a queda e o próximo heartbeat, discutida na Parte B, agora visível. A líder aparece como "a confirmar", com um alerta, e o nó dela fica vermelho com "Fora do ar, era a líder".
+3. **Divergência:** as agências no ar apontam para líderes diferentes, por exemplo "a Agência 0 vê a 2 e a Agência 1 vê a 1". O nó que discorda fica destacado em vermelho.
+4. **Eleição em andamento:** as agências respondem, mas sem líder definida.
+
+Cada agência que responde emite um pulso animado no próprio nó, e as ligações entre agências no ar ficam verdes. Assim dá para perceber que o painel está vivo mesmo quando nada muda. Com as 3 agências locais no ar, o tempo de resposta ficou em torno de 10 ms. A evidência está em `evidencias/sprint3/funcionalidade-adicional.png`.
+
+Duas decisões que valem registro:
+
+1. **O custo de rede é a troca consciente desta funcionalidade.** Na Questão 1 da Parte D, o app fazia uma consulta por ciclo. Agora faz três, em paralelo, então o tempo de cada ciclo continua o da agência mais lenta, limitado a 2 segundos. São respostas de uns 30 bytes, só com o app aberto e pausadas em segundo plano. Para um painel de demonstração do consenso, ver as 3 agências vale essas duas consultas a mais. Num app de banco de verdade, essa visão ficaria numa tela de diagnóstico, e não na home.
+2. **A agência de destino fixada é ignorada.** O indicador sempre consulta as 3, mesmo que a pessoa tenha fixado uma agência para as operações. Ele existe justamente para mostrar a rede inteira.
+
 ## Parte A - Mensagens de eleição e coordenador
 
 ### Questão 1

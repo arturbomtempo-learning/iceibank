@@ -1,12 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
-import 'package:iceibank/config/agency_endpoints.dart';
 import 'package:iceibank/domain/models/leader_status.dart';
 import 'package:iceibank/ui/core/themes/app_colors.dart';
 import 'package:iceibank/ui/core/themes/app_spacing.dart';
 import 'package:iceibank/ui/core/themes/app_typography.dart';
 import 'package:iceibank/ui/core/widgets/app_notice.dart';
 import 'package:iceibank/ui/leadership/view_models/leadership_view_model.dart';
+import 'package:iceibank/ui/leadership/widgets/agency_network.dart';
+import 'package:iceibank/ui/leadership/widgets/consensus_strip.dart';
 import 'package:iceibank/utils/time.dart';
 
 class LeadershipPanel extends StatefulWidget {
@@ -96,15 +97,11 @@ class _LeadershipPanelState extends State<LeadershipPanel> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
-            ExcludeSemantics(
-              child: _AgencyNodes(
-                leaderId: isOffline ? null : status?.leaderId,
-                sourceAgencyId: isOffline ? null : status?.sourceAgencyId,
-                unreachableAgencies: isOffline
-                    ? AgencyEndpoints.ids
-                    : status?.unreachableAgencies ?? const [],
-              ),
-            ),
+            AgencyNetwork(status: status, isOffline: isOffline),
+            if (status != null && !isOffline) ...[
+              const SizedBox(height: AppSpacing.lg),
+              ConsensusStrip(status: status),
+            ],
             AnimatedSize(
               duration: const Duration(milliseconds: 320),
               curve: Curves.easeOutCubic,
@@ -274,8 +271,8 @@ class _LeaderHeadline extends StatelessWidget {
         ),
         'electing',
       ),
-      (_, final int id, _) => (
-        'Agência líder',
+      (final current?, final int id, _) => (
+        current.consensus == Consensus.agreed ? 'Agência líder' : 'Agência líder, a confirmar',
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -283,15 +280,21 @@ class _LeaderHeadline extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
-              child: Icon(
-                CupertinoIcons.checkmark_seal_fill,
-                size: 22,
-                color: context.resolve(AppColors.primary),
-              ),
+              child: current.consensus == Consensus.agreed
+                  ? Icon(
+                      CupertinoIcons.checkmark_seal_fill,
+                      size: 22,
+                      color: context.resolve(AppColors.primary),
+                    )
+                  : Icon(
+                      CupertinoIcons.exclamationmark_triangle_fill,
+                      size: 20,
+                      color: context.resolve(AppColors.danger),
+                    ),
             ),
           ],
         ),
-        'leader-$id',
+        'leader-$id-${current.consensus.name}',
       ),
     };
 
@@ -318,139 +321,6 @@ class _LeaderHeadline extends StatelessWidget {
           child: KeyedSubtree(key: ValueKey(key), child: headline),
         ),
       ],
-    );
-  }
-}
-
-class _AgencyNodes extends StatelessWidget {
-  const _AgencyNodes({
-    required this.leaderId,
-    required this.sourceAgencyId,
-    required this.unreachableAgencies,
-  });
-
-  final int? leaderId;
-  final int? sourceAgencyId;
-  final List<int> unreachableAgencies;
-
-  @override
-  Widget build(BuildContext context) {
-    final ids = AgencyEndpoints.ids;
-    final line = context.resolve(AppColors.fill);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final agencyId in ids) ...[
-          _AgencyNode(
-            agencyId: agencyId,
-            role: switch (agencyId) {
-              _ when agencyId == leaderId => _NodeRole.leader,
-              _ when unreachableAgencies.contains(agencyId) => _NodeRole.unreachable,
-              _ when agencyId == sourceAgencyId => _NodeRole.source,
-              _ => _NodeRole.idle,
-            },
-          ),
-          if (agencyId != ids.last)
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(top: _AgencyNode.size / 2 - 1),
-                child: Container(height: 2, color: line),
-              ),
-            ),
-        ],
-      ],
-    );
-  }
-}
-
-enum _NodeRole { leader, source, unreachable, idle }
-
-class _AgencyNode extends StatelessWidget {
-  const _AgencyNode({required this.agencyId, required this.role});
-
-  static const double size = 48;
-
-  final int agencyId;
-  final _NodeRole role;
-
-  @override
-  Widget build(BuildContext context) {
-    final isLeader = role == _NodeRole.leader;
-    final isUnreachable = role == _NodeRole.unreachable;
-    final duration = MediaQuery.disableAnimationsOf(context)
-        ? Duration.zero
-        : const Duration(milliseconds: 380);
-
-    final numberColor = switch (role) {
-      _NodeRole.leader => AppColors.white,
-      _NodeRole.unreachable => context.resolve(AppColors.danger),
-      _ => context.resolve(AppColors.text),
-    };
-
-    final (String label, Color labelColor) = switch (role) {
-      _NodeRole.leader => ('Líder', context.resolve(AppColors.primary)),
-      _NodeRole.unreachable => ('Sem resposta', context.resolve(AppColors.danger)),
-      _NodeRole.source => ('Consultada', context.resolve(AppColors.textSecondary)),
-      _NodeRole.idle => ('', context.resolve(AppColors.textTertiary)),
-    };
-
-    return SizedBox(
-      width: 92,
-      child: Column(
-        children: [
-          AnimatedContainer(
-            duration: duration,
-            curve: Curves.easeOutCubic,
-            width: size,
-            height: size,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isLeader
-                  ? null
-                  : context.resolve(isUnreachable ? AppColors.dangerSoft : AppColors.fill),
-              gradient: isLeader
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.brandLight, AppColors.brand],
-                    )
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.brand.withValues(alpha: isLeader ? 0.35 : 0),
-                  blurRadius: isLeader ? 18 : 0,
-                  spreadRadius: isLeader ? 1 : 0,
-                ),
-              ],
-            ),
-            child: isUnreachable
-                ? Icon(CupertinoIcons.wifi_slash, size: 18, color: numberColor)
-                : Text('$agencyId', style: AppTypography.brand(18).copyWith(color: numberColor)),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Agência $agencyId',
-            style: AppTypography.caption.copyWith(color: context.resolve(AppColors.text)),
-          ),
-          const SizedBox(height: 2),
-          AnimatedDefaultTextStyle(
-            duration: duration,
-            style: AppTypography.caption.copyWith(
-              color: labelColor,
-              fontWeight: isLeader ? FontWeight.w700 : FontWeight.w500,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              softWrap: false,
-              textAlign: TextAlign.center,
-              strutStyle: const StrutStyle(forceStrutHeight: true),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

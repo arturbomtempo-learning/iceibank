@@ -15,8 +15,8 @@ void main() {
   setUp(() => requestedPorts = []);
 
   LeadershipRepository buildRepository({
-    required Set<int> offlinePorts,
-    Object? leader = 2,
+    Set<int> offline = const {},
+    Map<int, Object?> leaders = const {},
     int? pinnedAgency,
   }) {
     return LeadershipRepository(
@@ -25,14 +25,18 @@ void main() {
         onUnauthorized: () {},
         pinnedAgency: () => pinnedAgency,
         httpClient: MockClient((request) async {
+          final agencyId = request.url.port - 4035;
           requestedPorts.add(request.url.port);
           expect(request.url.path, '/bully/lider');
           expect(request.headers.containsKey('Authorization'), isFalse);
-          if (offlinePorts.contains(request.url.port)) {
-            throw http.ClientException('Connection refused');
-          }
+          if (offline.contains(agencyId)) throw http.ClientException('Connection refused');
           return http.Response.bytes(
-            utf8.encode(jsonEncode({'idAgencia': request.url.port - 4035, 'liderAtual': leader})),
+            utf8.encode(
+              jsonEncode({
+                'idAgencia': agencyId,
+                'liderAtual': leaders.containsKey(agencyId) ? leaders[agencyId] : 2,
+              }),
+            ),
             200,
           );
         }),
@@ -40,42 +44,62 @@ void main() {
     );
   }
 
-  test('consulta a primeira agência e devolve a líder atual', () async {
-    final result = await buildRepository(offlinePorts: {}).fetchLeader();
+  test('consulta as 3 agências e usa a primeira que responde como fonte da líder', () async {
+    final result = await buildRepository().fetchLeader();
 
-    expect(requestedPorts, [4035]);
     final status = (result as Ok<LeaderStatus>).value;
+    expect(requestedPorts..sort(), [4035, 4036, 4037]);
     expect(status.leaderId, 2);
     expect(status.sourceAgencyId, 0);
-    expect(status.unreachableAgencies, isEmpty);
+    expect(status.onlineProbes, hasLength(3));
+    expect(status.probes.every((probe) => probe.latency != null), isTrue);
+    expect(status.consensus, Consensus.agreed);
   });
 
-  test('tenta a próxima agência quando a consultada está fora do ar', () async {
-    final result = await buildRepository(offlinePorts: {4035, 4036}).fetchLeader();
+  test('passa para a próxima agência quando a primeira está fora do ar', () async {
+    final result = await buildRepository(offline: {0}).fetchLeader();
 
-    expect(requestedPorts, [4035, 4036, 4037]);
     final status = (result as Ok<LeaderStatus>).value;
-    expect(status.sourceAgencyId, 2);
-    expect(status.unreachableAgencies, [0, 1]);
+    expect(status.sourceAgencyId, 1);
+    expect(status.unreachableAgencies, [0]);
+    expect(status.probeFor(0)!.isOnline, isFalse);
+    expect(status.consensus, Consensus.agreed);
   });
 
-  test('ignora a agência fixada e continua tentando as outras', () async {
-    final result = await buildRepository(offlinePorts: {4035}, pinnedAgency: 2).fetchLeader();
+  test('ignora a agência fixada e consulta todas', () async {
+    final result = await buildRepository(pinnedAgency: 2).fetchLeader();
 
-    expect(requestedPorts, [4035, 4036]);
     expect(result, isA<Ok<LeaderStatus>>());
+    expect(requestedPorts..sort(), [4035, 4036, 4037]);
   });
 
-  test('indica eleição em andamento quando ainda não há líder', () async {
-    final result = await buildRepository(offlinePorts: {}, leader: null).fetchLeader();
+  test('detecta a líder reconhecida que parou de responder', () async {
+    final result = await buildRepository(offline: {2}).fetchLeader();
 
-    expect((result as Ok<LeaderStatus>).value.isElecting, isTrue);
+    expect((result as Ok<LeaderStatus>).value.consensus, Consensus.leaderUnreachable);
   });
 
-  test('desiste só depois de tentar as 3 agências', () async {
-    final result = await buildRepository(offlinePorts: {4035, 4036, 4037}).fetchLeader();
+  test('detecta agências que discordam sobre a líder', () async {
+    final result = await buildRepository(offline: {2}, leaders: {0: 2, 1: 1}).fetchLeader();
 
-    expect(requestedPorts, [4035, 4036, 4037]);
+    final status = (result as Ok<LeaderStatus>).value;
+    expect(status.consensus, Consensus.divergent);
+    expect(status.leaderId, 2);
+    expect(status.probeFor(1)!.leaderId, 1);
+  });
+
+  test('indica eleição em andamento quando nenhuma agência tem líder', () async {
+    final result = await buildRepository(leaders: {0: null, 1: null, 2: null}).fetchLeader();
+
+    final status = (result as Ok<LeaderStatus>).value;
+    expect(status.isElecting, isTrue);
+    expect(status.consensus, Consensus.electing);
+  });
+
+  test('desiste só quando nenhuma das 3 agências responde', () async {
+    final result = await buildRepository(offline: {0, 1, 2}).fetchLeader();
+
+    expect(requestedPorts, hasLength(3));
     expect(
       result,
       isA<Failure<LeaderStatus>>().having(
