@@ -8,10 +8,13 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 ![Vue](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=for-the-badge&logo=vuedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-4.3-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.13-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-offline--first-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 ![JWT](https://img.shields.io/badge/Auth-JWT-D63AFF?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Pub%2FSub-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
-![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Relógio_Vetorial-555555?style=for-the-badge)
-![Status](https://img.shields.io/badge/Sprint_3-Em_andamento-yellow?style=for-the-badge)
+![Conceito](https://img.shields.io/badge/Sistemas_Distribuídos-Consenso_e_Relógio_Vetorial-555555?style=for-the-badge)
+![Status](https://img.shields.io/badge/Sprint_3-Concluído-brightgreen?style=for-the-badge)
 ![Repo Size](https://img.shields.io/github/repo-size/arturbomtempo-learning/iceibank?style=for-the-badge)
 ![Last Commit](https://img.shields.io/github/last-commit/arturbomtempo-learning/iceibank?style=for-the-badge)
 
@@ -19,7 +22,9 @@ Um banco distribuído em três agências independentes, onde cada agência é um
 
 ## 🚧 Status do Projeto
 
-Sprints 1 e 2 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ, autenticação e autorização via JWT e frontend web completo. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1, a confirmação de entrega com estorno automático no Sprint 2 e o indicador de agências ativas no app do Sprint 3. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório. O Sprint 3 está em andamento: as agências já elegem uma líder entre si pelo algoritmo de Bully e detectam sozinhas a queda dela, com heartbeat e failover automático, e um script reconstrói o histórico de lideranças a partir dos logs. As agências também já aceitam a sincronização offline-first, detectando conflitos pelo vetor, e o app mobile em Flutter já tem o fluxo bancário, o painel de liderança com o indicador de agências ativas e o modo offline-first.
+Sprints 1, 2 e 3 concluídas. As três agências rodam simultaneamente com partição de contas, relógio vetorial, transferências entre agências por mensageria assíncrona com RabbitMQ e autenticação e autorização via JWT. Desde o Sprint 3, elas também elegem uma líder entre si pelo algoritmo de Bully, detectam sozinhas a queda dela com heartbeat e failover automático, e aceitam a sincronização de operações feitas offline, detectando conflitos pelo relógio vetorial.
+
+Dois clientes consomem a mesma API: o **frontend web** em Vue e o **app mobile** em Flutter, com o fluxo bancário completo, um painel que mostra a líder atual em tempo real e o modo offline-first, com armazenamento local, fila de operações pendentes e sincronização automática ao reconectar. Cada sprint tem sua funcionalidade adicional: o extrato consolidado no Sprint 1, a confirmação de entrega com estorno automático no Sprint 2 e o indicador de agências ativas no app do Sprint 3. As evidências de teste e as respostas conceituais de cada sprint estão registradas no repositório.
 
 São quatro sprints ao longo do semestre: cada um parte do código do anterior e adiciona um novo conceito de Sistemas Distribuídos.
 
@@ -36,10 +41,12 @@ São quatro sprints ao longo do semestre: cada um parte do código do anterior e
     - [⭐ Funcionalidades Adicionais](#-funcionalidades-adicionais)
         - [Sprint 1: extrato consolidado](#sprint-1-extrato-consolidado)
         - [Sprint 2: confirmação de entrega com estorno automático](#sprint-2-confirmação-de-entrega-com-estorno-automático)
+        - [Sprint 3: indicador de agências ativas](#sprint-3-indicador-de-agências-ativas)
     - [🛠 Tecnologias Utilizadas](#-tecnologias-utilizadas)
     - [🏗 Arquitetura](#-arquitetura)
         - [Backend: as três agências](#backend-as-três-agências)
         - [Frontend: o internet banking](#frontend-o-internet-banking)
+        - [Mobile: o app Flutter](#mobile-o-app-flutter)
         - [Sobre a pasta `agencia-express`](#sobre-a-pasta-agencia-express)
     - [⚙️ Instalação e Execução](#️-instalação-e-execução)
         - [Pré-requisitos](#pré-requisitos)
@@ -48,11 +55,15 @@ São quatro sprints ao longo do semestre: cada um parte do código do anterior e
         - [💻 Passo 3: subir o frontend](#-passo-3-subir-o-frontend)
         - [🛑 Como parar](#-como-parar)
         - [🔑 Passo 4: primeiro acesso](#-passo-4-primeiro-acesso)
+        - [📱 Passo 5: rodar o app mobile](#-passo-5-rodar-o-app-mobile)
         - [🕒 Linha do tempo unificada](#-linha-do-tempo-unificada)
         - [🧯 Problemas comuns](#-problemas-comuns)
     - [🔌 Endpoints da API](#-endpoints-da-api)
     - [📂 Estrutura de Pastas](#-estrutura-de-pastas)
     - [🖼️ Evidências](#️-evidências)
+        - [Sprint 1](#sprint-1)
+        - [Sprint 2](#sprint-2)
+        - [Sprint 3](#sprint-3)
     - [📖 Referências](#-referências)
     - [🤖 Uso Responsável de IA](#-uso-responsável-de-ia)
     - [🙏 Agradecimentos](#-agradecimentos)
@@ -73,12 +84,14 @@ Essa escolha é o que dá sentido a tudo o mais. Uma transferência entre contas
 
 O projeto também expõe, de forma deliberada, as limitações de cada etapa. No Sprint 1, se a agência de destino caísse no meio de uma transferência, o débito já aplicado não era revertido. A mensageria do Sprint 2 resolveu a entrega, porque a mensagem fica retida na fila e é entregue quando a agência volta, e a confirmação de entrega resolveu o crédito que falha no destino, porque a origem recebe o desfecho e devolve o valor. O que ainda falta é **atomicidade**: o estorno é uma compensação posterior, não uma transação única, não há controle de idempotência para mensagens reentregues, e se a publicação no broker falhar depois do débito, o valor fica debitado sem chegar ao destino. Essas lacunas não são escondidas, elas são registradas no log e documentadas, porque resolvê-las de verdade é o tema do Sprint 4, com transações distribuídas.
 
-| Sprint | Conceito de Sistemas Distribuídos         |    Situação     |
-| :----: | ----------------------------------------- | :-------------: |
-| **1**  | **Relógio lógico de Lamport**             |  ✅ Concluído   |
-| **2**  | **Relógio vetorial e mensageria**         |  ✅ Concluído   |
-|   3    | Consenso (eleição de líder) e app Flutter | 🚧 Em andamento |
-|   4    | Transações distribuídas (2PC/Saga)        |    Planejado    |
+O Sprint 3 segue a mesma linha. A líder eleita pelo Bully ainda é só **informativa**: nenhuma operação passa por ela, papel que ela assume no Sprint 4, coordenando o 2PC. E a detecção de conflito offline-first é propositalmente simples: como o vetor é da agência, e não da conta, qualquer evento na agência conta como mudança, inclusive em outra conta. O app não resolve o conflito sozinho: mostra o saldo real e deixa a pessoa decidir.
+
+| Sprint | Conceito de Sistemas Distribuídos             |   Situação   |
+| :----: | --------------------------------------------- | :----------: |
+| **1**  | **Relógio lógico de Lamport**                 | ✅ Concluído |
+| **2**  | **Relógio vetorial e mensageria**             | ✅ Concluído |
+| **3**  | **Consenso (eleição de líder) e app Flutter** | ✅ Concluído |
+|   4    | Transações distribuídas (2PC/Saga)            |  Planejado   |
 
 ---
 
@@ -124,7 +137,15 @@ Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionam
 
 **SEO e compartilhamento.** Cada página tem título, descrição e link canônico próprios, atualizados a cada navegação. As páginas públicas são indexáveis e as autenticadas saem com `noindex`. O build gera o HTML de cada rota já com as tags certas, além de `robots.txt`, `sitemap.xml`, imagem de prévia para redes sociais e ícones do app.
 
-**Roteamento automático de agência.** O frontend descobre sozinho qual agência atende cada conta e envia a requisição para o endereço certo, sem que a pessoa precise escolher. Um controle manual permite fixar uma agência específica para demonstrar o comportamento da partição.
+**Roteamento automático de agência.** O frontend e o app descobrem sozinhos qual agência atende cada conta e enviam a requisição para o endereço certo, sem que a pessoa precise escolher. Um controle manual permite fixar uma agência específica para demonstrar o comportamento da partição.
+
+**App mobile em Flutter.** Cliente nativo com visual iOS (Cupertino), que roda no iPhone e no Android: login com JWT guardado no Keychain e no Keystore, saldo, depósito, saque, transferência local e entre agências, cadastro de correntistas e abertura de contas pelo gerente, e tratamento visível dos erros da API, inclusive o aviso de sessão expirada. Se uma agência cai, o app tenta as outras antes de desistir.
+
+**Painel de liderança em tempo real.** A home do app mostra qual agência é a líder, consultando `GET /bully/lider` a cada 3 segundos, sem que a pessoa precise atualizar a tela. Quando a líder muda, o painel anuncia a troca com o horário. ⭐ Com o indicador de agências ativas, ele também mostra o estado de cada agência e se elas concordam sobre a líder.
+
+**Modo offline-first no app.** O saldo e o vetor de cada conta ficam guardados em SQLite, e a home continua funcionando sem conexão, com o último saldo conhecido. Um depósito ou saque feito sem conexão vai para uma fila local, com o vetor conhecido, e aparece na hora como saldo provisório. Quando a agência volta, o app sincroniza sozinho. Se a agência recusar com `409`, o app mostra o saldo real e pergunta à pessoa se aplica a operação mesmo assim ou a descarta.
+
+**Aparência ajustável.** O app segue o tema do aparelho por padrão, e a pessoa pode fixar o tema claro ou escuro só para ele, numa tela de ajustes. A escolha fica salva.
 
 ---
 
@@ -223,7 +244,20 @@ Cada agência que responde emite um pulso no próprio nó, e as ligações entre
 | Zod          |  4.6   | Validação dos formulários com tipos inferidos do schema        |
 | Tailwind CSS |  4.3   | Estilização, sobre um design system com tokens próprios        |
 
-A escolha de **Python com Flask** atende à exigência do roteiro, que permite Java ou Python e proíbe a entrega em Node.js. O **Vue** foi escolhido no frontend, cuja tecnologia era livre.
+**Mobile**
+
+| Tecnologia             | Versão | Papel no projeto                                                        |
+| ---------------------- | :----: | ----------------------------------------------------------------------- |
+| Flutter                |  3.47  | Framework do app, com widgets Cupertino para o visual do iOS            |
+| Dart                   |  3.13  | Linguagem do app                                                        |
+| http                   |  1.6   | Cliente HTTP oficial do Dart, usado em todas as chamadas às agências    |
+| flutter_secure_storage |  11.2  | Guarda o token JWT no Keychain do iOS e no Keystore do Android          |
+| sqflite                |  2.4   | SQLite local: cache de saldos e vetores e a fila de operações pendentes |
+| shared_preferences     |  2.5   | Preferências simples: agência de destino fixada e tema escolhido        |
+| path                   |  1.9   | Monta o caminho do arquivo do banco local                               |
+| flutter_localizations  |  SDK   | Textos e formatos do sistema em português                               |
+
+A escolha de **Python com Flask** atende à exigência do roteiro, que permite Java ou Python e proíbe a entrega em Node.js. O **Vue** foi escolhido no frontend, cuja tecnologia era livre. No app, o **Flutter** é obrigatório pelo roteiro, e a regra foi usar o mínimo de pacotes de terceiros: fora o `flutter_secure_storage` e o `sqflite`, todos são da própria equipe do Flutter e do Dart. Gerenciamento de estado, navegação, injeção de dependências e animações usam só o que o Flutter já oferece.
 
 ---
 
@@ -273,19 +307,38 @@ Três decisões merecem destaque:
 
 **O SEO tem uma única fonte de verdade.** O arquivo `src/app/seo/pages.ts` define caminho, título, descrição e indexação de cada página. O roteador usa esses dados para atualizar as tags a cada navegação, e um plugin do Vite (`vite-plugins/seo.ts`) usa os mesmos dados no build para gerar o HTML de cada rota, o `robots.txt` e o `sitemap.xml`.
 
+### Mobile: o app Flutter
+
+O app segue a **arquitetura recomendada pela documentação oficial do Flutter**, em camadas e no padrão MVVM:
+
+- **`data/services/`** fala com o mundo externo: o `ApiClient` (HTTP, token, failover entre agências), o armazenamento seguro da sessão e o banco SQLite.
+- **`data/repositories/`** é a fonte da verdade de cada assunto: autenticação, contas, usuários, liderança, sincronização, agência de destino e tema. Eles nunca dependem uns dos outros.
+- **`domain/models/`** guarda os modelos imutáveis, como conta, extrato, operação pendente e estado da liderança.
+- **`ui/`** é dividida por funcionalidade (`auth`, `home`, `operations`, `transfers`, `management`, `leadership`, `sync`, `settings`), cada uma com seus view models (`ChangeNotifier`) e widgets. O design system fica em `ui/core`, com as mesmas cores, raios e tipografia do web, em versões clara e escura.
+
+As decisões que mais pesaram:
+
+**O app conversa com as agências do mesmo jeito que o web.** Mesmo contrato, mesmas rotas e a mesma regra `id % 3` para escolher a agência. A diferença é o endereço: no emulador Android, o Mac é `10.0.2.2`; no simulador do iOS, `127.0.0.1`. As configurações nativas liberam HTTP sem criptografia só para a rede local.
+
+**O painel de liderança consulta as 3 agências em paralelo, a cada 3 segundos**, o mesmo intervalo do heartbeat do backend. A líder em destaque vem da primeira agência que responde, sempre na ordem 0 → 1 → 2, o que evita que o painel alterne entre agências que ainda discordam durante uma eleição. As consultas param quando o app vai para segundo plano.
+
+**O modo offline-first usa o vetor como versão da conta.** O vetor vem de `GET /contas/<id>` e é guardado no SQLite junto do saldo. Operações feitas sem conexão entram numa fila, em ordem, cada uma com o vetor conhecido. A reconexão é detectada tentando a fila a cada 4 segundos enquanto houver pendências, e não pelo `connectivity_plus`: ele só informa se o aparelho tem rede, não se a agência responde, e com as agências em `localhost` desligar o Wi-Fi do computador nem chegaria ao simulador. Duas operações seguidas na mesma agência têm o vetor encadeado, já que cada sincronização avança exatamente uma posição, para que a segunda não vire um conflito falso.
+
+**Nada é aplicado às cegas.** No `409`, o app troca o saldo provisório pelo real, marca a operação como "não aplicada" e pede uma decisão. Uma nova tentativa automática poderia sacar duas vezes, se a mudança tivesse sido a mesma operação feita por outro caminho. A justificativa completa está nas Partes E e F do [`RESPOSTAS.md`](RESPOSTAS.md).
+
 ### Sobre a pasta `agencia-express`
 
 O roteiro traz o código de referência em **Node.js/Express** apenas como material didático, para que o aluno entenda a lógica com clareza, e proíbe explicitamente a entrega nessa linguagem.
 
-A pasta [`agencia-express/`](agencia-express/) contém essa implementação de referência, que reproduzi primeiro para validar os conceitos antes de partir para a entrega. Ela acompanha o roteiro até o Sprint 2, com relógio vetorial e mensageria pelo RabbitMQ, mas não inclui as funcionalidades adicionais, que são autorais. **Ela não faz parte da entrega**: serviu como laboratório de estudo e está mantida no repositório apenas como registro do processo.
+A pasta [`agencia-express/`](agencia-express/) contém essa implementação de referência, que reproduzi primeiro para validar os conceitos antes de partir para a entrega. Ela acompanha o roteiro até o Sprint 3, com relógio vetorial, mensageria pelo RabbitMQ, eleição pelo algoritmo de Bully e o endpoint de sincronização offline-first, mas não inclui as funcionalidades adicionais, que são autorais. **Ela não faz parte da entrega**: serviu como laboratório de estudo e está mantida no repositório apenas como registro do processo.
 
-A entrega avaliável é a pasta [`agencia/`](agencia/), escrita em Python com Flask, junto do frontend em [`frontend/`](frontend/).
+A entrega avaliável é a pasta [`agencia/`](agencia/), escrita em Python com Flask, junto do frontend em [`frontend/`](frontend/) e do app em [`app_mobile/`](app_mobile/).
 
 ---
 
 ## ⚙️ Instalação e Execução
 
-O ICEIBank roda em **4 terminais simultâneos**: um para cada uma das três agências, mais um para o frontend. Essa separação não é detalhe de execução, é a essência do projeto: cada agência é um processo independente, com sua própria memória e seu próprio relógio lógico.
+O ICEIBank roda em **até 5 terminais simultâneos**: um para cada uma das três agências, mais um para o frontend e outro para o app mobile, se quiser usar os dois clientes. Essa separação não é detalhe de execução, é a essência do projeto: cada agência é um processo independente, com sua própria memória e seu próprio relógio lógico.
 
 | Terminal | O que roda      | Porta |
 | :------: | --------------- | :---: |
@@ -293,11 +346,13 @@ O ICEIBank roda em **4 terminais simultâneos**: um para cada uma das três agê
 |    2     | Agência 1       | 4036  |
 |    3     | Agência 2       | 4037  |
 |    4     | Frontend (Vite) | 5173  |
+|    5     | App mobile      |   -   |
 
 ### Pré-requisitos
 
 - **Python 3.10+** (o projeto foi desenvolvido com o 3.14)
 - **Node.js 22.18+ ou 24.12+** e npm, para o frontend
+- **Flutter 3.47+**, para o app mobile, com o **Xcode** (simulador do iOS, só no macOS) ou o **Android Studio** (emulador Android). O `flutter doctor` precisa passar sem erros na plataforma escolhida
 - **Git**
 
 ### 📦 Passo 1: clonar e preparar o backend
@@ -484,6 +539,34 @@ O número da conta define a agência: **0, 3, 6...** ficam na Agência 0; **1, 4
 
 > Para ver o extrato consolidado em ação, abra contas do mesmo correntista em agências diferentes, por exemplo as contas 6, 7 e 8. A tela inicial passa a mostrar as três, com o saldo somado.
 
+### 📱 Passo 5: rodar o app mobile
+
+Com as três agências no ar, abra um emulador ou simulador:
+
+- **iOS (macOS):** `open -a Simulator`
+- **Android:** no Android Studio, **Device Manager**, crie um aparelho (por exemplo, Pixel 9) e clique em ▶
+
+Depois, no quinto terminal:
+
+```bash
+cd iceibank/app_mobile
+flutter pub get
+flutter run
+```
+
+Se houver mais de um aparelho aberto, o Flutter pergunta em qual rodar. A primeira compilação para Android baixa o Gradle e as dependências e leva alguns minutos; as próximas levam segundos. Avisos `WARNING: A restricted method in java.lang.System` durante a compilação vêm do Gradle com Java recente e podem ser ignorados.
+
+O app encontra as agências sozinho: `127.0.0.1` no simulador do iOS e `10.0.2.2` no emulador Android. O projeto foi validado nesses dois ambientes.
+
+O primeiro acesso é igual ao do web: entre como `admin` / `admin1234`, cadastre um correntista e abra uma conta para ele, tudo pelas ações rápidas da home.
+
+**Para testar o modo offline-first**, o app precisa perder o contato com a agência da conta:
+
+- **No emulador Android**, ative o **modo avião** no painel rápido.
+- **No simulador do iOS**, que não tem modo avião e acessa as agências por `localhost`, desligar o Wi-Fi não tem efeito. Pare a agência da conta com `Ctrl+C`; o roteiro fala justamente em "sem conexão com a agência responsável".
+
+Os testes automatizados do app rodam com `flutter test`, e a análise estática com `flutter analyze`.
+
 ### 🕒 Linha do tempo unificada
 
 Depois de gerar alguns eventos, é possível ver a linha do tempo das três agências juntas, com os pares concorrentes identificados pelo relógio vetorial:
@@ -524,6 +607,8 @@ cd iceibank\agencia
 | Todas as telas mostram "não foi possível falar com a agência" | Alguma agência não está rodando                    | Confirme que os três terminais estão ativos                                          |
 | As contas sumiram depois de reiniciar                         | Comportamento esperado: as contas ficam em memória | Recrie as contas entrando como `admin`                                               |
 | "Já existe um usuário com esse nome" após reiniciar           | Os usuários são salvos em arquivo, e não somem     | Use outro nome, ou apague `agencia/data/usuarios.json` para voltar apenas ao `admin` |
+| A sincronização offline sempre volta como conflito            | Algo mudou na agência depois da última leitura     | Puxe a home para atualizar antes de ficar offline; qualquer evento na agência conta  |
+| A primeira compilação Android parece travada                  | O Gradle está baixando as dependências             | Aguarde alguns minutos; se passar de 15, rode `flutter run -v` para ver a etapa      |
 
 ---
 
@@ -599,10 +684,24 @@ iceibank/
 │   ├── .env.example                  # URLs das agências e SITE_URL
 │   └── package.json
 │
+├── app_mobile/                       # ✅ Entrega: app em Flutter (Sprint 3)
+│   ├── lib/
+│   │   ├── config/                   # Endereços das agências e montagem das dependências
+│   │   ├── data/
+│   │   │   ├── services/             # ApiClient, sessão segura e banco SQLite
+│   │   │   └── repositories/         # Contas, sessão, liderança, sincronização, tema...
+│   │   ├── domain/models/            # Conta, extrato, operação pendente, liderança
+│   │   ├── ui/                       # Telas por funcionalidade, cada uma com view models
+│   │   └── utils/                    # Moeda, horários e formatadores
+│   ├── test/                         # Testes de repositórios, modelos e view models
+│   ├── android/ e ios/               # Projetos nativos, ícones e liberação da rede local
+│   └── pubspec.yaml
+│
 ├── agencia-express/                  # 📖 Referência em Node.js do roteiro (não entregue)
 ├── evidencias/
 │   ├── sprint1/                      # Prints dos testes do Sprint 1
-│   └── sprint2/                      # Prints dos testes do Sprint 2
+│   ├── sprint2/                      # Prints dos testes do Sprint 2
+│   └── sprint3/                      # Prints dos testes do Sprint 3
 ├── enunciado/                        # Roteiros das sprints 1, 2 e 3
 ├── RESPOSTAS.md                      # Respostas conceituais e decisões de design
 └── README.md
@@ -612,9 +711,11 @@ iceibank/
 
 ## 🖼️ Evidências
 
-Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/), [`evidencias/sprint2/`](evidencias/sprint2/) e [`evidencias/sprint3/`](evidencias/sprint3/), com a data visível no terminal para comprovar a execução.
+Todos os testes foram executados e registrados em [`evidencias/sprint1/`](evidencias/sprint1/), [`evidencias/sprint2/`](evidencias/sprint2/) e [`evidencias/sprint3/`](evidencias/sprint3/). Nos prints de terminal, a data aparece no próprio terminal ou na barra de menus do macOS. Os roteiros pedem o `Get-Date` do PowerShell, mas o projeto foi executado no macOS, onde a data vem do `date` e da barra de menus. Nos prints do app, aparece o relógio do aparelho, e quando o comportamento depende do backend, o terminal da agência fica ao lado, com o horário de cada requisição. As evidências marcadas com ➕ não foram pedidas pelo roteiro e complementam as obrigatórias.
 
-**Sprint 1: backend e conceitos distribuídos**
+### Sprint 1
+
+**Backend e conceitos distribuídos**
 
 Os prints do Sprint 1 registram o comportamento da época, com relógio de Lamport e chamada HTTP direta entre agências. O Sprint 2 substituiu os dois, como mostram as evidências da tabela seguinte.
 
@@ -624,27 +725,6 @@ Os prints do Sprint 1 registram o comportamento da época, com relógio de Lampo
 | [`transferencia-entre-agencias.png`](evidencias/sprint1/transferencia-entre-agencias.png) | Transferência entre agências, com o crédito remoto            |
 | [`falha-conhecida.png`](evidencias/sprint1/falha-conhecida.png)                           | Sprint 1: destino fora do ar, HTTP 502 e débito não revertido |
 | [`linha-do-tempo.png`](evidencias/sprint1/linha-do-tempo.png)                             | Eventos das 3 agências ordenados por relógio de Lamport       |
-
-**Sprint 2: mensageria e relógio vetorial**
-
-| Evidência                                                                         | O que demonstra                                                               |
-| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png) | Transferência entre agências concluída pela fila do RabbitMQ                  |
-| [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                 | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
-| [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)       | Pares de eventos concorrentes identificados pelo relógio vetorial             |
-| [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png) | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
-
-**Sprint 3: eleição de líder pelo algoritmo de Bully**
-
-| Evidência                                                               | O que demonstra                                                                             |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| [`eleicao-inicial.png`](evidencias/sprint3/eleicao-inicial.png)         | As 3 agências sobem e convergem para a mesma líder, a Agência 2                             |
-| [`failover.png`](evidencias/sprint3/failover.png)                       | A líder é derrubada, o heartbeat detecta a queda e as 2 restantes elegem a Agência 1        |
-| [`failover-retorno.png`](evidencias/sprint3/failover-retorno.png)       | ➕ Evidência extra: a Agência 2 volta ao ar e retoma a liderança                            |
-| [`historico-lideranca.png`](evidencias/sprint3/historico-lideranca.png) | Saída do `historico_lideranca.py`: líder inicial, queda e nova líder reconstruídas dos logs |
-| [`funcionalidade-adicional.png`](evidencias/sprint3/funcionalidade-adicional.png) | Indicador de agências ativas: cada agência com o tempo de resposta e a líder que reconhece, antes e depois da queda |
-
-O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte B também manda subir de novo a agência derrubada e observar o que acontece. Esse retorno ganhou um print próprio porque mostra o outro lado do failover, que o primeiro print não cobre: a recuperação também é automática. Ao voltar, a Agência 2 inicia a própria eleição, não encontra ninguém de id maior, se declara líder e anuncia o resultado. As agências 0 e 1 aceitam o anúncio e passam a reconhecê-la, mesmo com a Agência 1 liderando normalmente até ali. É exatamente o comportamento de "valentão" que dá nome ao algoritmo, e o mesmo print mostra o seu custo: uma troca de liderança que ninguém pediu, tema da Pergunta 2 da Parte B. Os vetores também deixam uma marca da reinicialização. A Agência 2 volta com o relógio zerado, em `[0, 0, 1]`, porque o vetor fica em memória, e só volta a incorporar o que as outras agências já sabiam quando recebe delas uma mensagem que carrega vetor, como uma eleição ou um crédito remoto. As respostas ao anúncio de coordenador e as consultas do heartbeat não levam vetor.
 
 **Autenticação (Parte F)**
 
@@ -677,6 +757,69 @@ O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte
 | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | [`funcionalidade-adicional.png`](evidencias/sprint1/funcionalidade-adicional.png) | Cada agência conhece só a sua partição, e uma única chamada ao `/extrato` reúne as três com o saldo somado |
 
+### Sprint 2
+
+**Mensageria e relógio vetorial**
+
+| Evidência                                                                         | O que demonstra                                                               |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [`transferencia-assincrona.png`](evidencias/sprint2/transferencia-assincrona.png) | Transferência entre agências concluída pela fila do RabbitMQ                  |
+| [`resiliencia-fila.png`](evidencias/sprint2/resiliencia-fila.png)                 | Destino fora do ar: mensagem retida na fila e entregue quando a agência volta |
+| [`linha-do-tempo-causal.png`](evidencias/sprint2/linha-do-tempo-causal.png)       | Pares de eventos concorrentes identificados pelo relógio vetorial             |
+| [`funcionalidade-adicional.png`](evidencias/sprint2/funcionalidade-adicional.png) | Confirmação de entrega: crédito confirmado e, na falha, estorno automático    |
+
+### Sprint 3
+
+**Partes A, B e C: eleição de líder pelo algoritmo de Bully**
+
+| Evidência                                                               | O que demonstra                                                                             |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [`eleicao-inicial.png`](evidencias/sprint3/eleicao-inicial.png)         | As 3 agências sobem e convergem para a mesma líder, a Agência 2                             |
+| [`failover.png`](evidencias/sprint3/failover.png)                       | A líder é derrubada, o heartbeat detecta a queda e as 2 restantes elegem a Agência 1        |
+| [`failover-retorno.png`](evidencias/sprint3/failover-retorno.png)       | ➕ A Agência 2 volta ao ar e retoma a liderança                                             |
+| [`historico-lideranca.png`](evidencias/sprint3/historico-lideranca.png) | Saída do `historico_lideranca.py`: líder inicial, queda e nova líder reconstruídas dos logs |
+
+O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte B também manda subir de novo a agência derrubada e observar o que acontece. Esse retorno ganhou um print próprio porque mostra o outro lado do failover, que o primeiro print não cobre: a recuperação também é automática. Ao voltar, a Agência 2 inicia a própria eleição, não encontra ninguém de id maior, se declara líder e anuncia o resultado. As agências 0 e 1 aceitam o anúncio e passam a reconhecê-la, mesmo com a Agência 1 liderando normalmente até ali. É exatamente o comportamento de "valentão" que dá nome ao algoritmo, e o mesmo print mostra o seu custo: uma troca de liderança que ninguém pediu, tema da Pergunta 2 da Parte B. Os vetores também deixam uma marca da reinicialização. A Agência 2 volta com o relógio zerado, em `[0, 0, 1]`, porque o vetor fica em memória, e só volta a incorporar o que as outras agências já sabiam quando recebe delas uma mensagem que carrega vetor, como uma eleição ou um crédito remoto. As respostas ao anúncio de coordenador e as consultas do heartbeat não levam vetor.
+
+**Parte D: app Flutter com painel de liderança**
+
+| Evidência                                                                 | O que demonstra                                                                                      |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| [`app-lider-atual.png`](evidencias/sprint3/app-lider-atual.png)           | Com as 3 agências no ar, o painel mostra a Agência 2 como líder                                      |
+| [`app-failover.png`](evidencias/sprint3/app-failover.png)                 | Antes e depois: a líder cai e o painel passa sozinho para a Agência 1, às 00:01:26, sem nenhum toque |
+| [`app-failover-retorno.png`](evidencias/sprint3/app-failover-retorno.png) | ➕ A Agência 2 volta, e o painel registra sozinho a troca da Agência 1 para a 2                      |
+| [`app-sem-agencias.png`](evidencias/sprint3/app-sem-agencias.png)         | ➕ As 3 agências fora do ar: o painel mostra "sem sinal", a última líder conhecida e segue tentando  |
+
+O `app-failover.png` reúne as duas capturas, antes e depois, numa imagem só, como o roteiro permite. A troca de 2 para 1 aconteceu às 00:01:24 nos logs das agências e apareceu no app às 00:01:26, dentro do ciclo de 3 segundos de consulta.
+
+**Parte E: sincronização offline-first no backend**
+
+| Evidência                                                                     | O que demonstra                                                                                     |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [`conflito-sincronizacao.png`](evidencias/sprint3/conflito-sincronizacao.png) | Sincronização com o vetor antigo recusada com `409`, devolvendo o vetor atual e o estado da conta   |
+| [`sincronizacao-aplicada.png`](evidencias/sprint3/sincronizacao-aplicada.png) | ➕ Passo 5 da tarefa: a mesma operação, com o `vetorAtual` devolvido no `409`, aplicada com sucesso |
+| [`conflito-outra-conta.png`](evidencias/sprint3/conflito-outra-conta.png)     | ➕ `409` causado por uma operação em outra conta da mesma agência                                   |
+
+O roteiro pede print só do conflito, mas o passo 5 da tarefa manda sincronizar de novo com o vetor atualizado, e esse sucesso ganhou um print próprio. O `conflito-outra-conta.png` documenta a simplificação discutida na Pergunta 2 da Parte E: a conta 300 continuava com o mesmo saldo, mas a criação da conta 303 avançou o vetor da agência, e a sincronização foi recusada mesmo assim.
+
+**Parte F: app Flutter no modo offline-first**
+
+| Evidência                                                           | O que demonstra                                                                                                 |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [`app-offline.png`](evidencias/sprint3/app-offline.png)             | Em modo avião, o depósito fica guardado como pendente, sem erro, e o saldo aparece como provisório              |
+| [`app-sincronizacao.png`](evidencias/sprint3/app-sincronizacao.png) | Antes e depois: ao reconectar, o app envia a operação sozinho, e o terminal da agência registra a sincronização |
+| [`app-conflito.png`](evidencias/sprint3/app-conflito.png)           | Tarefa 5: o `409` tratado de forma visível, com o saldo real, a operação "não aplicada" e o pedido de decisão   |
+
+A Parte F foi evidenciada no **emulador Android**, porque o roteiro pede o modo avião, que o simulador do iOS não tem. O `app-sincronizacao.png` também reúne antes e depois numa imagem só. O roteiro não dá nome ao print do conflito, então ele foi salvo como `app-conflito.png`. Para provocar o conflito, um depósito de R$ 20 ficou guardado no app em modo avião enquanto um depósito de R$ 30 era feito na mesma conta por `curl`. Ao reconectar, a agência recusou a sincronização com `409`, e o app trocou o saldo provisório de R$ 170 pelo real, de R$ 180, sem aplicar nada sozinho.
+
+**⭐ Funcionalidade adicional do Sprint 3**
+
+| Evidência                                                                         | O que demonstra                                                                                                     |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| [`funcionalidade-adicional.png`](evidencias/sprint3/funcionalidade-adicional.png) | Indicador de agências ativas: cada agência com o tempo de resposta e a líder que reconhece, antes e depois da queda |
+
+As duas metades foram extraídas da gravação da tela. Às 00:31:07, as 3 agências respondiam em 3 ms e todas reconheciam a Agência 2. Às 00:31:13, a Agência 2 aparecia fora do ar e as outras duas já reconheciam a Agência 1. O indicador também sabe mostrar uma líder que parou de responder antes de ser substituída, mas esse estado não chegou a aparecer na gravação: a agência derrubada recusou a conexão na hora, e a nova líder foi eleita dentro de um único ciclo de consulta do app. Ele aparece quando a detecção demora mais, por exemplo com uma líder travada em vez de desligada, e está coberto pelos testes automatizados do app.
+
 ---
 
 ## 📖 Referências
@@ -684,6 +827,7 @@ O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte
 - LAMPORT, Leslie. _Time, Clocks, and the Ordering of Events in a Distributed System._ Communications of the ACM, v. 21, n. 7, 1978.
 - FIDGE, Colin J. _Timestamps in Message-Passing Systems That Preserve the Partial Ordering._ Proceedings of the 11th Australian Computer Science Conference, 1988.
 - MATTERN, Friedemann. _Virtual Time and Global States of Distributed Systems._ Parallel and Distributed Algorithms, North-Holland, 1989.
+- GARCIA-MOLINA, Hector. _Elections in a Distributed Computing System._ IEEE Transactions on Computers, v. C-31, n. 1, p. 48-59, 1982.
 - GARCIA-MOLINA, Hector; SALEM, Kenneth. _Sagas._ Proceedings of the ACM SIGMOD International Conference on Management of Data, 1987.
 - COULOURIS, George et al. _Distributed Systems: Concepts and Design._ 5th ed. Addison-Wesley, 2011.
 - TANENBAUM, A. S.; VAN STEEN, M. _Sistemas Distribuídos: Princípios e Paradigmas._ Tradução da 2ª edição. Pearson, 2007.
@@ -693,6 +837,8 @@ O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte
 - Vue.js. Documentação oficial. Disponível em: <https://vuejs.org/>
 - PyJWT. Documentação oficial. Disponível em: <https://pyjwt.readthedocs.io/>
 - RabbitMQ. Documentação oficial. Disponível em: <https://www.rabbitmq.com/docs>
+- Flutter. Documentação oficial e guia de arquitetura de apps. Disponível em: <https://docs.flutter.dev/app-architecture>
+- SQLite. Documentação oficial. Disponível em: <https://www.sqlite.org/docs.html>
 
 ---
 
@@ -700,18 +846,18 @@ O roteiro pede print apenas da queda da líder, mas o passo 6 da tarefa da Parte
 
 Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-01.md), registro aqui, de forma aberta, como usei ferramentas de inteligência artificial neste trabalho. As ferramentas foram o **Claude Code (modelo Claude Sonnet 5)** e o **ChatGPT**, no modelo gratuito atualmente disponível (**GPT-5.6 Luna**).
 
-**Onde a IA foi usada.** Diferente de um uso apenas cosmético, ela participou do desenvolvimento em três frentes: na implementação da **API em Flask**, na construção do **frontend em Vue**, e na redação deste `README.md` e do [`RESPOSTAS.md`](RESPOSTAS.md). Prefiro declarar isso com clareza a minimizar o papel que a ferramenta teve.
+**Onde a IA foi usada.** Diferente de um uso apenas cosmético, ela participou do desenvolvimento em quatro frentes: na implementação da **API em Flask**, na construção do **frontend em Vue** e do **app em Flutter**, e na redação deste `README.md` e do [`RESPOSTAS.md`](RESPOSTAS.md). Prefiro declarar isso com clareza a minimizar o papel que a ferramenta teve.
 
 **Como foi usada.** O que separa um uso responsável de uma cópia irrefletida é o método, e aqui ele foi deliberado:
 
 - **Engenharia de prompt.** Cada solicitação partiu de um contexto construído por mim: o enunciado da sprint, o padrão de arquitetura que eu queria seguir, as restrições do projeto e o comportamento esperado. Não descrevi problemas de forma vaga esperando uma solução pronta.
 - **Direção das decisões de projeto.** As escolhas estruturais foram minhas, e várias contrariaram a primeira sugestão da ferramenta. Defini o modelo de credenciais e de papéis, o formato do armazenamento do token, a decisão de não repassar o token de sessão entre agências, o desenho da funcionalidade adicional e a identidade visual do frontend. Em mais de um momento revertí alterações que extrapolavam o escopo do roteiro, para manter a fidelidade ao que foi pedido.
 - **Revisão crítica linha a linha.** Nada entrou no repositório sem leitura e entendimento. Quando o comportamento não fez sentido, questionei e corrigi: bugs de interface, mensagens de erro imprecisas e inconsistências entre o que a tela mostrava e o que a API devolvia foram identificados por mim durante os testes.
-- **Validação por evidência.** Todo o comportamento documentado foi executado e comprovado por mim, e está registrado nos prints das pastas [`evidencias/sprint1/`](evidencias/sprint1/) e [`evidencias/sprint2/`](evidencias/sprint2/).
+- **Validação por evidência.** Todo o comportamento documentado foi executado e comprovado por mim, e está registrado nos prints das pastas [`evidencias/sprint1/`](evidencias/sprint1/), [`evidencias/sprint2/`](evidencias/sprint2/) e [`evidencias/sprint3/`](evidencias/sprint3/).
 
 **O que continua sendo meu.** A compreensão do problema, as decisões de arquitetura, a validação de cada funcionalidade, a análise dos resultados observados nos logs e o conteúdo conceitual das respostas do [`RESPOSTAS.md`](RESPOSTAS.md), embasado nas referências bibliográficas listadas acima e no próprio roteiro.
 
-Assumo integralmente a autoria e a responsabilidade por este trabalho e **estou apto a explicar e defender qualquer trecho entregue neste repositório**, seja o algoritmo do relógio vetorial, o fluxo de autenticação e autorização, a mensageria entre as agências ou qualquer decisão tomada no frontend.
+Assumo integralmente a autoria e a responsabilidade por este trabalho e **estou apto a explicar e defender qualquer trecho entregue neste repositório**, seja o algoritmo do relógio vetorial, o fluxo de autenticação e autorização, a mensageria entre as agências, a eleição pelo algoritmo de Bully, o modo offline-first do app ou qualquer decisão tomada no frontend e no app.
 
 ---
 
