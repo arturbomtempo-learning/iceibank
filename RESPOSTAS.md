@@ -622,3 +622,60 @@ Na Parte F, o comportamento planejado é:
    - **"Descartar"**: remove a operação da fila.
 
 O custo é um toque a mais. Em um app bancário, uma confirmação extra é muito mais barata do que mover dinheiro sem a pessoa saber.
+
+## Parte F - App Flutter no modo offline-first
+
+### Questão 1
+
+Escolhi o **SQLite, pelo pacote `sqflite`**. O que o app guarda tem formato de tabela: cada conta tem saldo, vetor e a hora da última leitura, e a fila de operações tem ordem, situação e dono. O SQL resolve isso diretamente:
+
+1. **Ordem garantida.** A fila usa uma chave autoincremental, então `ORDER BY id` devolve as operações na ordem em que foram feitas. Isso importa porque um saque pode depender de um depósito anterior.
+2. **Transações.** Ao atualizar o cache de contas, o app apaga as contas antigas da agência e grava as novas numa única transação, sem risco de ficar com o cache pela metade se o app fechar no meio.
+3. **Consultas por usuário.** Tudo é separado pelo nome de usuário. Dois correntistas no mesmo aparelho não veem os dados um do outro, e as pendências de quem saiu continuam guardadas até a próxima entrada.
+4. **Leveza.** No iOS e no Android, o `sqflite` usa o SQLite que já vem no sistema, sem aumentar o tamanho do app.
+
+Alternativas consideradas:
+
+- **Hive:** é rápido e não exige SQL, mas é chave-valor, sem consultas nem transações entre caixas. Além disso, o autor abandonou o projeto, que hoje sobrevive num fork da comunidade.
+- **Drift:** é a opção mais completa, com SQL tipado e migrações, mas depende de geração de código com `build_runner`, peso demais para duas tabelas.
+- **Isar:** também foi abandonado pelo autor.
+- **`shared_preferences`:** o app já usa para um indicador simples, mas ele serve para preferências, não para uma fila com ordem e situação.
+
+O armazenamento fica atrás de uma interface (`OfflineStore`). O resto do app não conhece o SQLite, e os testes usam uma versão em memória com o mesmo contrato. O token de login continua fora do banco, no Keychain e no Keystore, como na Parte D.
+
+### Questão 2
+
+A evidência `app-conflito.png` registra a sequência, com a conta 301, da Agência 1:
+
+1. Com o celular em modo avião, fiz um depósito de R$ 20,00. O app o guardou na fila com o vetor `[0, 8, 4]`, que tinha lido da agência logo depois da sincronização anterior, às 23:49:45.
+2. Ainda com o app offline, depositei R$ 30,00 na mesma conta por `curl`. A agência foi para `[0, 9, 4]`, com saldo de R$ 180,00.
+3. Ao desligar o modo avião, sem nenhum toque meu, o app enviou a operação pendente, e a agência respondeu **409** às 23:54:37.
+
+Na tela, no mesmo segundo:
+
+- o saldo, que estava em **R$ 170,00 provisórios** (150 reais mais os 20 pendentes), passou para **R$ 180,00**, o valor real devolvido em `contaAtual`, sem a marca de provisório;
+- apareceu o aviso vermelho **"Uma operação não pôde ser aplicada automaticamente. Toque nela para ver o saldo real e decidir."**, e o celular vibrou;
+- a operação continuou na lista, agora como **"Não aplicada · Saldo real: R$ 180,00"**, com uma seta indicando que exige decisão.
+
+Ao tocar nela, abre uma escolha com o saldo real e três opções: **"Aplicar mesmo assim"**, que reenvia com o `vetorAtual` do 409; **"Descartar operação"**; e **"Decidir depois"**. É a abordagem defendida na Questão 3 da Parte E:
+
+- **descartar em silêncio** faria sumir um depósito que a pessoa viu como guardado;
+- **tentar de novo sozinho** seria aplicar às cegas exatamente o que o 409 existe para impedir. Se o depósito de R$ 30 tivesse sido a mesma operação feita por outro caminho, a nova tentativa contaria o dinheiro duas vezes;
+- **perguntar** é o único caminho em que alguém decide sabendo o que mudou.
+
+A operação em conflito fica guardada no SQLite até a decisão, inclusive se o app for fechado. A evidência também mostra que o conflito foi real, e não um falso positivo da fila: a operação anterior foi sincronizada com sucesso, e só o depósito externo avançou o vetor.
+
+### Questão 3
+
+O risco é a pessoa **agir com base em dinheiro que ainda não existe**. Num app de rede social, uma curtida otimista que falha não causa dano. Num banco, um saldo provisório pode levar a pessoa a pagar uma conta, prometer um valor a alguém ou sacar contando com um depósito que depois volta como conflito ou é recusado. O risco aumenta quando alguém mexe na conta por outro caminho, porque o saldo provisório soma sobre um saldo que pode já ter mudado. E perder uma operação que a tela mostrou como feita destrói a confiança no app.
+
+O design reduz esse risco em várias camadas:
+
+1. **O provisório nunca se passa por real.** O recibo diz "Depósito guardado", e não "realizado", com um selo de relógio e "Saldo provisório". A home marca "Saldo provisório, com operações a sincronizar", cada conta afetada ganha um ícone de relógio, e a seção "Operações pendentes" diz para qual agência cada operação está esperando.
+2. **A verdade continua na agência.** O saldo provisório é só um cálculo na tela: o saldo real guardado mais as pendências. O dado gravado no aparelho nunca é alterado pela UI otimista. No conflito, a tela troca o provisório pelo `contaAtual` devolvido pela agência.
+3. **Limites também offline.** O saque offline é validado contra o saldo provisório, então não dá para sacar duas vezes o mesmo dinheiro, e a agência valida de novo o saldo real na sincronização.
+4. **Nada é aplicado às cegas nem duplicado.** O vetor conhecido viaja com a operação. Mesmo quando um envio dá timeout e a operação acaba guardada, uma eventual aplicação anterior aparece como conflito, e não como um segundo depósito.
+5. **Nada se perde.** A fila fica no SQLite, sobrevive ao fechamento do app e até à saída da conta, com um aviso na confirmação de saída.
+6. **Escopo limitado ao seguro.** Só depósitos e saques vão para a fila, que é o que a agência sabe sincronizar. Transferências envolvem duas agências e o estorno da Saga, e continuam exigindo conexão.
+
+Fica um risco residual: a tela de transferência mostra o saldo já com as pendências. Se a pessoa tentar transferir dinheiro que ainda está só na fila, a agência recusa por saldo insuficiente, o que é seguro mas pode confundir. Um app real separaria "saldo disponível" de "saldo a confirmar", como os bancos fazem com depósitos em cheque, e só deixaria movimentar o disponível.
