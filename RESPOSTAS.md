@@ -403,7 +403,7 @@ A cada ciclo de 3 segundos, o app consulta `GET /bully/lider` nas 3 agências **
 3. **Divergência:** as agências no ar apontam para líderes diferentes, por exemplo "a Agência 0 vê a 2 e a Agência 1 vê a 1". O nó que discorda fica destacado em vermelho.
 4. **Eleição em andamento:** as agências respondem, mas sem líder definida.
 
-Cada agência que responde emite um pulso animado no próprio nó, e as ligações entre agências no ar ficam verdes. Assim dá para perceber que o painel está vivo mesmo quando nada muda. Com as 3 agências locais no ar, o tempo de resposta ficou em torno de 10 ms. A evidência está em `evidencias/sprint3/funcionalidade-adicional.png`.
+Cada agência que responde emite um pulso animado no próprio nó, e as ligações entre agências no ar ficam verdes. Assim dá para perceber que o painel está vivo mesmo quando nada muda. A evidência `evidencias/sprint3/funcionalidade-adicional.png` mostra o antes e o depois de derrubar a líder. Às 00:31:07, as 3 agências estavam no ar, respondendo em 3 ms, e todas reconheciam a Agência 2. Às 00:31:13, a Agência 2 aparecia fora do ar e as 2 ativas já reconheciam a Agência 1, eleita às 00:31:10. A gravação não chegou a mostrar a situação de líder que não responde: a agência derrubada recusou a conexão na hora, e o heartbeat detectou a queda e elegeu a nova líder dentro de um único ciclo do app. Essa situação aparece quando a detecção demora mais do que o intervalo de consulta, por exemplo com uma líder travada em vez de desligada, e está coberta pelos testes do app.
 
 Duas decisões que valem registro:
 
