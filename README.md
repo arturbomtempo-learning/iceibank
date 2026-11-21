@@ -36,7 +36,7 @@ São quatro sprints ao longo do semestre: cada um parte do código do anterior e
     - [🚧 Status do Projeto](#-status-do-projeto)
     - [📚 Índice](#-índice)
     - [📝 Sobre o Projeto](#-sobre-o-projeto)
-    - [🎬 Vídeo de Apresentação](#-vídeo-de-apresentação)
+    - [🎬 Apresentações](#-apresentações)
     - [✨ Funcionalidades Principais](#-funcionalidades-principais)
     - [⭐ Funcionalidades Adicionais](#-funcionalidades-adicionais)
         - [Sprint 1: extrato consolidado](#sprint-1-extrato-consolidado)
@@ -95,11 +95,51 @@ O Sprint 3 segue a mesma linha. A líder eleita pelo Bully ainda é só **inform
 
 ---
 
-## 🎬 Vídeo de Apresentação
+## 🎬 Apresentações
 
-Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionamento:
+**Sprint 1.** Como parte da entrega, foi gravado um vídeo apresentando o projeto em funcionamento:
 
 **▶️ [Assistir à apresentação do Sprint 1](https://youtu.be/fpBiZ1JiXc8)**
+
+**Sprints 2 e 3.** A pasta [`presentations/`](presentations/) reúne o material da apresentação em sala:
+
+| Arquivo                                                    | Conteúdo                                                                                                             |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| [`sprint-2-and-3.html`](presentations/sprint-2-and-3.html) | Os slides, com capa, sumário, o que é o projeto, decisões de design, Sprint 2, Sprint 3, demonstração e encerramento |
+| [`demo.mp4`](presentations/demo.mp4)                       | Vídeo de demonstração de 1min23, exibido dentro do slide 7                                                           |
+
+Para apresentar, basta abrir o `sprint-2-and-3.html` no navegador, sem servidor nem instalação. As setas ou a barra de espaço trocam os slides, **N** mostra as notas de fala de cada slide, **T** liga um cronômetro de 3 minutos e **F** coloca em tela cheia. O vídeo começa sozinho ao chegar no slide de demonstração e pausa ao sair dele.
+
+**Como os slides foram feitos.** Os slides são um único arquivo de **HTML, CSS e JavaScript puros**, sem framework nem biblioteca. Eles seguem a identidade visual do projeto: as cores do design system do frontend, as fontes Plus Jakarta Sans e Inter, o logo de barras e o mascote, carregado da própria pasta do frontend. As animações seguem o estilo do app:
+
+- os elementos entram com um deslizar suave, um após o outro;
+- no slide do Sprint 2, uma transferência atravessa o RabbitMQ com o relógio vetorial atualizando em cada etapa;
+- no slide do Sprint 3, uma réplica do painel de liderança do app mostra a líder caindo e uma nova sendo eleita.
+
+O conteúdo se ajusta a qualquer tamanho de tela e respeita a preferência de movimento reduzido do sistema.
+
+**Como o vídeo foi gravado.** A gravação foi automatizada, com as 3 agências e o frontend realmente no ar:
+
+- **Web:** um script em Node controla o Chrome pelo Chrome DevTools Protocol e grava a tela quadro a quadro. Um cursor visível mostra cada clique, e os campos são digitados letra por letra.
+- **App:** um teste de integração do Flutter percorre o fluxo no simulador do iPhone, conversando com as agências reais, enquanto o `xcrun simctl io recordVideo` grava a tela.
+- **Edição:** feita com o **ffmpeg**, obtido pelo pacote `imageio-ffmpeg`. As legendas, as vinhetas de abertura e encerramento e a moldura do iPhone foram desenhadas em HTML com a identidade do projeto e convertidas em imagem pelo Chrome.
+
+A montagem seguiu o método da skill [**brag**](https://github.com/latent-spaces/brag): abertura forte, uma legenda por passo com tempo suficiente para leitura, cortes no início de cada ação e aceleração só dos trechos de espera. O [**Recordly**](https://github.com/webadderallorg/recordly) também foi avaliado, mas, por ser um gravador operado por interface gráfica, deu lugar à gravação automatizada descrita acima.
+
+O vídeo mostra:
+
+- o gerente cadastrando o correntista `artur` e abrindo as contas 7 (Agência 1) e 8 (Agência 2);
+- no app:
+    - login, saldo e o cartão girando;
+    - depósito e saque;
+    - um saque bloqueado por deixar o saldo negativo;
+    - um depósito feito sem conexão e sincronizado sozinho;
+    - uma transferência entre agências;
+    - o painel de liderança e a troca de tema.
+
+Como o simulador do iOS não tem modo avião, a falta de conexão desse trecho foi simulada cortando a rede dentro do app, com as agências no ar; o código percorrido é o mesmo de uma queda real. Todo o resto conversa com as agências de verdade.
+
+**Uso de IA neste material.** A inteligência artificial ajudou a desenvolver os slides, a automatizar a gravação e a montar o vídeo. As ideias, porém, foram todas minhas: a estrutura e a ordem dos slides, o estilo minimalista e as animações, o roteiro do vídeo e o que demonstrar em cada passo. Revisei cada slide e cada cena antes de considerar o material pronto.
 
 ---
 
@@ -702,6 +742,7 @@ iceibank/
 │   ├── sprint1/                      # Prints dos testes do Sprint 1
 │   ├── sprint2/                      # Prints dos testes do Sprint 2
 │   └── sprint3/                      # Prints dos testes do Sprint 3
+├── presentations/                    # Slides e vídeo de demonstração das Sprints 2 e 3
 ├── enunciado/                        # Roteiros das sprints 1, 2 e 3
 ├── RESPOSTAS.md                      # Respostas conceituais e decisões de design
 └── README.md
@@ -846,7 +887,7 @@ As duas metades foram extraídas da gravação da tela. Às 00:31:07, as 3 agên
 
 Seguindo a nota de transparência do próprio [`sprint-01.md`](enunciado/sprint-01.md), registro aqui, de forma aberta, como usei ferramentas de inteligência artificial neste trabalho. As ferramentas foram o **Claude Code** (com os modelos **Claude Sonnet 5** e, no Sprint 3, **Claude Opus 5.5**) e o **ChatGPT**, no modelo gratuito atualmente disponível (**GPT-5.6 Luna**).
 
-**Onde a IA foi usada.** Diferente de um uso apenas cosmético, ela participou do desenvolvimento em quatro frentes: na implementação da **API em Flask**, na construção do **frontend em Vue** e do **app em Flutter**, e na redação deste `README.md` e do [`RESPOSTAS.md`](RESPOSTAS.md). No Sprint 3, ela também montou algumas evidências a partir das minhas próprias capturas: juntou pares de prints de antes e depois numa imagem só e extraiu quadros de uma gravação de tela feita por mim, sem alterar o conteúdo de nenhuma captura. Prefiro declarar isso com clareza a minimizar o papel que a ferramenta teve.
+**Onde a IA foi usada.** Diferente de um uso apenas cosmético, ela participou do desenvolvimento em quatro frentes: na implementação da **API em Flask**, na construção do **frontend em Vue** e do **app em Flutter**, e na redação deste `README.md` e do [`RESPOSTAS.md`](RESPOSTAS.md). Nas Sprints 2 e 3, também apoiou a preparação dos slides e do vídeo de demonstração, como detalhado em [Apresentações](#-apresentações). No Sprint 3, ela também montou algumas evidências a partir das minhas próprias capturas: juntou pares de prints de antes e depois numa imagem só e extraiu quadros de uma gravação de tela feita por mim, sem alterar o conteúdo de nenhuma captura. Prefiro declarar isso com clareza a minimizar o papel que a ferramenta teve.
 
 **Como foi usada.** O que separa um uso responsável de uma cópia irrefletida é o método, e aqui ele foi deliberado:
 
