@@ -52,20 +52,18 @@ body {
 .viewport {
     position: fixed;
     inset: 0;
-    display: grid;
-    place-items: center;
+    overflow: hidden;
 }
 
 .stage {
-    position: relative;
+    position: absolute;
+    left: 0;
+    top: 0;
     width: 1600px;
     height: 900px;
-    flex: none;
-    transform-origin: center center;
+    transform-origin: 0 0;
     overflow: hidden;
-    border-radius: 6px;
     background: var(--bg);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 
 .slide {
@@ -1421,7 +1419,11 @@ body {
     const pad = (value) => String(value).padStart(2, '0');
 
     function fit() {
-        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const scale = Math.min(width / 1600, height / 900);
+        stage.style.width = `${width / scale}px`;
+        stage.style.height = `${height / scale}px`;
         stage.style.transform = `scale(${scale})`;
     }
 
@@ -1450,7 +1452,11 @@ body {
         const evtA1 = document.getElementById('evtA1');
         const packet = document.getElementById('packet');
         const caption = document.getElementById('flowCaption');
-        const left = 155, mid = 690, right = 1225;
+        const flow = a0.closest('.flow');
+        const centerOf = (element) => element.offsetLeft + element.offsetWidth / 2;
+        const left = centerOf(a0.parentElement);
+        const mid = flow.clientWidth / 2;
+        const right = centerOf(a1.parentElement);
 
         const hit = (el) => { el.classList.add('is-hit'); at(650, () => el.classList.remove('is-hit')); };
         const move = (x) => { packet.style.left = `${x}px`; };
