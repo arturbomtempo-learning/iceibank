@@ -1,0 +1,1659 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICEIBank · Sprints 2 e 3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --brand-50: #ebfbf4;
+    --brand-100: #cdf5e5;
+    --brand-200: #9ceac9;
+    --brand-300: #61d9a8;
+    --brand-400: #2fc187;
+    --brand-500: #12a56e;
+    --brand-600: #0a8659;
+    --brand-700: #076b48;
+    --brand-800: #08543a;
+    --brand-900: #08422f;
+    --accent: #57e3a8;
+    --ink: #062017;
+    --ink-raised: #0a2d20;
+    --ink-muted: #8bb4a3;
+    --ink-line: #17452f;
+    --bg: #f4f7f5;
+    --surface: #ffffff;
+    --surface-sunken: #eef3f0;
+    --text: #0b1f18;
+    --text-muted: #5f7369;
+    --border: #e3eae6;
+    --danger: #c6303d;
+    --danger-soft: #fdecee;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-display: 'Plus Jakarta Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+    background: #020d09;
+    color: var(--text);
+    font-family: var(--font-sans);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+.viewport {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+}
+
+.stage {
+    position: relative;
+    width: 1600px;
+    height: 900px;
+    flex: none;
+    transform-origin: center center;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--bg);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+
+.slide {
+    position: absolute;
+    inset: 0;
+    padding: 92px 110px 90px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(18px) scale(0.995);
+    transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out), visibility 0s linear 0.5s;
+}
+
+.slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out), visibility 0s;
+}
+
+.slide--ink {
+    background:
+        radial-gradient(1100px 620px at 88% -10%, rgba(87, 227, 168, 0.16), transparent 60%),
+        radial-gradient(800px 500px at -5% 110%, rgba(18, 165, 110, 0.14), transparent 60%),
+        var(--ink);
+    color: #ffffff;
+}
+
+[data-anim] {
+    opacity: 0;
+    transform: translateY(22px);
+}
+
+.slide.is-active [data-anim] {
+    animation: fadeSlideIn 0.62s var(--ease-out) forwards;
+    animation-delay: calc(var(--i, 0) * 80ms + 120ms);
+}
+
+@keyframes fadeSlideIn {
+    to { opacity: 1; transform: none; }
+}
+
+.eyebrow {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brand-600);
+}
+
+.slide--ink .eyebrow { color: var(--accent); }
+
+.display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.04;
+}
+
+.h2 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 54px;
+    letter-spacing: -0.025em;
+    line-height: 1.08;
+    margin-top: 12px;
+}
+
+.lead {
+    font-size: 22px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.slide--ink .lead { color: var(--ink-muted); }
+
+.chrome {
+    position: absolute;
+    left: 110px;
+    right: 110px;
+    top: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    z-index: 5;
+    pointer-events: none;
+    transition: color 0.4s;
+}
+
+.stage.on-ink .chrome { color: var(--ink-muted); }
+
+.chrome-brand { display: flex; align-items: center; gap: 10px; }
+
+.chrome-brand strong {
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--text);
+    transition: color 0.4s;
+}
+
+.stage.on-ink .chrome-brand strong { color: #ffffff; }
+
+.chrome-brand strong span { color: var(--brand-600); }
+
+.stage.on-ink .chrome-brand strong span { color: var(--accent); }
+
+.counter { font-variant-numeric: tabular-nums; letter-spacing: 0.06em; }
+
+.progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 5px;
+    width: 100%;
+    background: rgba(10, 134, 89, 0.1);
+    z-index: 6;
+}
+
+.progress span {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, var(--brand-400), var(--brand-600), var(--accent));
+    transition: width 0.6s var(--ease-out);
+}
+
+.logo-mark { display: block; flex: none; }
+
+.cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    max-width: 920px;
+}
+
+.cover-logo {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.cover-logo .display { font-size: 118px; }
+
+.cover-logo .display span { color: var(--accent); }
+
+.cover-mark .bar {
+    transform-box: fill-box;
+    transform-origin: left center;
+    transform: scaleX(0);
+}
+
+.slide.is-active .cover-mark .bar { animation: barGrow 0.7s var(--ease-out) forwards; }
+.slide.is-active .cover-mark .bar:nth-child(2) { animation-delay: 0.12s; }
+.slide.is-active .cover-mark .bar:nth-child(3) { animation-delay: 0.24s; }
+
+@keyframes barGrow { to { transform: scaleX(1); } }
+
+.cover-subtitle {
+    margin-top: 26px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 34px;
+    letter-spacing: -0.015em;
+    color: #ffffff;
+}
+
+.cover-desc {
+    margin-top: 18px;
+    max-width: 780px;
+}
+
+.author {
+    margin-top: 56px;
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    padding: 14px 26px 14px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--ink-line);
+    align-self: flex-start;
+}
+
+.author img {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 2px solid rgba(87, 227, 168, 0.55);
+}
+
+.author strong { display: block; font-size: 21px; font-weight: 700; color: #ffffff; }
+.author small { display: block; font-size: 15px; color: var(--ink-muted); margin-top: 2px; }
+
+.net {
+    position: absolute;
+    right: 70px;
+    top: 170px;
+    width: 540px;
+    height: 540px;
+}
+
+.net svg { width: 100%; height: 100%; overflow: visible; }
+
+.net .link { stroke: rgba(87, 227, 168, 0.28); stroke-width: 2; }
+
+.net .packet { fill: var(--accent); filter: drop-shadow(0 0 8px rgba(87, 227, 168, 0.9)); }
+
+.net .node-circle { fill: rgba(255, 255, 255, 0.06); stroke: rgba(87, 227, 168, 0.5); stroke-width: 2; }
+
+.net .node-circle.is-leader { fill: url(#leaderGradient); stroke: none; }
+
+.net text { fill: #ffffff; font-family: var(--font-display); font-weight: 800; font-size: 30px; text-anchor: middle; dominant-baseline: central; }
+
+.net .node-label { font-family: var(--font-sans); font-weight: 600; font-size: 15px; fill: var(--ink-muted); }
+
+.net .ring {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
+}
+
+.slide.is-active .net .ring { animation: ring 2.4s var(--ease-out) infinite; }
+.slide.is-active .net .ring.r1 { animation-delay: 0.8s; }
+.slide.is-active .net .ring.r2 { animation-delay: 1.6s; }
+
+@keyframes ring {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.7); }
+}
+
+.agenda {
+    margin-top: 64px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+}
+
+.agenda-item {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 52px 34px;
+    border-radius: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 4px rgba(6, 32, 23, 0.03), 0 16px 40px -18px rgba(6, 32, 23, 0.18);
+}
+
+.agenda-item .num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 54px;
+    color: var(--brand-200);
+    font-variant-numeric: tabular-nums;
+    min-width: 76px;
+}
+
+.agenda-item strong { display: block; font-size: 28px; font-weight: 700; }
+.agenda-item small { display: block; font-size: 18px; color: var(--text-muted); margin-top: 6px; }
+
+.agenda-item.is-highlight {
+    background: linear-gradient(135deg, var(--brand-600), var(--brand-800));
+    border-color: transparent;
+    color: #ffffff;
+}
+
+.agenda-item.is-highlight .num { color: var(--accent); }
+.agenda-item.is-highlight small { color: rgba(255, 255, 255, 0.75); }
+
+.cols { display: grid; gap: 56px; margin-top: 40px; }
+
+.cols-about { grid-template-columns: 1.05fr 1fr; }
+
+.partition {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.agency-card {
+    border-radius: 20px;
+    padding: 22px 22px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.agency-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--brand-400), var(--brand-700));
+}
+
+.agency-card .name { font-family: var(--font-display); font-weight: 800; font-size: 22px; }
+.agency-card .port { font-size: 14px; color: var(--text-muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+.agency-card .accounts {
+    margin-top: 16px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.agency-card .accounts span {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    border-radius: 11px;
+    display: grid;
+    place-items: center;
+    background: var(--brand-50);
+    color: var(--brand-800);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.formula {
+    margin-top: 22px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 18px;
+}
+
+.formula code {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.learn-group + .learn-group { margin-top: 26px; }
+
+.roadmap {
+    margin-top: 46px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    position: relative;
+}
+
+.roadmap-step {
+    position: relative;
+    padding: 18px 20px 18px 22px;
+    border-radius: 18px;
+    background: var(--surface-sunken);
+    color: var(--text-muted);
+}
+
+.roadmap-step b { display: block; font-family: var(--font-display); font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; }
+.roadmap-step span { display: block; margin-top: 4px; font-size: 17px; font-weight: 600; }
+
+.roadmap-step.is-now {
+    background: var(--ink);
+    color: #ffffff;
+    box-shadow: 0 18px 36px -18px rgba(6, 32, 23, 0.55);
+}
+
+.roadmap-step.is-now b { color: var(--accent); }
+
+.roadmap-step.is-now::after {
+    content: 'apresentado hoje';
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--accent);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+.learn-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+.learn-title .pill {
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--accent);
+    letter-spacing: 0.06em;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.chip i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--brand-500);
+    flex: none;
+}
+
+.design { display: grid; grid-template-columns: 560px 1fr; gap: 64px; margin-top: 34px; align-items: center; }
+
+.phones { position: relative; height: 640px; }
+
+.phone {
+    position: absolute;
+    width: 292px;
+    height: 600px;
+    border-radius: 46px;
+    padding: 12px;
+    background: #0d1512;
+    box-shadow: 0 30px 70px -20px rgba(6, 32, 23, 0.45), inset 0 0 0 2px #26332d;
+}
+
+.phone-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 36px;
+    overflow: hidden;
+    padding: 46px 18px 18px;
+    position: relative;
+}
+
+.phone-screen::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    width: 86px;
+    height: 24px;
+    border-radius: 999px;
+    background: #000000;
+    transform: translateX(-50%);
+}
+
+.phone--light { left: 10px; top: 30px; z-index: 2; }
+.phone--light .phone-screen { background: #f3f6f4; color: var(--text); }
+
+.phone--dark { left: 250px; top: 0; transform: rotate(6deg); }
+.phone--dark .phone-screen { background: #08130f; color: #e7efeb; }
+
+.slide.is-active .phone--light { animation: floatA 6s ease-in-out infinite; }
+.slide.is-active .phone--dark { animation: floatB 6s ease-in-out infinite; }
+
+@keyframes floatA { 50% { transform: translateY(-10px); } }
+@keyframes floatB { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(6deg) translateY(10px); } }
+
+.ph-head { display: flex; align-items: center; gap: 8px; }
+
+.ph-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    background: var(--brand-50);
+    color: var(--brand-800);
+}
+
+.phone--dark .ph-avatar { background: #12352a; color: var(--brand-200); }
+
+.ph-hello { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+.ph-sub { font-size: 9.5px; opacity: 0.6; }
+.ph-eyebrow { margin-top: 18px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.16em; opacity: 0.55; }
+.ph-balance { font-family: var(--font-display); font-weight: 800; font-size: 25px; margin-top: 2px; letter-spacing: -0.02em; }
+.ph-provisional { margin-top: 4px; font-size: 9px; font-weight: 600; color: var(--brand-600); }
+.phone--dark .ph-provisional { color: var(--brand-300); }
+
+.bank-card {
+    margin-top: 14px;
+    height: 156px;
+    border-radius: 16px;
+    padding: 14px 16px;
+    color: #ffffff;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(180px 140px at 100% 0%, rgba(87, 227, 168, 0.22), transparent 70%),
+        linear-gradient(135deg, #124a3e, #0a382f 52%, #03251f);
+    box-shadow: 0 14px 24px -12px rgba(4, 26, 20, 0.55);
+}
+
+.bank-card .card-brand { display: flex; align-items: center; gap: 6px; font-family: var(--font-display); font-weight: 800; font-size: 13px; }
+.bank-card .card-brand span { color: var(--accent); }
+
+.bank-card .chip-ic {
+    margin-top: 30px;
+    width: 32px;
+    height: 23px;
+    border-radius: 5px;
+    background: linear-gradient(180deg, #e2e6e5, #a9afae);
+}
+
+.bank-card .digits { margin-top: 12px; font-weight: 700; font-size: 12px; letter-spacing: 0.18em; }
+.bank-card .holder { margin-top: 4px; font-size: 8px; font-weight: 700; letter-spacing: 0.14em; opacity: 0.85; }
+
+.bank-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.16) 45%, transparent 60%);
+    transform: translateX(-120%);
+}
+
+.slide.is-active .bank-card::after { animation: shine 4.5s ease-in-out infinite 1s; }
+
+@keyframes shine { 0%, 55% { transform: translateX(-120%); } 80%, 100% { transform: translateX(120%); } }
+
+.ph-actions { margin-top: 16px; display: flex; justify-content: space-between; padding: 0 6px; }
+
+.ph-actions span {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--brand-600);
+    box-shadow: 0 4px 12px -6px rgba(6, 32, 23, 0.2);
+}
+
+.phone--dark .ph-actions span { background: #10241d; color: var(--brand-300); box-shadow: none; }
+
+.ph-live {
+    margin-top: 16px;
+    border-radius: 14px;
+    padding: 10px 12px;
+    background: #ffffff;
+    font-size: 9px;
+}
+
+.phone--dark .ph-live { background: #0e1f19; }
+
+.ph-live .live { display: flex; align-items: center; gap: 6px; font-weight: 800; letter-spacing: 0.14em; color: var(--brand-600); }
+.phone--dark .ph-live .live { color: var(--brand-300); }
+.ph-live .leader { font-family: var(--font-display); font-weight: 800; font-size: 18px; margin-top: 4px; }
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    position: relative;
+}
+
+.live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.slide.is-active .live-dot::after { animation: livePulse 1.4s ease-out infinite; }
+
+@keyframes livePulse { from { transform: scale(1); opacity: 0.5; } to { transform: scale(2.6); opacity: 0; } }
+
+.mascot {
+    position: absolute;
+    left: 360px;
+    bottom: -6px;
+    width: 210px;
+    z-index: 3;
+    filter: drop-shadow(0 18px 24px rgba(6, 32, 23, 0.25));
+}
+
+.slide.is-active .mascot { animation: bob 3.2s ease-in-out infinite; }
+
+@keyframes bob { 50% { transform: translateY(-12px) rotate(-2deg); } }
+
+.decisions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.decision {
+    padding: 22px 22px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.decision .ic {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: var(--brand-50);
+    color: var(--brand-700);
+    margin-bottom: 12px;
+}
+
+.decision strong { display: block; font-size: 19px; font-weight: 700; }
+.decision small { display: block; font-size: 15px; line-height: 1.45; color: var(--text-muted); margin-top: 4px; }
+
+.palette { display: flex; gap: 10px; margin-top: 22px; align-items: center; }
+
+.palette span {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(6, 32, 23, 0.08);
+}
+
+.palette small { margin-left: 8px; font-size: 15px; color: var(--text-muted); line-height: 1.4; }
+.palette small b { color: var(--text); font-family: ui-monospace, 'SF Mono', Menlo, monospace; }
+
+.sprint-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+
+.badge-unit {
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--brand-50);
+    color: var(--brand-800);
+    font-weight: 700;
+    font-size: 16px;
+    white-space: nowrap;
+}
+
+.flow {
+    margin-top: 34px;
+    position: relative;
+    height: 360px;
+    border-radius: 26px;
+    background: var(--ink);
+    overflow: hidden;
+}
+
+.flow::before {
+    content: '';
+    position: absolute;
+    left: 250px;
+    right: 250px;
+    top: 132px;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, rgba(87, 227, 168, 0.4) 0 10px, transparent 10px 18px);
+}
+
+.flow-node {
+    position: absolute;
+    top: 66px;
+    width: 230px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.flow-node.a0 { left: 40px; }
+.flow-node.a1 { right: 40px; }
+.flow-node.broker { left: 50%; transform: translateX(-50%); width: 300px; }
+
+.flow-circle {
+    width: 132px;
+    height: 132px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 2px solid rgba(87, 227, 168, 0.45);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 24px;
+    transition: box-shadow 0.4s, background 0.4s;
+    position: relative;
+}
+
+.flow-node.broker .flow-circle {
+    width: 300px;
+    height: 132px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, rgba(87, 227, 168, 0.16), rgba(18, 165, 110, 0.08));
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.flow-node.broker .flow-circle small { display: block; font-family: var(--font-sans); font-weight: 500; font-size: 14px; color: var(--ink-muted); }
+
+.flow-circle.is-hit {
+    box-shadow: 0 0 0 10px rgba(87, 227, 168, 0.12), 0 0 40px rgba(87, 227, 168, 0.45);
+    background: rgba(87, 227, 168, 0.18);
+}
+
+.flow-vector {
+    margin-top: 14px;
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--accent);
+    transition: transform 0.3s var(--ease-out), background 0.3s;
+}
+
+.flow-vector.is-bumped { transform: scale(1.14); background: rgba(87, 227, 168, 0.22); }
+
+.flow-event { margin-top: 8px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink-muted); min-height: 18px; }
+
+.packet {
+    position: absolute;
+    top: 116px;
+    left: 155px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 800;
+    white-space: nowrap;
+    box-shadow: 0 0 24px rgba(87, 227, 168, 0.65);
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: left 1.1s var(--ease-out), opacity 0.25s;
+}
+
+.packet.is-back { background: #ffffff; box-shadow: 0 0 24px rgba(255, 255, 255, 0.45); }
+
+.flow-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 26px;
+    text-align: center;
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--brand-100);
+}
+
+.cards4 { margin-top: 26px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+.info-card {
+    padding: 26px 24px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.info-card .tag { font-size: 13px; font-weight: 800; letter-spacing: 0.12em; color: var(--brand-600); text-transform: uppercase; }
+.info-card strong { display: block; margin-top: 8px; font-size: 22px; font-weight: 700; line-height: 1.25; }
+.info-card small { display: block; margin-top: 8px; font-size: 16.5px; line-height: 1.45; color: var(--text-muted); }
+.info-card code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14px; color: var(--brand-800); background: var(--brand-50); padding: 1px 6px; border-radius: 6px; }
+
+.info-card.is-star { background: linear-gradient(135deg, var(--brand-600), var(--brand-800)); border-color: transparent; color: #ffffff; }
+.info-card.is-star .tag { color: var(--accent); }
+.info-card.is-star small { color: rgba(255, 255, 255, 0.78); }
+.info-card.is-star code { background: rgba(255, 255, 255, 0.14); color: #ffffff; }
+
+.s3 { display: grid; grid-template-columns: 600px 1fr; gap: 44px; margin-top: 30px; }
+
+.bully {
+    position: relative;
+    height: 560px;
+    border-radius: 26px;
+    background: var(--ink);
+    color: #ffffff;
+    padding: 26px 30px;
+    overflow: hidden;
+}
+
+.bully-top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+
+.bully-top .live { display: flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 800; letter-spacing: 0.16em; }
+.bully-top .every { color: var(--ink-muted); font-weight: 600; }
+
+.bully-caption { margin-top: 18px; font-size: 15px; color: var(--ink-muted); }
+
+.bully-leader {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 50px;
+    letter-spacing: -0.02em;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 62px;
+}
+
+.bully-leader .seal { color: var(--accent); }
+.bully-leader .seal.is-warn { color: #f0707c; font-size: 40px; }
+
+.bully-net { position: absolute; left: 30px; right: 30px; top: 190px; height: 200px; }
+.bully-net svg { width: 100%; height: 100%; overflow: visible; }
+
+.b-link { stroke: rgba(87, 227, 168, 0.4); stroke-width: 2.5; transition: stroke 0.4s; }
+.b-link.is-down { stroke: rgba(255, 255, 255, 0.1); }
+
+.b-node { transition: fill 0.45s, stroke 0.45s; fill: rgba(255, 255, 255, 0.07); stroke: rgba(255, 255, 255, 0.18); stroke-width: 2; }
+.b-node.is-leader { fill: url(#bullyLeaderGradient); stroke: none; }
+.b-node.is-down { fill: rgba(198, 48, 61, 0.18); stroke: #f0707c; }
+
+.b-glow { fill: rgba(47, 193, 135, 0.35); filter: blur(14px); opacity: 0; transition: opacity 0.45s; }
+.b-glow.is-on { opacity: 1; }
+
+.b-num { fill: #ffffff; font-family: var(--font-display); font-weight: 800; font-size: 28px; text-anchor: middle; dominant-baseline: central; transition: fill 0.4s; }
+.b-num.is-down { fill: #f0707c; }
+
+.b-label { fill: #ffffff; font-family: var(--font-sans); font-size: 15px; font-weight: 600; text-anchor: middle; }
+.b-state { fill: var(--ink-muted); font-family: var(--font-sans); font-size: 14px; font-weight: 700; text-anchor: middle; transition: fill 0.4s; }
+.b-state.is-leader { fill: var(--accent); }
+.b-state.is-down { fill: #f0707c; }
+
+.b-pulse { fill: var(--accent); opacity: 0; filter: drop-shadow(0 0 6px rgba(87, 227, 168, 0.9)); }
+.b-pulse.is-election { fill: #ffffff; }
+
+.bully-banner {
+    position: absolute;
+    left: 30px;
+    right: 30px;
+    bottom: 26px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.4;
+    background: rgba(87, 227, 168, 0.12);
+    color: var(--brand-100);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.4s, color 0.4s;
+}
+
+.bully-banner.is-alert { background: rgba(198, 48, 61, 0.18); color: #ffc9cf; }
+
+.s3-list { display: grid; gap: 12px; }
+
+.s3-row {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 16px;
+    align-items: start;
+    padding: 18px 20px;
+    border-radius: 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.s3-row .part {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--brand-700);
+    background: var(--brand-50);
+    border-radius: 12px;
+    padding: 8px 0;
+    text-align: center;
+}
+
+.s3-row strong { display: block; font-size: 19px; font-weight: 700; }
+.s3-row small { display: block; font-size: 15px; line-height: 1.45; color: var(--text-muted); margin-top: 3px; }
+
+.s3-row.is-star { background: linear-gradient(135deg, var(--brand-600), var(--brand-800)); border-color: transparent; color: #ffffff; }
+.s3-row.is-star .part { background: rgba(255, 255, 255, 0.14); color: var(--accent); }
+.s3-row.is-star small { color: rgba(255, 255, 255, 0.78); }
+
+.video-slot {
+    margin-top: 36px;
+    height: 560px;
+    border-radius: 28px;
+    border: 2px dashed var(--brand-200);
+    background:
+        radial-gradient(600px 300px at 50% 0%, rgba(87, 227, 168, 0.12), transparent 70%),
+        var(--surface);
+    display: grid;
+    place-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.video-slot.has-video { border: none; background: #000000; }
+
+.video-slot video { width: 100%; height: 100%; object-fit: contain; background: #000000; }
+
+.play {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    margin: 0 auto 22px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--brand-400), var(--brand-700));
+    color: #ffffff;
+    box-shadow: 0 20px 40px -14px rgba(10, 134, 89, 0.6);
+    position: relative;
+}
+
+.play::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid var(--brand-400);
+}
+
+.slide.is-active .play::after { animation: ring 2.2s var(--ease-out) infinite; }
+
+.video-slot strong { display: block; font-family: var(--font-display); font-weight: 800; font-size: 30px; }
+.video-slot small { display: block; margin-top: 8px; font-size: 18px; color: var(--text-muted); }
+
+.thanks { display: grid; grid-template-columns: 1fr 380px; align-items: center; height: 100%; gap: 40px; }
+
+.thanks .display { font-size: 132px; }
+.thanks .display span { color: var(--accent); }
+
+.thanks-sub { margin-top: 14px; font-family: var(--font-display); font-weight: 700; font-size: 40px; color: #ffffff; }
+
+.thanks-links { margin-top: 44px; display: flex; gap: 14px; flex-wrap: wrap; }
+
+.thanks-links span {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--ink-line);
+    color: var(--brand-100);
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.thanks-mascot { width: 360px; filter: drop-shadow(0 26px 40px rgba(0, 0, 0, 0.45)); }
+
+.slide.is-active .thanks-mascot { animation: bob 3.4s ease-in-out infinite; }
+
+.notes {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    width: min(980px, calc(100vw - 32px));
+    transform: translate(-50%, 140%);
+    padding: 18px 22px 18px;
+    border-radius: 18px;
+    background: rgba(6, 32, 23, 0.94);
+    backdrop-filter: blur(10px);
+    color: #e7efeb;
+    font-size: 16px;
+    line-height: 1.5;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--ink-line);
+    transition: transform 0.45s var(--ease-out);
+    z-index: 30;
+}
+
+.notes.is-open { transform: translate(-50%, 0); }
+
+.notes-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+.notes-head span:last-child { color: var(--ink-muted); letter-spacing: 0.04em; text-transform: none; font-weight: 600; }
+
+.timer {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(6, 32, 23, 0.92);
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--ink-line);
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s, transform 0.3s, color 0.3s;
+    z-index: 30;
+}
+
+.timer.is-visible { opacity: 1; transform: none; }
+.timer.is-warning { color: #f5c46a; }
+.timer.is-over { color: #f0707c; }
+
+.hint {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    font-size: 12px;
+    color: rgba(231, 239, 235, 0.45);
+    z-index: 30;
+    transition: opacity 0.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 0.01ms !important; }
+    [data-anim] { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+        <linearGradient id="markGradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#2fc187"/>
+            <stop offset="55%" stop-color="#0a8659"/>
+            <stop offset="100%" stop-color="#08543a"/>
+        </linearGradient>
+        <linearGradient id="leaderGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2fc187"/>
+            <stop offset="100%" stop-color="#0a8659"/>
+        </linearGradient>
+        <linearGradient id="bullyLeaderGradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#2fc187"/>
+            <stop offset="100%" stop-color="#0a8659"/>
+        </linearGradient>
+        <symbol id="mark" viewBox="0 0 40 40">
+            <rect width="40" height="40" rx="12" fill="url(#markGradient)"/>
+            <g transform="rotate(-45 20 20)" fill="#ffffff">
+                <rect x="8" y="9.6" width="24" height="4.6" rx="2.3"/>
+                <rect x="11" y="17.7" width="18" height="4.6" rx="2.3" opacity="0.82"/>
+                <rect x="14" y="25.8" width="12" height="4.6" rx="2.3" opacity="0.6"/>
+            </g>
+        </symbol>
+    </defs>
+</svg>
+
+<div class="viewport">
+<div class="stage" id="stage">
+    <div class="chrome">
+        <div class="chrome-brand">
+            <svg class="logo-mark" width="26" height="26"><use href="#mark"/></svg>
+            <strong>ICEI<span>Bank</span></strong>
+            <span>· Sprints 2 e 3</span>
+        </div>
+        <div class="counter" id="counter">01 / 08</div>
+    </div>
+
+    <section class="slide slide--ink" data-title="Capa">
+        <div class="cover">
+            <div class="eyebrow" data-anim style="--i:0">Laboratório de Desenvolvimento de Aplicações Móveis e Distribuídas</div>
+            <div class="cover-logo" style="margin-top:26px">
+                <svg class="logo-mark cover-mark" width="112" height="112" viewBox="0 0 40 40">
+                    <rect width="40" height="40" rx="12" fill="url(#markGradient)"/>
+                    <g transform="rotate(-45 20 20)" fill="#ffffff">
+                        <rect class="bar" x="8" y="9.6" width="24" height="4.6" rx="2.3"/>
+                        <rect class="bar" x="11" y="17.7" width="18" height="4.6" rx="2.3" opacity="0.82"/>
+                        <rect class="bar" x="14" y="25.8" width="12" height="4.6" rx="2.3" opacity="0.6"/>
+                    </g>
+                </svg>
+                <div class="display" data-anim style="--i:1">ICEI<span>Bank</span></div>
+            </div>
+            <div class="cover-subtitle" data-anim style="--i:2">Sprints 2 e 3: mensageria, relógio vetorial, consenso e app mobile</div>
+            <p class="lead cover-desc" data-anim style="--i:3">Um banco distribuído em três agências independentes, que trocam mensagens por um broker, ordenam eventos com relógio vetorial, elegem uma líder sozinhas e atendem um app iOS que funciona até sem conexão.</p>
+            <div class="author" data-anim style="--i:4">
+                <img src="https://avatars.githubusercontent.com/u/96635074?v=4" alt="Foto de Artur Bomtempo Colen">
+                <div>
+                    <strong>Artur Bomtempo Colen</strong>
+                    <small>Engenharia de Software · PUC Minas</small>
+                </div>
+            </div>
+        </div>
+        <div class="net" data-anim style="--i:3">
+            <svg viewBox="0 0 540 540">
+                <line class="link" x1="140" y1="390" x2="400" y2="390"/>
+                <line class="link" x1="140" y1="390" x2="270" y2="160"/>
+                <line class="link" x1="400" y1="390" x2="270" y2="160"/>
+                <circle class="packet" r="6"><animateMotion dur="2.6s" repeatCount="indefinite" path="M140 390 L270 160"/></circle>
+                <circle class="packet" r="6"><animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite" path="M400 390 L270 160"/></circle>
+                <circle class="packet" r="5"><animateMotion dur="3.2s" begin="0.4s" repeatCount="indefinite" path="M140 390 L400 390"/></circle>
+                <circle class="ring r0" cx="270" cy="160" r="58"/>
+                <circle class="ring r1" cx="270" cy="160" r="58"/>
+                <circle class="ring r2" cx="270" cy="160" r="58"/>
+                <circle class="node-circle is-leader" cx="270" cy="160" r="58"/>
+                <text x="270" y="160">2</text>
+                <text class="node-label" x="270" y="244">Agência 2 · líder</text>
+                <circle class="node-circle" cx="140" cy="390" r="50"/>
+                <text x="140" y="390">0</text>
+                <text class="node-label" x="140" y="466">Agência 0</text>
+                <circle class="node-circle" cx="400" cy="390" r="50"/>
+                <text x="400" y="390">1</text>
+                <text class="node-label" x="400" y="466">Agência 1</text>
+            </svg>
+        </div>
+    </section>
+
+    <section class="slide" data-title="Sumário">
+        <div class="eyebrow" data-anim style="--i:0">Sumário</div>
+        <h2 class="h2" data-anim style="--i:1">O que vou mostrar em 3 minutos</h2>
+        <div class="agenda">
+            <div class="agenda-item" data-anim style="--i:2"><span class="num">01</span><div><strong>O ICEIBank</strong><small>O que é e o que aprendi</small></div></div>
+            <div class="agenda-item" data-anim style="--i:3"><span class="num">02</span><div><strong>Decisões de design</strong><small>iOS, minimalismo e verde</small></div></div>
+            <div class="agenda-item" data-anim style="--i:4"><span class="num">03</span><div><strong>Sprint 2</strong><small>Mensageria e relógio vetorial</small></div></div>
+            <div class="agenda-item" data-anim style="--i:5"><span class="num">04</span><div><strong>Sprint 3</strong><small>Consenso e app offline-first</small></div></div>
+            <div class="agenda-item is-highlight" data-anim style="--i:6"><span class="num">05</span><div><strong>Demonstração</strong><small>O sistema funcionando de verdade</small></div></div>
+            <div class="agenda-item" data-anim style="--i:7"><span class="num">06</span><div><strong>Dúvidas</strong><small>Perguntas e encerramento</small></div></div>
+        </div>
+    </section>
+
+    <section class="slide" data-title="O ICEIBank">
+        <div class="eyebrow" data-anim style="--i:0">01 · O ICEIBank</div>
+        <h2 class="h2" data-anim style="--i:1">Um banco que só funciona porque é distribuído</h2>
+        <div class="cols cols-about">
+            <div>
+                <p class="lead" data-anim style="--i:2">Cada conta pertence a <strong style="color:var(--text)">uma única agência</strong>. Cada agência é um processo independente, com memória e relógio próprios, e nenhuma conhece as contas das outras.</p>
+                <div class="partition">
+                    <div class="agency-card" data-anim style="--i:3"><div class="name">Agência 0</div><div class="port">porta 4035</div><div class="accounts"><span>0</span><span>3</span><span>6</span><span>…</span></div></div>
+                    <div class="agency-card" data-anim style="--i:4"><div class="name">Agência 1</div><div class="port">porta 4036</div><div class="accounts"><span>1</span><span>4</span><span>7</span><span>…</span></div></div>
+                    <div class="agency-card" data-anim style="--i:5"><div class="name">Agência 2</div><div class="port">porta 4037</div><div class="accounts"><span>2</span><span>5</span><span>8</span><span>…</span></div></div>
+                </div>
+                <div class="formula" data-anim style="--i:6">Agência da conta = <code>id % 3</code></div>
+            </div>
+            <div>
+                <div class="learn-group" data-anim style="--i:3">
+                    <div class="learn-title"><span class="pill">Sprint 2</span> Comunicação indireta</div>
+                    <div class="chips">
+                        <span class="chip"><i></i>Middleware orientado a mensagens</span>
+                        <span class="chip"><i></i>Publish/Subscribe</span>
+                        <span class="chip"><i></i>Relógio vetorial</span>
+                        <span class="chip"><i></i>Saga compensatória</span>
+                    </div>
+                </div>
+                <div class="learn-group" data-anim style="--i:5">
+                    <div class="learn-title"><span class="pill">Sprint 3</span> Consenso e mobile</div>
+                    <div class="chips">
+                        <span class="chip"><i></i>Eleição de líder (Bully)</span>
+                        <span class="chip"><i></i>Detecção de falhas</span>
+                        <span class="chip"><i></i>Offline-first</span>
+                        <span class="chip"><i></i>Detecção de conflito</span>
+                        <span class="chip"><i></i>App Flutter</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="roadmap">
+            <div class="roadmap-step" data-anim style="--i:7"><b>Sprint 1</b><span>REST, JWT e relógio de Lamport</span></div>
+            <div class="roadmap-step is-now" data-anim style="--i:8"><b>Sprint 2</b><span>Mensageria e relógio vetorial</span></div>
+            <div class="roadmap-step is-now" data-anim style="--i:9"><b>Sprint 3</b><span>Consenso e app mobile</span></div>
+            <div class="roadmap-step" data-anim style="--i:10"><b>Sprint 4</b><span>Transações distribuídas (2PC)</span></div>
+        </div>
+    </section>
+
+    <section class="slide" data-title="Decisões de design">
+        <div class="eyebrow" data-anim style="--i:0">02 · Decisões de design</div>
+        <h2 class="h2" data-anim style="--i:1">Um app de banco iOS, minimalista e verde</h2>
+        <div class="design">
+            <div class="phones" data-anim style="--i:2">
+                <div class="phone phone--dark">
+                    <div class="phone-screen">
+                        <div class="ph-head"><div class="ph-avatar">AS</div><div><div class="ph-hello">Olá, Ana</div><div class="ph-sub">Bem-vindo ao seu ICEIBank</div></div></div>
+                        <div class="ph-eyebrow">SALDO DISPONÍVEL</div>
+                        <div class="ph-balance">R$ 180,00</div>
+                        <div class="bank-card"><div class="card-brand"><svg width="16" height="16"><use href="#mark"/></svg>ICEI<span>Bank</span></div><div class="chip-ic"></div><div class="digits">•••• •••• 0301</div><div class="holder">ANA SOUZA</div></div>
+                        <div class="ph-actions"><span>↓</span><span>↑</span><span>⇄</span></div>
+                        <div class="ph-live"><div class="live"><span class="live-dot"></span>AO VIVO</div><div class="leader">Agência 1</div></div>
+                    </div>
+                </div>
+                <div class="phone phone--light">
+                    <div class="phone-screen">
+                        <div class="ph-head"><div class="ph-avatar">AS</div><div><div class="ph-hello">Olá, Ana</div><div class="ph-sub">Bem-vindo ao seu ICEIBank</div></div></div>
+                        <div class="ph-eyebrow">SALDO DISPONÍVEL</div>
+                        <div class="ph-balance">R$ 150,00</div>
+                        <div class="ph-provisional">◷ Saldo provisório, com operações a sincronizar</div>
+                        <div class="bank-card"><div class="card-brand"><svg width="16" height="16"><use href="#mark"/></svg>ICEI<span>Bank</span></div><div class="chip-ic"></div><div class="digits">•••• •••• 0301</div><div class="holder">ANA SOUZA</div></div>
+                        <div class="ph-actions"><span>↓</span><span>↑</span><span>⇄</span></div>
+                        <div class="ph-live"><div class="live"><span class="live-dot"></span>AO VIVO</div><div class="leader">Agência 2</div></div>
+                    </div>
+                </div>
+                <img class="mascot" src="../frontend/src/assets/mascot/mascot-full-body.webp" alt="Mascote do ICEIBank">
+            </div>
+            <div>
+                <div class="decisions">
+                    <div class="decision" data-anim style="--i:3"><div class="ic">◐</div><strong>iOS em primeiro lugar</strong><small>Widgets Cupertino, folhas, gestos e vibração. Roda também no Android.</small></div>
+                    <div class="decision" data-anim style="--i:4"><div class="ic">✦</div><strong>Minimalista</strong><small>Pouca informação por tela, saldo oculto por padrão e um cartão que gira.</small></div>
+                    <div class="decision" data-anim style="--i:5"><div class="ic">☾</div><strong>Claro, escuro ou automático</strong><small>Escolha salva no aparelho, aplicada antes da primeira tela.</small></div>
+                    <div class="decision" data-anim style="--i:6"><div class="ic">◎</div><strong>Mínimo de dependências</strong><small>Só o armazenamento seguro e o SQLite vêm de terceiros.</small></div>
+                </div>
+                <div class="palette" data-anim style="--i:7">
+                    <span style="background:#2fc187"></span>
+                    <span style="background:#0a8659"></span>
+                    <span style="background:#08543a"></span>
+                    <span style="background:#062017"></span>
+                    <span style="background:#f4f7f5"></span>
+                    <small>Verde <b>#0A8659</b> como cor da marca,<br>a mesma paleta no web e no app, e o mascote</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide" data-title="Sprint 2" data-demo="flow">
+        <div class="sprint-head">
+            <div>
+                <div class="eyebrow" data-anim style="--i:0">03 · Sprint 2</div>
+                <h2 class="h2" data-anim style="--i:1">A origem publica e segue: o broker entrega</h2>
+            </div>
+            <span class="badge-unit" data-anim style="--i:2">U3 · Comunicação indireta</span>
+        </div>
+        <div class="flow" data-anim style="--i:3">
+            <div class="flow-node a0"><div class="flow-circle" id="flowA0">Agência 0</div><div class="flow-vector" id="vecA0">[2, 0, 0]</div><div class="flow-event" id="evtA0"></div></div>
+            <div class="flow-node broker"><div class="flow-circle" id="flowBroker">RabbitMQ<small>exchange topic · iceibank.eventos</small></div><div class="flow-event" id="evtBroker">fila durável por agência</div></div>
+            <div class="flow-node a1"><div class="flow-circle" id="flowA1">Agência 1</div><div class="flow-vector" id="vecA1">[0, 1, 0]</div><div class="flow-event" id="evtA1"></div></div>
+            <div class="packet" id="packet">creditar · [3, 0, 0]</div>
+            <div class="flow-caption" id="flowCaption">Transferência de R$ 300 da conta 0 para a conta 1</div>
+        </div>
+        <div class="cards4">
+            <div class="info-card" data-anim style="--i:4"><div class="tag">Parte A + C</div><strong>RabbitMQ no lugar do HTTP</strong><small>Fila durável e mensagem persistente: o destino pode estar fora do ar.</small></div>
+            <div class="info-card" data-anim style="--i:5"><div class="tag">Parte B</div><strong>Relógio vetorial</strong><small>Um contador por agência: evento local, envio e <code>max</code> ao receber.</small></div>
+            <div class="info-card" data-anim style="--i:6"><div class="tag">Parte D</div><strong>Linha do tempo causal</strong><small>O <code>mesclar_logs.py</code> separa o que é causal do que é concorrente.</small></div>
+            <div class="info-card is-star" data-anim style="--i:7"><div class="tag">⭐ Extra</div><strong>Confirmação com estorno</strong><small>Se o crédito falha, a origem devolve o dinheiro: padrão Saga.</small></div>
+        </div>
+    </section>
+
+    <section class="slide" data-title="Sprint 3" data-demo="bully">
+        <div class="sprint-head">
+            <div>
+                <div class="eyebrow" data-anim style="--i:0">04 · Sprint 3</div>
+                <h2 class="h2" data-anim style="--i:1">A líder é eleita e o app acompanha</h2>
+            </div>
+            <span class="badge-unit" data-anim style="--i:2">Consenso · U4 Mobile</span>
+        </div>
+        <div class="s3">
+            <div class="bully" data-anim style="--i:3">
+                <div class="bully-top"><div class="live"><span class="live-dot"></span>AO VIVO</div><div class="every">Heartbeat a cada 3 s</div></div>
+                <div class="bully-caption" id="bullyCaption">Agência líder</div>
+                <div class="bully-leader" id="bullyLeader">Agência 2 <span class="seal">✓</span></div>
+                <div class="bully-net">
+                    <svg viewBox="0 0 540 200">
+                        <line class="b-link" id="bl01" x1="90" y1="70" x2="270" y2="70"/>
+                        <line class="b-link" id="bl12" x1="270" y1="70" x2="450" y2="70"/>
+                        <circle class="b-glow" id="bg0" cx="90" cy="70" r="46"/>
+                        <circle class="b-glow" id="bg1" cx="270" cy="70" r="46"/>
+                        <circle class="b-glow is-on" id="bg2" cx="450" cy="70" r="46"/>
+                        <circle class="b-node" id="bn0" cx="90" cy="70" r="40"/>
+                        <circle class="b-node" id="bn1" cx="270" cy="70" r="40"/>
+                        <circle class="b-node is-leader" id="bn2" cx="450" cy="70" r="40"/>
+                        <text class="b-num" id="bt0" x="90" y="70">0</text>
+                        <text class="b-num" id="bt1" x="270" y="70">1</text>
+                        <text class="b-num" id="bt2" x="450" y="70">2</text>
+                        <text class="b-label" x="90" y="140">Agência 0</text>
+                        <text class="b-label" x="270" y="140">Agência 1</text>
+                        <text class="b-label" x="450" y="140">Agência 2</text>
+                        <text class="b-state" id="bs0" x="90" y="164">no ar</text>
+                        <text class="b-state" id="bs1" x="270" y="164">no ar</text>
+                        <text class="b-state is-leader" id="bs2" x="450" y="164">líder</text>
+                        <circle class="b-pulse" id="bp0" r="6" cx="90" cy="70"/>
+                        <circle class="b-pulse" id="bp1" r="6" cx="270" cy="70"/>
+                    </svg>
+                </div>
+                <div class="bully-banner" id="bullyBanner"><span>●</span><span id="bullyBannerText">3 de 3 agências no ar. Todas reconhecem a Agência 2.</span></div>
+            </div>
+            <div class="s3-list">
+                <div class="s3-row" data-anim style="--i:4"><div class="part">A · B · C</div><div><strong>Bully, heartbeat e histórico</strong><small>Vence o maior id vivo. A queda da líder foi detectada em 1,33 s, sem intervenção.</small></div></div>
+                <div class="s3-row" data-anim style="--i:5"><div class="part">D</div><div><strong>App Flutter com painel ao vivo</strong><small>Fluxo bancário completo e a líder na home, atualizada sozinha a cada 3 s.</small></div></div>
+                <div class="s3-row" data-anim style="--i:6"><div class="part">E</div><div><strong>Sincronização com conflito</strong><small>O vetor vira a versão da conta: se mudou, a agência responde 409.</small></div></div>
+                <div class="s3-row" data-anim style="--i:7"><div class="part">F</div><div><strong>App offline-first</strong><small>SQLite, fila de pendentes, saldo provisório e sincronização automática.</small></div></div>
+                <div class="s3-row is-star" data-anim style="--i:8"><div class="part">⭐ Extra</div><div><strong>Indicador de agências ativas</strong><small>O app mostra cada agência e se elas concordam: o consenso visível.</small></div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide" data-title="Demonstração">
+        <div class="sprint-head">
+            <div>
+                <div class="eyebrow" data-anim style="--i:0">05 · Demonstração</div>
+                <h2 class="h2" data-anim style="--i:1">O ICEIBank funcionando de verdade</h2>
+            </div>
+            <span class="badge-unit" data-anim style="--i:2">Web · iOS · Android</span>
+        </div>
+        <div class="video-slot" id="videoSlot" data-src="" data-anim style="--i:3">
+            <div>
+                <div class="play"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.52.85l10.4-6.5a1 1 0 0 0 0-1.7L9.52 4.65A1 1 0 0 0 8 5.5Z"/></svg></div>
+                <strong>Espaço do vídeo de demonstração</strong>
+                <small>Failover da líder, operação offline e o conflito tratado na tela</small>
+            </div>
+        </div>
+    </section>
+
+    <section class="slide slide--ink" data-title="Obrigado">
+        <div class="thanks">
+            <div>
+                <div class="eyebrow" data-anim style="--i:0">06 · Encerramento</div>
+                <div class="display" data-anim style="--i:1; margin-top:18px">Obrigado<span>!</span></div>
+                <div class="thanks-sub" data-anim style="--i:2">Ficou alguma dúvida?</div>
+                <div class="thanks-links" data-anim style="--i:3">
+                    <span>github.com/arturbomtempo-learning/iceibank</span>
+                    <span>Artur Bomtempo Colen</span>
+                </div>
+            </div>
+            <div data-anim style="--i:2"><img class="thanks-mascot" src="../frontend/src/assets/mascot/mascot-full-body.webp" alt="Mascote do ICEIBank"></div>
+        </div>
+    </section>
+
+    <div class="progress"><span id="progress"></span></div>
+</div>
+</div>
+
+<aside class="notes" id="notes">
+    <div class="notes-head"><span>Notas de fala</span><span id="notesMeta"></span></div>
+    <div id="notesBody"></div>
+</aside>
+<div class="timer" id="timer">3:00</div>
+<div class="hint" id="hint">← → navegar · N notas · T cronômetro · F tela cheia</div>
+
+<script>
+(() => {
+    const notes = [
+        { time: '0:10', text: 'Sou o Artur, e vou apresentar as Sprints 2 e 3 do ICEIBank: um banco dividido em três agências que conversam por mensagens, elegem uma líder sozinhas e atendem um app iOS.' },
+        { time: '0:05', text: 'Vou passar pelo que é o projeto, pelas decisões de design, pelo que cada sprint entregou e pela demonstração.' },
+        { time: '0:25', text: 'Cada conta mora numa única agência, definida por id % 3. No Sprint 2 aprendi comunicação indireta, Publish/Subscribe, relógio vetorial e Saga. No Sprint 3, eleição de líder, detecção de falhas e offline-first, com um app em Flutter.' },
+        { time: '0:20', text: 'O app segue o padrão do iOS: minimalista, verde, a mesma paleta e o mascote do web, com tema claro, escuro ou automático. Usei o mínimo de pacotes de terceiros: só o armazenamento seguro e o SQLite.' },
+        { time: '0:35', text: 'No Sprint 2, a transferência deixou de ser HTTP direto: a origem debita, publica no RabbitMQ e segue. O vetor viaja na mensagem e o destino faz o max ao receber. O mesclar_logs separa causal de concorrente. O extra: o destino confirma, e se o crédito falha a origem estorna, o padrão Saga.' },
+        { time: '0:45', text: 'No Sprint 3, as agências elegem a líder pelo Bully: vence o maior id vivo. O heartbeat de 3 s detectou a queda em 1,33 s. O app mostra a líder ao vivo, guarda operações offline numa fila em SQLite e sincroniza sozinho. Se o vetor mudou, a agência responde 409 e o app pergunta à pessoa. O extra mostra o consenso de cada agência.' },
+        { time: 'vídeo', text: 'Deixe o vídeo rodar. Destaque três momentos: a líder caindo e o painel trocando sozinho, o depósito guardado em modo avião e o conflito 409 aparecendo na tela.' },
+        { time: '0:05', text: 'Obrigado! Fico à disposição para dúvidas.' },
+    ];
+
+    const stage = document.getElementById('stage');
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const counter = document.getElementById('counter');
+    const progress = document.getElementById('progress');
+    const notesPanel = document.getElementById('notes');
+    const notesBody = document.getElementById('notesBody');
+    const notesMeta = document.getElementById('notesMeta');
+    const timerEl = document.getElementById('timer');
+    const hint = document.getElementById('hint');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let current = 0;
+    let demoTimers = [];
+
+    const pad = (value) => String(value).padStart(2, '0');
+
+    function fit() {
+        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+        stage.style.transform = `scale(${scale})`;
+    }
+
+    function clearDemo() {
+        demoTimers.forEach(clearTimeout);
+        demoTimers = [];
+    }
+
+    function at(ms, fn) {
+        demoTimers.push(setTimeout(fn, ms));
+    }
+
+    function setVector(el, value) {
+        el.textContent = value;
+        el.classList.add('is-bumped');
+        at(320, () => el.classList.remove('is-bumped'));
+    }
+
+    function runFlow() {
+        const a0 = document.getElementById('flowA0');
+        const a1 = document.getElementById('flowA1');
+        const broker = document.getElementById('flowBroker');
+        const vecA0 = document.getElementById('vecA0');
+        const vecA1 = document.getElementById('vecA1');
+        const evtA0 = document.getElementById('evtA0');
+        const evtA1 = document.getElementById('evtA1');
+        const packet = document.getElementById('packet');
+        const caption = document.getElementById('flowCaption');
+        const left = 155, mid = 690, right = 1225;
+
+        const hit = (el) => { el.classList.add('is-hit'); at(650, () => el.classList.remove('is-hit')); };
+        const move = (x) => { packet.style.left = `${x}px`; };
+
+        const cycle = () => {
+            packet.style.transition = 'none';
+            packet.classList.remove('is-back');
+            move(left);
+            packet.style.opacity = '0';
+            vecA0.textContent = '[2, 0, 0]';
+            vecA1.textContent = '[0, 1, 0]';
+            evtA0.textContent = '';
+            evtA1.textContent = '';
+            caption.textContent = 'Transferência de R$ 300 da conta 0 para a conta 1';
+            void packet.offsetWidth;
+            packet.style.transition = '';
+
+            at(700, () => { hit(a0); setVector(vecA0, '[3, 0, 0]'); evtA0.textContent = 'DÉBITO + ENVIO'; packet.textContent = 'creditar · [3, 0, 0]'; packet.style.opacity = '1'; });
+            at(1100, () => { move(mid); caption.textContent = 'A origem publica e segue, sem esperar o destino'; });
+            at(2250, () => { hit(broker); });
+            at(2500, () => { move(right); });
+            at(3650, () => { hit(a1); packet.style.opacity = '0'; setVector(vecA1, '[3, 2, 0]'); evtA1.textContent = 'CRÉDITO APLICADO'; caption.textContent = 'Ao receber: max posição a posição e depois +1 na própria'; });
+            at(4800, () => { setVector(vecA1, '[3, 3, 0]'); evtA1.textContent = 'ENVIA CONFIRMAÇÃO'; packet.classList.add('is-back'); packet.textContent = 'confirmacao · aplicado'; packet.style.opacity = '1'; });
+            at(5150, () => { move(mid); caption.textContent = '⭐ Confirmação de entrega: se falhasse, a origem estornaria'; });
+            at(6300, () => { hit(broker); });
+            at(6550, () => { move(left); });
+            at(7700, () => { hit(a0); packet.style.opacity = '0'; setVector(vecA0, '[4, 3, 0]'); evtA0.textContent = 'TRANSFERÊNCIA CONFIRMADA'; caption.textContent = 'O vetor [4, 3, 0] prova que a confirmação veio depois do crédito'; });
+            at(10200, cycle);
+        };
+        cycle();
+    }
+
+    function runBully() {
+        const $ = (id) => document.getElementById(id);
+        const nodes = [$('bn0'), $('bn1'), $('bn2')];
+        const glows = [$('bg0'), $('bg1'), $('bg2')];
+        const nums = [$('bt0'), $('bt1'), $('bt2')];
+        const states = [$('bs0'), $('bs1'), $('bs2')];
+        const banner = $('bullyBanner');
+        const bannerText = $('bullyBannerText');
+        const leader = $('bullyLeader');
+        const caption = $('bullyCaption');
+        const pulses = [$('bp0'), $('bp1')];
+        const xs = [90, 270, 450];
+
+        const setLeader = (id) => {
+            nodes.forEach((n, i) => n.classList.toggle('is-leader', i === id));
+            glows.forEach((g, i) => g.classList.toggle('is-on', i === id));
+            states.forEach((s, i) => {
+                if (s.classList.contains('is-down')) return;
+                s.classList.toggle('is-leader', i === id);
+                s.textContent = i === id ? 'líder' : 'no ar';
+            });
+            leader.innerHTML = `Agência ${id} <span class="seal">✓</span>`;
+            caption.textContent = 'Agência líder';
+        };
+
+        const setDown = (id, down) => {
+            nodes[id].classList.toggle('is-down', down);
+            nums[id].classList.toggle('is-down', down);
+            states[id].classList.toggle('is-down', down);
+            if (down) { states[id].classList.remove('is-leader'); states[id].textContent = 'fora do ar'; glows[id].classList.remove('is-on'); nodes[id].classList.remove('is-leader'); }
+            else { states[id].textContent = 'no ar'; }
+            $('bl12').classList.toggle('is-down', down && id === 2);
+        };
+
+        const shoot = (pulse, from, to, election) => {
+            if (reduceMotion) return;
+            pulse.classList.toggle('is-election', !!election);
+            const start = performance.now();
+            const duration = 700;
+            const frame = (now) => {
+                const t = Math.min(1, (now - start) / duration);
+                const eased = 1 - Math.pow(1 - t, 3);
+                pulse.setAttribute('cx', xs[from] + (xs[to] - xs[from]) * eased);
+                pulse.style.opacity = t < 0.9 ? '1' : String((1 - t) * 10);
+                if (t < 1) requestAnimationFrame(frame);
+                else pulse.style.opacity = '0';
+            };
+            requestAnimationFrame(frame);
+        };
+
+        const message = (text, alert) => {
+            bannerText.textContent = text;
+            banner.classList.toggle('is-alert', !!alert);
+        };
+
+        const cycle = () => {
+            setDown(2, false);
+            setLeader(2);
+            message('3 de 3 agências no ar. Todas reconhecem a Agência 2.');
+            at(600, () => { shoot(pulses[0], 0, 2); shoot(pulses[1], 1, 2); });
+            at(2200, () => { shoot(pulses[0], 0, 2); shoot(pulses[1], 1, 2); });
+            at(3600, () => { setDown(2, true); caption.textContent = 'Agência líder, a confirmar'; leader.innerHTML = 'Agência 2 <span class="seal is-warn">⚠</span>'; message('A Agência 2 caiu. O heartbeat de 3 s vai perceber.', true); });
+            at(4600, () => { shoot(pulses[1], 1, 2); message('Sem resposta em 1 s: LIDER_NAO_RESPONDEU. Nova eleição.', true); });
+            at(5600, () => { shoot(pulses[0], 0, 1, true); });
+            at(6500, () => { setLeader(1); message('Nova líder: Agência 1. Queda detectada em 1,33 s, sem ninguém tocar em nada.'); });
+            at(9400, () => { setDown(2, false); message('A Agência 2 voltou e retoma a liderança: é o "valentão".'); });
+            at(10200, () => { setLeader(2); });
+            at(12600, cycle);
+        };
+        cycle();
+    }
+
+    function startDemo(slide) {
+        clearDemo();
+        if (reduceMotion) return;
+        if (slide.dataset.demo === 'flow') runFlow();
+        if (slide.dataset.demo === 'bully') runBully();
+    }
+
+    function show(index) {
+        current = Math.max(0, Math.min(slides.length - 1, index));
+        slides.forEach((slide, i) => slide.classList.toggle('is-active', i === current));
+        const slide = slides[current];
+        stage.classList.toggle('on-ink', slide.classList.contains('slide--ink'));
+        counter.textContent = `${pad(current + 1)} / ${pad(slides.length)}`;
+        progress.style.width = `${((current + 1) / slides.length) * 100}%`;
+        const note = notes[current];
+        notesBody.textContent = note ? note.text : '';
+        notesMeta.textContent = note ? `${slide.dataset.title} · ${note.time}` : '';
+        if (location.hash !== `#${current + 1}`) history.replaceState(null, '', `#${current + 1}`);
+        startDemo(slide);
+    }
+
+    const next = () => show(current + 1);
+    const prev = () => show(current - 1);
+
+    let timerStart = null;
+    let timerElapsed = 0;
+    let timerHandle = null;
+
+    function renderTimer() {
+        const running = timerStart ? Date.now() - timerStart : 0;
+        const remaining = 180 - Math.floor((timerElapsed + running) / 1000);
+        const abs = Math.abs(remaining);
+        timerEl.textContent = `${remaining < 0 ? '+' : ''}${Math.floor(abs / 60)}:${pad(abs % 60)}`;
+        timerEl.classList.toggle('is-warning', remaining <= 30 && remaining >= 0);
+        timerEl.classList.toggle('is-over', remaining < 0);
+    }
+
+    function toggleTimer() {
+        timerEl.classList.add('is-visible');
+        if (timerStart) {
+            timerElapsed += Date.now() - timerStart;
+            timerStart = null;
+            clearInterval(timerHandle);
+        } else {
+            timerStart = Date.now();
+            timerHandle = setInterval(renderTimer, 250);
+        }
+        renderTimer();
+    }
+
+    function setupVideo() {
+        const slot = document.getElementById('videoSlot');
+        const src = slot.dataset.src;
+        if (!src) return;
+        slot.classList.add('has-video');
+        slot.innerHTML = '';
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.playsInline = true;
+        slot.appendChild(video);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (['ArrowRight', 'PageDown', ' ', 'Enter'].includes(event.key)) { event.preventDefault(); next(); }
+        else if (['ArrowLeft', 'PageUp', 'Backspace'].includes(event.key)) { event.preventDefault(); prev(); }
+        else if (event.key === 'Home') show(0);
+        else if (event.key === 'End') show(slides.length - 1);
+        else if (event.key.toLowerCase() === 'n') notesPanel.classList.toggle('is-open');
+        else if (event.key.toLowerCase() === 't') toggleTimer();
+        else if (event.key.toLowerCase() === 'f') {
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+        }
+        hint.style.opacity = '0';
+    });
+
+    document.querySelector('.viewport').addEventListener('click', (event) => {
+        if (event.target.closest('video')) return;
+        if (event.clientX > window.innerWidth / 3) next(); else prev();
+    });
+
+    let touchX = null;
+    window.addEventListener('touchstart', (event) => { touchX = event.touches[0].clientX; }, { passive: true });
+    window.addEventListener('touchend', (event) => {
+        if (touchX === null) return;
+        const delta = event.changedTouches[0].clientX - touchX;
+        if (Math.abs(delta) > 50) (delta < 0 ? next : prev)();
+        touchX = null;
+    });
+
+    window.addEventListener('resize', fit);
+    setTimeout(() => { hint.style.opacity = '0'; }, 6000);
+
+    fit();
+    setupVideo();
+    const fromHash = parseInt(location.hash.slice(1), 10);
+    show(Number.isFinite(fromHash) ? fromHash - 1 : 0);
+})();
+</script>
+</body>
+</html>
