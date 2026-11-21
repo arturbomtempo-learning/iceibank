@@ -975,9 +975,15 @@ body {
     overflow: hidden;
 }
 
-.video-slot.has-video { border: none; background: #000000; }
+.video-slot.has-video {
+    width: 996px;
+    margin: 36px auto 0;
+    border: none;
+    background: #062017;
+    box-shadow: 0 30px 70px -24px rgba(6, 32, 23, 0.55);
+}
 
-.video-slot video { width: 100%; height: 100%; object-fit: contain; background: #000000; }
+.video-slot video { width: 100%; height: 100%; object-fit: contain; background: #062017; display: block; }
 
 .play {
     width: 112px;
@@ -1354,9 +1360,9 @@ body {
                 <div class="eyebrow" data-anim style="--i:0">05 · Demonstração</div>
                 <h2 class="h2" data-anim style="--i:1">O ICEIBank funcionando de verdade</h2>
             </div>
-            <span class="badge-unit" data-anim style="--i:2">Web · iOS · Android</span>
+            <span class="badge-unit" data-anim style="--i:2">Web · iOS</span>
         </div>
-        <div class="video-slot" id="videoSlot" data-src="" data-anim style="--i:3">
+        <div class="video-slot" id="videoSlot" data-src="demo.mp4" data-anim style="--i:3">
             <div>
                 <div class="play"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.52.85l10.4-6.5a1 1 0 0 0 0-1.7L9.52 4.65A1 1 0 0 0 8 5.5Z"/></svg></div>
                 <strong>Espaço do vídeo de demonstração</strong>
@@ -1566,6 +1572,14 @@ body {
         notesBody.textContent = note ? note.text : '';
         notesMeta.textContent = note ? `${slide.dataset.title} · ${note.time}` : '';
         if (location.hash !== `#${current + 1}`) history.replaceState(null, '', `#${current + 1}`);
+        document.querySelectorAll('video').forEach((video) => {
+            if (slide.contains(video)) {
+                video.currentTime = 0;
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+        });
         startDemo(slide);
     }
 
@@ -1608,6 +1622,8 @@ body {
         video.src = src;
         video.controls = true;
         video.playsInline = true;
+        video.muted = true;
+        video.preload = 'auto';
         slot.appendChild(video);
     }
 
