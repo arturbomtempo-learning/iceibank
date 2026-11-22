@@ -106,7 +106,7 @@ O Sprint 3 segue a mesma linha. A líder eleita pelo Bully ainda é só **inform
 | Arquivo                                                    | Conteúdo                                                                                                             |
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | [`sprint-2-and-3.html`](presentations/sprint-2-and-3.html) | Os slides, com capa, sumário, o que é o projeto, decisões de design, Sprint 2, Sprint 3, demonstração e encerramento |
-| [`demo.mp4`](presentations/demo.mp4)                       | Vídeo de demonstração de 1min23, exibido dentro do slide 7                                                           |
+| [`demo.mp4`](presentations/demo.mp4)                       | Vídeo de demonstração de 1min59, exibido dentro do slide 7                                                           |
 
 Para apresentar, basta abrir o `sprint-2-and-3.html` no navegador, sem servidor nem instalação. As setas ou a barra de espaço trocam os slides, **N** mostra as notas de fala de cada slide, **T** liga um cronômetro de 3 minutos e **F** coloca em tela cheia. O vídeo começa sozinho ao chegar no slide de demonstração e pausa ao sair dele.
 
@@ -128,9 +128,9 @@ A montagem seguiu o método da skill [**brag**](https://github.com/latent-spaces
 
 O vídeo mostra:
 
-- o gerente cadastrando o correntista `artur` e abrindo as contas 7 (Agência 1) e 8 (Agência 2);
+- no web, a página inicial de ponta a ponta e o gerente cadastrando o correntista `artur`, abrindo as contas 7 (Agência 1) e 8 (Agência 2) e vendo as duas no painel;
 - no app:
-    - login, saldo e o cartão girando;
+    - login, saldo, o cartão girando e um passeio pela home inteira;
     - depósito e saque;
     - um saque bloqueado por deixar o saldo negativo;
     - um depósito feito sem conexão e sincronizado sozinho;
