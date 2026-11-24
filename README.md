@@ -139,7 +139,7 @@ O vídeo mostra:
 
 Como o simulador do iOS não tem modo avião, a falta de conexão desse trecho foi simulada cortando a rede dentro do app, com as agências no ar; o código percorrido é o mesmo de uma queda real. Todo o resto conversa com as agências de verdade.
 
-**Uso de IA neste material.** A inteligência artificial ajudou a desenvolver os slides, a automatizar a gravação e a montar o vídeo. As ideias, porém, foram todas minhas: a estrutura e a ordem dos slides, o estilo minimalista e as animações, o roteiro do vídeo e o que demonstrar em cada passo. Revisei cada slide e cada cena antes de considerar o material pronto.
+**Uso de IA neste material.** Todo o conteúdo da apresentação é meu: o texto e a ordem dos slides, o estilo minimalista, as ideias de cada animação, o roteiro do vídeo e o que demonstrar em cada passo. A inteligência artificial potencializou essa criação na parte técnica: escreveu o código HTML, CSS e JavaScript dos slides a partir das minhas definições, automatizou a gravação e montou o vídeo. Revisei cada slide e cada cena antes de considerar o material pronto.
 
 ---
 
